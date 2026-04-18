@@ -1,0 +1,272 @@
+// Mentora MVP schema
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+  GUARDIAN
+}
+
+enum DayOfWeek {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  DROPPED
+  COMPLETED
+}
+
+enum GuardianLinkStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
+// ---------- Users ----------
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String
+  firstName     String    @default("")
+  lastName      String    @default("")
+  image         String?
+  passwordHash  String?
+  role          Role
+  regionId      String?
+  region        Region?   @relation(fields: [regionId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  teacherProfile  TeacherProfile?
+  studentProfile  StudentProfile?
+  guardianProfile GuardianProfile?
+
+  // Auth.js relations
+  accounts      Account[]
+  sessions      Session[]
+
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  purpose    String   @default("magic-link") // magic-link | guardian-invite
+
+  @@unique([identifier, token])
+}
+
+// ---------- Role profiles ----------
+
+model TeacherProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayId        String   @unique
+  headline         String   @default("")
+  bio              String   @default("") @db.Text
+  avgRating        Float    @default(0)
+  ratingsCount     Int      @default(0)
+  hoursTaught      Int      @default(0)
+  profileCompleted Boolean  @default(false)
+  subjects         TeacherSubject[]
+  rates            TeacherRate[]
+  offerings        ClassOffering[]
+  createdAt        DateTime @default(now())
+}
+
+model StudentProfile {
+  id         String              @id @default(cuid())
+  userId     String              @unique
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio        String?             @db.Text
+  interests  StudentInterest[]
+  guardians  GuardianLink[]      @relation("studentLinks")
+  enrollments Enrollment[]
+  createdAt  DateTime            @default(now())
+}
+
+model GuardianProfile {
+  id         String         @id @default(cuid())
+  userId     String         @unique
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone      String?
+  students   GuardianLink[] @relation("guardianLinks")
+  createdAt  DateTime       @default(now())
+}
+
+model GuardianLink {
+  id                String             @id @default(cuid())
+  studentProfileId  String
+  guardianProfileId String?
+  guardianEmail     String
+  status            GuardianLinkStatus @default(PENDING)
+  createdAt         DateTime           @default(now())
+  acceptedAt        DateTime?
+
+  studentProfile  StudentProfile   @relation("studentLinks", fields: [studentProfileId], references: [id], onDelete: Cascade)
+  guardianProfile GuardianProfile? @relation("guardianLinks", fields: [guardianProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([studentProfileId, guardianEmail])
+  @@index([guardianProfileId])
+}
+
+// ---------- Subjects / regions / rates ----------
+
+model Subject {
+  id       String @id @default(cuid())
+  slug     String @unique
+  name     String
+  teachers TeacherSubject[]
+  students StudentInterest[]
+  offerings ClassOffering[]
+  rates    TeacherRate[]
+}
+
+model TeacherSubject {
+  teacherProfileId String
+  subjectId        String
+  defaultCap       Int?
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  subject          Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([teacherProfileId, subjectId])
+}
+
+model StudentInterest {
+  studentProfileId String
+  subjectId        String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  subject          Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([studentProfileId, subjectId])
+}
+
+model Region {
+  id           String          @id @default(cuid())
+  code         String          @unique // e.g. "NG", "US", "EU"
+  name         String
+  currency     String          // ISO 4217, e.g. "NGN", "USD", "EUR"
+  users        User[]
+  minRates     RegionMinRate[]
+  teacherRates TeacherRate[]
+}
+
+model RegionMinRate {
+  id         String @id @default(cuid())
+  regionId   String
+  hourlyRate Int    // Stored as smallest currency unit (kobo, cent)
+  region     Region @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+  @@unique([regionId])
+}
+
+model TeacherRate {
+  id               String         @id @default(cuid())
+  teacherProfileId String
+  subjectId        String
+  regionId         String
+  hourlyRate       Int            // smallest currency unit
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  subject          Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  region           Region         @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherProfileId, subjectId, regionId])
+}
+
+// ---------- Scheduling & enrollment ----------
+
+model ClassOffering {
+  id               String         @id @default(cuid())
+  teacherProfileId String
+  subjectId        String
+  title            String
+  description      String?        @db.Text
+  dayOfWeek        DayOfWeek
+  startMinutes     Int            // minutes since 00:00 UTC local-to-teacher
+  endMinutes       Int
+  teacherCap       Int            // teacher's personal cap for THIS period
+  active           Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  subject          Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  enrollments      Enrollment[]
+
+  @@index([teacherProfileId, dayOfWeek])
+  @@index([subjectId])
+}
+
+model Enrollment {
+  id               String           @id @default(cuid())
+  studentProfileId String
+  offeringId       String
+  status           EnrollmentStatus @default(ACTIVE)
+  enrolledAt       DateTime         @default(now())
+  droppedAt        DateTime?
+
+  studentProfile   StudentProfile   @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  offering         ClassOffering    @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  @@unique([studentProfileId, offeringId])
+  @@index([offeringId, status])
+}
+
+// ---------- Platform policy (singleton) ----------
+
+model PlatformPolicy {
+  id                     String @id @default("singleton")
+  globalClassCap         Int    @default(30)
+  commissionPercent      Int    @default(15) // 10-25 typical
+  attendanceThresholdPct Int    @default(50)
+  updatedAt              DateTime @updatedAt
+}

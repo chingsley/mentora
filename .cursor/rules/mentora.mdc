@@ -1,0 +1,127 @@
+---
+description: Project-wide engineering rules for Mentora (Next.js 15 + TypeScript + Prisma + Auth.js)
+alwaysApply: true
+---
+
+# Mentora Engineering Rules
+
+These rules apply to every file in the repo. Follow them unless the user explicitly overrides one in a task. They consolidate the Next.js production checklist, clean-code principles, and component-organization best practices.
+
+## 1. Architecture
+
+- Stack is **Next.js 15 (App Router) + TypeScript strict + Prisma + Auth.js v5**. No NestJS, no Pages Router.
+- Backend lives inside Next.js: prefer **Server Components**, **Server Actions**, and **Route Handlers** (`app/**/route.ts`). Do not introduce a separate API server.
+- The app is **web + mobile-responsive**. Design mobile-first (360px baseline) and scale up; never ship a layout that breaks under 360px.
+
+## 2. Directory & file layout
+
+```
+src/
+  app/                # App Router routes, layouts, server actions, route handlers
+  components/
+    ui/               # Low-level, reusable primitives (Button, Input, Card, ...)
+    features/         # Feature-specific components (TeacherCard, AvailabilityGrid, ...)
+    layouts/          # Shell pieces (Sidebar, TopBar, RoleGate)
+  server/             # server-only data access layer (Prisma queries). NEVER import in client components
+  lib/                # Cross-cutting utilities (auth, db, env, providers, capacity, pricing, ...)
+  hooks/              # Custom React hooks (camelCase, useXxx)
+  types/              # Shared TS types / Zod-derived types
+  styles/             # Tailwind entry and theme variables
+tests/                # Top-level integration tests (unit tests colocate with source)
+prisma/               # schema.prisma, migrations, seed.ts
+```
+
+- **Colocate tests** next to the file they cover: `Button.tsx` + `Button.test.tsx` + `index.ts` in `components/ui/Button/`.
+- Re-export from `index.ts` so imports stay clean: `import { Button } from "@/components/ui/Button";`.
+
+## 3. Naming conventions
+
+- **Components**: `PascalCase.tsx` (e.g. `TeacherCard.tsx`). One component per file.
+- **Hooks**: `camelCase.ts` starting with `use` (e.g. `useDebounce.ts`).
+- **Utilities / server modules**: `camelCase.ts` (e.g. `getUser.ts`, `pricing.ts`).
+- **Types / interfaces**: `PascalCase` (e.g. `interface User`, `type UserRole`). Props interfaces suffixed `Props` (e.g. `interface TeacherCardProps`).
+- **Constants**: `UPPER_SNAKE_CASE` for true constants (e.g. `MAX_RETRY_COUNT`).
+- **Enums**: `PascalCase` names, `UPPER_SNAKE_CASE` members. Prefer union string literals (`"ADMIN" | "TEACHER"`) over TS `enum` unless interop with Prisma requires it.
+
+## 4. Components
+
+- **Keep components under 200 lines** and focused on one concern. If a component manages fetching **and** complex UI **and** forms, split it.
+- **Server Components by default.** Only add `"use client"` at the leaf that truly needs browser APIs / hooks / interactivity. Never put `"use client"` at a page or layout unless the entire subtree is client-only.
+- **Separate UI from logic.** Presentational components in `components/ui` and `components/features` should not fetch data or import from `@/server`. Containers (pages, route segments) fetch and pass data down as typed props.
+- **Typed props always.** Use `interface FooProps { ... }` and destructure at the parameter: `function Foo({ a, b }: FooProps)`.
+- Prefer **composition over configuration**: many small components that compose, not one big component with 15 props.
+- Use `next/link` for internal navigation, `next/image` for images (always provide `alt`, `width`/`height` or `fill`), `next/font` for webfonts, and `next/dynamic` for heavy client-only components.
+
+## 5. Data fetching & mutations
+
+- **Fetch data in Server Components** or in the `src/server/*` data access layer. Do not fetch from Route Handlers inside a Server Component (extra hop).
+- All DB access goes through functions in `src/server/*`. **Never import `@prisma/client` or `@/lib/db` from a Client Component.**
+- **Validate every public input** (Server Actions, Route Handlers, form data) with Zod. Derive types with `z.infer<typeof schema>`.
+- **Re-check auth and role inside every mutation**, even if a parent layout also checks. Use `requireRole("TEACHER")` / `requireSession()` helpers from `@/lib/auth`.
+- Use `revalidatePath` / `revalidateTag` after mutations. Prefer request-scoped caching (`cache()` from `react`) for per-render deduplication.
+- Handle loading and error states with `loading.tsx` and `error.tsx` per route segment. Add `global-error.tsx` and `global-not-found.tsx` at the app root.
+
+## 6. Styling
+
+- **Tailwind CSS v4** utility-first. No CSS-in-JS, no CSS modules unless justified.
+- Theme tokens are defined in `src/styles/globals.css` via `@theme`:
+  - `--color-background: #f5f5f7`
+  - `--color-foreground: #ffffff` (cards, forms, surfaces)
+  - `--color-text: #020817`
+  - `--color-header: #172033`
+- Use token classes (`bg-background`, `bg-foreground`, `text-text`, `bg-header`). Do not hardcode hex values in components.
+- Mobile-first breakpoints: start unprefixed, add `sm:` / `md:` / `lg:` as needed.
+- Use semantic elements (`header`, `main`, `nav`, `section`). Respect focus states (the global `:focus-visible` ring is already set up).
+
+## 7. State management
+
+- **Local state first**: `useState` / `useReducer` inside the component.
+- Only lift to a **Zustand** store when state is truly global (auth session UI cache, feature flags). Keep stores small, one per concern.
+- Never mirror server state in a client store; derive from server data or rely on Next.js caching.
+
+## 8. Forms
+
+- Use `react-hook-form` + `@hookform/resolvers/zod` on the client for UX, and re-validate the same Zod schema on the server (Server Action or Route Handler).
+- Disable the submit button while pending, show field-level errors, and return typed action results: `{ ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> }`.
+
+## 9. Security
+
+- Never commit secrets. Put all env vars in `.env.local`, validate them at boot via `@/lib/env.ts` with Zod. Only prefix with `NEXT_PUBLIC_` when the value must reach the browser.
+- Auth: HTTP-only cookies, CSRF via Auth.js defaults. Always re-check role in the handler.
+- **Tainting**: treat anything coming from `searchParams`, `cookies`, `headers`, or `formData` as untrusted until validated.
+- Rate-limit expensive mutations (enrollment, signup) at the handler level when deployed.
+- Add a Content Security Policy header in `next.config.ts` before production.
+
+## 10. Performance
+
+- Respect the Next.js production checklist: leverage Server Components, avoid opting whole routes into dynamic rendering, stream with Suspense, prefetch links.
+- Use `next/dynamic` with `ssr: false` for heavy widgets only needed on interaction.
+- Cache `fetch` strategically (`{ next: { revalidate: N } }`). Use `unstable_cache` for non-`fetch` data.
+- Analyze bundles with `@next/bundle-analyzer` before shipping a major release.
+
+## 11. Testing
+
+- Unit tests: **Jest + React Testing Library**, colocated with source.
+- Write tests for `src/lib/capacity.ts`, `src/lib/pricing.ts`, and every Zod schema.
+- Prefer testing behavior over implementation. No snapshot-only tests.
+- Aim for fast tests; integration tests may live in `/tests`.
+
+## 12. Code quality
+
+- TS strict is **non-negotiable**. No `any` without a `// eslint-disable-next-line` and a comment explaining why.
+- Use `import type { ... }` for type-only imports.
+- Prefer early returns; avoid deeply nested conditionals.
+- No dead code. Remove commented-out code before committing.
+- **Comments**: only for non-obvious intent, trade-offs, or constraints. Do not narrate what the code does. No "// increment counter" style comments.
+
+## 13. Accessibility
+
+- All interactive elements must be reachable by keyboard. Use `<button>` for actions, `<a>` for navigation.
+- Provide `alt` text for every image. Use `aria-*` attributes when a native element can't express intent.
+- Respect `prefers-reduced-motion`.
+
+## 14. Git / commits
+
+- Never commit without an explicit user request.
+- Never commit `.env*` files or generated output.
+- Keep each commit focused; conventional prefixes (`feat:`, `fix:`, `chore:`, `refactor:`) encouraged.
