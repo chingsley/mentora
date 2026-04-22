@@ -105,11 +105,10 @@ export function RegisterForm({ defaultRole = "STUDENT", regions }: RegisterFormP
         options={regions.map((r) => ({ value: r.code, label: r.name }))}
       />
       {role === "STUDENT" ? (
-        <Input
-          name="bio"
-          label="What do you want to learn? (optional)"
-          placeholder="e.g. Algebra, Python, SAT prep"
-        />
+        <p className="rounded-md bg-accent/10 px-3 py-2 text-sm text-header">
+          Right after sign-up you&apos;ll set up your profile: photo, a short bio,
+          and the subjects you want to learn (we use this to recommend teachers).
+        </p>
       ) : null}
       {role === "TEACHER" ? (
         <p className="rounded-md bg-accent/10 px-3 py-2 text-sm text-header">

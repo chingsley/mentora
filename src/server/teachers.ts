@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { DayOfWeek } from "@prisma/client";
 import { db } from "@/lib/db";
 import { clampTeacherCap } from "@/lib/capacity";
@@ -12,33 +13,77 @@ export interface TeacherSearchFilters {
   regionCode?: string;
   query?: string;
   maxHourlyRate?: number;
+  dayOfWeek?: DayOfWeek;
+  minRating?: number;
 }
 
 export async function searchTeachers(filters: TeacherSearchFilters) {
-  const { subjectSlug, regionCode, query, maxHourlyRate } = filters;
+  const { subjectSlug, regionCode, query, maxHourlyRate, dayOfWeek, minRating } = filters;
+
+  const queryClauses: Prisma.TeacherProfileWhereInput[] = [];
+  if (query) {
+    const q = query.trim();
+    if (q.length > 0) {
+      queryClauses.push({
+        OR: [
+          { user: { name: { contains: q, mode: "insensitive" } } },
+          { displayId: { contains: q, mode: "insensitive" } },
+          { headline: { contains: q, mode: "insensitive" } },
+          { subjects: { some: { subject: { name: { contains: q, mode: "insensitive" } } } } },
+        ],
+      });
+    }
+  }
+
   return db.teacherProfile.findMany({
     where: {
-      user: {
-        AND: [
-          query
-            ? { OR: [{ name: { contains: query, mode: "insensitive" } }] }
-            : {},
-          regionCode ? { region: { code: regionCode } } : {},
-        ],
-      },
+      AND: queryClauses,
+      user: regionCode ? { region: { code: regionCode } } : undefined,
       subjects: subjectSlug ? { some: { subject: { slug: subjectSlug } } } : undefined,
       rates:
         maxHourlyRate !== undefined
           ? { some: { hourlyRate: { lte: maxHourlyRate } } }
           : undefined,
+      offerings: dayOfWeek ? { some: { dayOfWeek, active: true } } : undefined,
+      avgRating: minRating !== undefined ? { gte: minRating } : undefined,
     },
     include: {
       user: { select: { id: true, name: true, image: true, region: true } },
       subjects: { include: { subject: true } },
       rates: { include: { region: true, subject: true } },
+      offerings: {
+        where: { active: true },
+        select: { dayOfWeek: true },
+      },
     },
     orderBy: [{ avgRating: "desc" }, { createdAt: "desc" }],
     take: 50,
+  });
+}
+
+export async function recommendTeachers(studentUserId: string, limit = 6) {
+  const student = await db.studentProfile.findUnique({
+    where: { userId: studentUserId },
+    select: { interests: { select: { subjectId: true } } },
+  });
+  const subjectIds = student?.interests.map((i) => i.subjectId) ?? [];
+  if (subjectIds.length === 0) return [];
+
+  return db.teacherProfile.findMany({
+    where: {
+      subjects: { some: { subjectId: { in: subjectIds } } },
+    },
+    include: {
+      user: { select: { id: true, name: true, image: true, region: true } },
+      subjects: { include: { subject: true } },
+      rates: { include: { region: true, subject: true } },
+      offerings: {
+        where: { active: true },
+        select: { dayOfWeek: true },
+      },
+    },
+    orderBy: [{ avgRating: "desc" }, { ratingsCount: "desc" }],
+    take: limit,
   });
 }
 
@@ -59,6 +104,29 @@ export async function getTeacherById(teacherProfileId: string) {
       },
     },
   });
+}
+
+export async function getMyStudentEnrollmentsByOffering(
+  studentUserId: string | undefined,
+  offeringIds: string[],
+): Promise<Record<string, string>> {
+  if (!studentUserId || offeringIds.length === 0) return {};
+  const student = await db.studentProfile.findUnique({
+    where: { userId: studentUserId },
+    select: { id: true },
+  });
+  if (!student) return {};
+  const rows = await db.enrollment.findMany({
+    where: {
+      studentProfileId: student.id,
+      offeringId: { in: offeringIds },
+      status: "ACTIVE",
+    },
+    select: { id: true, offeringId: true },
+  });
+  const map: Record<string, string> = {};
+  for (const row of rows) map[row.offeringId] = row.id;
+  return map;
 }
 
 // ---------- My teacher profile (self view) ----------

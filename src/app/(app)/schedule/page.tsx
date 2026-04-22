@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { WeeklyScheduleCalendar } from "@/components/features/teacher/WeeklyScheduleCalendar";
+import { TeacherScheduleClient } from "./TeacherScheduleClient";
 import { getMyTeacherProfile } from "@/server/teachers";
 import { getPolicy } from "@/server/policies";
 
@@ -77,7 +77,7 @@ export default async function TeacherSchedulePage() {
       ) : (
         <Card>
           <CardContent>
-            <WeeklyScheduleCalendar
+            <TeacherScheduleClient
               offerings={offerings}
               subjects={subjects}
               globalCap={policy.globalClassCap}

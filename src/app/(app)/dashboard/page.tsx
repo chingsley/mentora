@@ -12,6 +12,7 @@ import { listStudentEnrollments } from "@/server/enrollments";
 import { getMyTeacherProfile, listTeacherOfferings } from "@/server/teachers";
 import { listLinkedStudents } from "@/server/guardians";
 import { getPolicy } from "@/server/policies";
+import { NotificationPermissionBanner } from "@/components/features/student/NotificationPermissionBanner";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -41,7 +42,9 @@ export default async function DashboardPage() {
 async function StudentDash({ userId }: { userId: string }) {
   const enrollments = await listStudentEnrollments(userId);
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="flex flex-col gap-4">
+      <NotificationPermissionBanner />
+      <div className="grid gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
           <CardTitle>Find a teacher</CardTitle>
@@ -72,6 +75,7 @@ async function StudentDash({ userId }: { userId: string }) {
           </Link>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

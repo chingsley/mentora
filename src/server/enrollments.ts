@@ -97,7 +97,22 @@ export async function listStudentEnrollments(studentUserId: string) {
       offering: {
         include: {
           subject: true,
-          teacherProfile: { include: { user: { select: { name: true } } } },
+          teacherProfile: {
+            include: {
+              user: { select: { name: true, regionId: true, region: true } },
+              rates: { include: { region: true } },
+            },
+          },
+          enrollments: { where: { status: "ACTIVE" }, select: { id: true } },
+          testimonials: {
+            orderBy: { createdAt: "desc" },
+            take: 10,
+            include: {
+              studentProfile: {
+                include: { user: { select: { name: true } } },
+              },
+            },
+          },
         },
       },
     },

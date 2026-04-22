@@ -13,11 +13,12 @@ export async function enrollAction(formData: FormData): Promise<EnrollResult> {
   const offeringIds = formData.getAll("offeringId").map(String);
   const parsed = enrollSchema.safeParse({ offeringIds });
   if (!parsed.success) {
-    return { ok: false, error: "Select at least one period." };
+    return { ok: false, error: "Select at least one class period." };
   }
   try {
     const results = await enrollStudent(session.user.id, parsed.data);
     revalidatePath("/classes");
+    revalidatePath(`/teachers`);
     return { ok: true, results };
   } catch (err) {
     return {

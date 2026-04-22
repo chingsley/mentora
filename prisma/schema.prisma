@@ -125,14 +125,15 @@ model TeacherProfile {
 }
 
 model StudentProfile {
-  id         String              @id @default(cuid())
-  userId     String              @unique
-  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio        String?             @db.Text
-  interests  StudentInterest[]
-  guardians  GuardianLink[]      @relation("studentLinks")
-  enrollments Enrollment[]
-  createdAt  DateTime            @default(now())
+  id           String              @id @default(cuid())
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio          String?             @db.Text
+  interests    StudentInterest[]
+  guardians    GuardianLink[]      @relation("studentLinks")
+  enrollments  Enrollment[]
+  testimonials ClassTestimonial[]
+  createdAt    DateTime            @default(now())
 }
 
 model GuardianProfile {
@@ -231,6 +232,7 @@ model ClassOffering {
   subjectId        String
   title            String
   description      String?        @db.Text
+  rules            String         @default("") @db.Text
   dayOfWeek        DayOfWeek
   startMinutes     Int            // minutes since 00:00 UTC local-to-teacher
   endMinutes       Int
@@ -238,9 +240,10 @@ model ClassOffering {
   active           Boolean        @default(true)
   createdAt        DateTime       @default(now())
 
-  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
-  subject          Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacherProfile   TeacherProfile     @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  subject          Subject            @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   enrollments      Enrollment[]
+  testimonials     ClassTestimonial[]
 
   @@index([teacherProfileId, dayOfWeek])
   @@index([subjectId])
@@ -259,6 +262,21 @@ model Enrollment {
 
   @@unique([studentProfileId, offeringId])
   @@index([offeringId, status])
+}
+
+model ClassTestimonial {
+  id               String         @id @default(cuid())
+  offeringId       String
+  studentProfileId String
+  rating           Int            // 1..5
+  body             String         @db.Text
+  createdAt        DateTime       @default(now())
+
+  offering         ClassOffering  @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([offeringId, studentProfileId])
+  @@index([offeringId])
 }
 
 // ---------- Platform policy (singleton) ----------

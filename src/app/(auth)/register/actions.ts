@@ -16,7 +16,6 @@ export async function registerAction(formData: FormData): Promise<RegisterAction
     confirmPassword: formData.get("confirmPassword"),
     role: formData.get("role"),
     regionCode: formData.get("regionCode") || undefined,
-    bio: formData.get("bio") || undefined,
   };
 
   const parsed = registerSchema.safeParse(raw);
@@ -46,6 +45,9 @@ export async function registerAction(formData: FormData): Promise<RegisterAction
     redirect: false,
   });
 
-  const redirectTo = parsed.data.role === "TEACHER" ? "/profile" : "/dashboard";
+  const redirectTo =
+    parsed.data.role === "TEACHER" || parsed.data.role === "STUDENT"
+      ? "/profile"
+      : "/dashboard";
   return { ok: true, redirectTo };
 }

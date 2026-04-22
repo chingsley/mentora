@@ -122,6 +122,13 @@ async function main() {
       });
     }
 
+    const demoRules = [
+      "Arrive 5 minutes early with your notebook and a pen.",
+      "Keep your microphone muted unless you're asking a question.",
+      "No phones or unrelated tabs open during the session.",
+      "Complete the homework sent after each class before the next meeting.",
+    ].join("\n");
+
     const existingOfferings = await db.classOffering.findMany({
       where: { teacherProfileId },
       select: { id: true },
@@ -137,6 +144,7 @@ async function main() {
             startMinutes: 8 * 60,
             endMinutes: 10 * 60,
             teacherCap: 10,
+            rules: demoRules,
           },
           {
             teacherProfileId,
@@ -146,6 +154,7 @@ async function main() {
             startMinutes: 12 * 60,
             endMinutes: 14 * 60,
             teacherCap: 8,
+            rules: demoRules,
           },
           {
             teacherProfileId,
@@ -155,8 +164,77 @@ async function main() {
             startMinutes: 10 * 60 + 42,
             endMinutes: 12 * 60 + 42,
             teacherCap: 12,
+            rules: demoRules,
           },
         ],
+      });
+    }
+  }
+
+  console.log("Seeding demo student + testimonials...");
+  const demoStudentEmail = "student@mentora.local";
+  const studentUser = await db.user.upsert({
+    where: { email: demoStudentEmail },
+    create: {
+      email: demoStudentEmail,
+      name: "Ada Obi",
+      firstName: "Ada",
+      lastName: "Obi",
+      passwordHash: await bcrypt.hash("ChangeMe123!", 10),
+      role: "STUDENT",
+      regionId: nigeria?.id,
+      studentProfile: { create: {} },
+    },
+    update: {},
+    include: { studentProfile: true },
+  });
+
+  if (studentUser.studentProfile && math) {
+    const studentProfileId = studentUser.studentProfile.id;
+    await db.studentInterest.upsert({
+      where: {
+        studentProfileId_subjectId: { studentProfileId, subjectId: math.id },
+      },
+      create: { studentProfileId, subjectId: math.id },
+      update: {},
+    });
+  }
+
+  const offerings = await db.classOffering.findMany({
+    where: { teacherProfile: { user: { email: demoTeacherEmail } } },
+    orderBy: { startMinutes: "asc" },
+    take: 2,
+  });
+
+  if (offerings.length > 0 && studentUser.studentProfile) {
+    const testimonialSeeds: Array<{ body: string; rating: number }> = [
+      {
+        rating: 5,
+        body: "Jane breaks down every concept until it clicks. My algebra grade jumped two letters in a term.",
+      },
+      {
+        rating: 4,
+        body: "Great pacing and very patient with questions. The weekly homework is genuinely useful.",
+      },
+    ];
+    for (let i = 0; i < offerings.length && i < testimonialSeeds.length; i += 1) {
+      const offering = offerings[i];
+      const seed = testimonialSeeds[i];
+      if (!offering || !seed) continue;
+      await db.classTestimonial.upsert({
+        where: {
+          offeringId_studentProfileId: {
+            offeringId: offering.id,
+            studentProfileId: studentUser.studentProfile.id,
+          },
+        },
+        create: {
+          offeringId: offering.id,
+          studentProfileId: studentUser.studentProfile.id,
+          rating: seed.rating,
+          body: seed.body,
+        },
+        update: { rating: seed.rating, body: seed.body },
       });
     }
   }

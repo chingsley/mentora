@@ -17,6 +17,12 @@ import {
   updateOfferingSchema,
   updateTeacherBio,
 } from "@/server/teachers";
+import {
+  setStudentInterests,
+  setStudentInterestsSchema,
+  updateStudentBio,
+  updateStudentBioSchema,
+} from "@/server/students";
 import { timeToMinutes } from "@/lib/time";
 import { db } from "@/lib/db";
 import { BelowMinimumRateError } from "@/lib/pricing";
@@ -202,6 +208,49 @@ export async function deleteOfferingAction(formData: FormData): Promise<ActionRe
   if (!offeringId) return { ok: false, error: "Missing offering id" };
   await deleteOfferingServer(session.user.id, offeringId);
   revalidateTeacher();
+  return { ok: true };
+}
+
+function revalidateStudent() {
+  revalidatePath("/profile");
+  revalidatePath("/teachers");
+  revalidatePath("/dashboard");
+}
+
+export async function saveStudentInterestsAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await requireRole("STUDENT");
+  const raw = formData.getAll("subjectId").map(String);
+  const parsed = setStudentInterestsSchema.safeParse({ subjectIds: raw });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Please pick valid subjects.",
+      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+    };
+  }
+  await setStudentInterests(session.user.id, parsed.data);
+  revalidateStudent();
+  return { ok: true };
+}
+
+export async function saveStudentBioAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await requireRole("STUDENT");
+  const parsed = updateStudentBioSchema.safeParse({
+    bio: formData.get("bio") ?? "",
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Please fix the highlighted fields.",
+      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+    };
+  }
+  await updateStudentBio(session.user.id, parsed.data);
+  revalidateStudent();
   return { ok: true };
 }
 

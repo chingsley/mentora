@@ -8,12 +8,17 @@ import { Button } from "@/components/ui/Button";
 export interface ProfilePhotoFormProps {
   currentImage: string | null;
   fallbackInitials: string;
+  hint?: string;
 }
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
-export function ProfilePhotoForm({ currentImage, fallbackInitials }: ProfilePhotoFormProps) {
+export function ProfilePhotoForm({
+  currentImage,
+  fallbackInitials,
+  hint = "PNG, JPEG, or WebP · up to 2 MB. A profile photo is required to complete your teacher profile.",
+}: ProfilePhotoFormProps) {
   const router = useRouter();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [preview, setPreview] = React.useState<string | null>(null);
@@ -108,10 +113,7 @@ export function ProfilePhotoForm({ currentImage, fallbackInitials }: ProfilePhot
             </Button>
           ) : null}
         </div>
-        <p className="text-xs text-muted-foreground">
-          PNG, JPEG, or WebP &middot; up to 2 MB. A profile photo is required to
-          complete your teacher profile.
-        </p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </div>
     </div>
