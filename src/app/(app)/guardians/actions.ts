@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/auth";
 import { inviteGuardian, inviteGuardianSchema } from "@/server/guardians";
 
 export type InviteGuardianResult =
-  | { ok: true; link: string }
+  | { ok: true; formattedCode: string; guardianEmail: string }
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 export async function inviteGuardianAction(formData: FormData): Promise<InviteGuardianResult> {
@@ -24,9 +24,13 @@ export async function inviteGuardianAction(formData: FormData): Promise<InviteGu
     };
   }
   try {
-    const { link } = await inviteGuardian(session.user.id, parsed.data);
+    const { formattedCode } = await inviteGuardian(session.user.id, parsed.data);
     revalidatePath("/guardians");
-    return { ok: true, link };
+    return {
+      ok: true,
+      formattedCode,
+      guardianEmail: parsed.data.guardianEmail,
+    };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Could not invite." };
   }

@@ -91,15 +91,21 @@ export async function dropEnrollment(studentUserId: string, input: z.infer<typeo
 export async function listStudentEnrollments(studentUserId: string) {
   const student = await db.studentProfile.findUnique({ where: { userId: studentUserId } });
   if (!student) return [];
+  return listEnrollmentsByStudentProfileId(student.id);
+}
+
+export async function listEnrollmentsByStudentProfileId(studentProfileId: string) {
   return db.enrollment.findMany({
-    where: { studentProfileId: student.id, status: "ACTIVE" },
+    where: { studentProfileId, status: "ACTIVE" },
     include: {
       offering: {
         include: {
           subject: true,
           teacherProfile: {
             include: {
-              user: { select: { name: true, regionId: true, region: true } },
+              user: {
+                select: { id: true, name: true, image: true, regionId: true, region: true },
+              },
               rates: { include: { region: true } },
             },
           },

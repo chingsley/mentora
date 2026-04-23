@@ -6,6 +6,7 @@ import type { Role } from "@prisma/client";
 import type { AppNavItem } from "./appNavConfig";
 import { AppNavIcon } from "./AppNavIcon";
 import { SignOutButton } from "./SignOutButton";
+import { WardSelector, type WardOption } from "./WardSelector";
 
 function isNavActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
@@ -56,6 +57,7 @@ export interface AppSidebarChromeProps {
   onToggleCollapse: () => void;
   onNavigate?: () => void;
   user: { name?: string | null; email?: string | null; role: Role };
+  wards?: WardOption[];
 }
 
 export function AppSidebarChrome({
@@ -65,6 +67,7 @@ export function AppSidebarChrome({
   onToggleCollapse,
   onNavigate,
   user,
+  wards,
 }: AppSidebarChromeProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -88,6 +91,10 @@ export function AppSidebarChrome({
       <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-4" aria-label="Main">
         <NavLinks items={items} collapsed={navCollapsed} onNavigate={onNavigate} />
       </nav>
+
+      {user.role === "GUARDIAN" && wards && wards.length > 0 ? (
+        <WardSelector wards={wards} collapsed={navCollapsed} />
+      ) : null}
 
       <div className="shrink-0 border-t border-white/10 p-2">
         {showCollapseToggle ? (

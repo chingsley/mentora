@@ -7,16 +7,18 @@ import * as React from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { APP_NAV } from "./appNavConfig";
 import { AppSidebarChrome } from "./AppSidebarChrome";
+import type { WardOption } from "./WardSelector";
 
 const STORAGE_KEY = "mentora-sidebar-collapsed";
 const LG = "(min-width: 1024px)";
 
 export interface AppShellClientProps {
   user: { name?: string | null; email?: string | null; role: Role };
+  wards?: WardOption[];
   children: React.ReactNode;
 }
 
-export function AppShellClient({ user, children }: AppShellClientProps) {
+export function AppShellClient({ user, wards, children }: AppShellClientProps) {
   const items = APP_NAV.filter((i) => i.roles.includes(user.role));
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
@@ -88,6 +90,7 @@ export function AppShellClient({ user, children }: AppShellClientProps) {
           onToggleCollapse={() => setCollapsed((c) => !c)}
           onNavigate={closeMobile}
           user={user}
+          wards={wards}
         />
       </aside>
 

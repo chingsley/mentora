@@ -18,8 +18,7 @@ interface RegisterPageProps {
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
   const { role } = await searchParams;
   const regions = await listRegions();
-  const defaultRole =
-    role === "TEACHER" || role === "GUARDIAN" || role === "STUDENT" ? role : "STUDENT";
+  const defaultRole = role === "TEACHER" || role === "STUDENT" ? role : "STUDENT";
 
   return (
     <Card>

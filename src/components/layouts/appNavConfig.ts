@@ -8,7 +8,9 @@ export type AppNavIconKey =
   | "guardians"
   | "policies"
   | "users"
-  | "profile";
+  | "profile"
+  | "reports"
+  | "ward";
 
 export interface AppNavItem {
   href: string;
@@ -29,6 +31,8 @@ export const APP_NAV: readonly AppNavItem[] = [
   { href: "/profile", label: "My profile", roles: ["TEACHER", "STUDENT"], icon: "profile" },
   { href: "/schedule", label: "My schedule", roles: ["TEACHER"], icon: "schedule" },
   { href: "/guardians", label: "Guardians", roles: ["STUDENT"], icon: "guardians" },
+  { href: "/guardian", label: "My wards", roles: ["GUARDIAN"], icon: "ward" },
   { href: "/admin/policies", label: "Policies", roles: ["ADMIN"], icon: "policies" },
   { href: "/admin/users", label: "Users", roles: ["ADMIN"], icon: "users" },
+  { href: "/admin/reports", label: "Reports", roles: ["ADMIN"], icon: "reports" },
 ] as const;

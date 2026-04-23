@@ -5,8 +5,10 @@ export interface JoinParams {
 }
 
 /**
- * Placeholder for the virtual-classroom join action.
- * TODO: replace with the real video provider (Daily.co / Agora / Twilio).
+ * Client-side simulation hook for the join button. Real video provider
+ * wiring (Daily.co / Agora / Twilio) should replace the body of this
+ * function; the server-side counterpart in `src/server/classSession.ts`
+ * handles attendance.
  */
 export async function joinClassSession(params: JoinParams): Promise<void> {
   // eslint-disable-next-line no-console

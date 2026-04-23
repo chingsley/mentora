@@ -131,10 +131,11 @@ async function TeacherDash({ userId }: { userId: string }) {
 async function GuardianDash({ userId }: { userId: string }) {
   const links = await listLinkedStudents(userId);
   return (
-    <div className="grid gap-4">
+    <div className="flex flex-col gap-4">
+      <NotificationPermissionBanner />
       <Card>
         <CardHeader>
-          <CardTitle>Linked students</CardTitle>
+          <CardTitle>My wards</CardTitle>
           <CardDescription>
             You have read-only access to {links.length} student record{links.length === 1 ? "" : "s"}.
           </CardDescription>
@@ -142,18 +143,29 @@ async function GuardianDash({ userId }: { userId: string }) {
         <CardContent>
           {links.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              A student needs to invite you via email. Ask them to add your email address from
-              their guardians page.
+              A student needs to invite you. Ask them to send you an invite code from their
+              guardians page.
             </p>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="grid gap-3 sm:grid-cols-2">
               {links.map((l) => (
-                <li key={l.id} className="rounded-md border border-border p-3">
-                  <p className="font-medium text-header">{l.studentProfile.user.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {l.studentProfile.enrollments.length} active class
-                    {l.studentProfile.enrollments.length === 1 ? "" : "es"}
-                  </p>
+                <li
+                  key={l.id}
+                  className="flex flex-col gap-2 rounded-md border border-border bg-foreground p-3"
+                >
+                  <div>
+                    <p className="font-medium text-header">{l.studentProfile.user.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {l.studentProfile.enrollments.length} active class
+                      {l.studentProfile.enrollments.length === 1 ? "" : "es"}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/guardian/w/${l.studentProfile.id}`}
+                    className="inline-flex h-9 items-center justify-center rounded-md bg-header px-3 text-xs font-medium text-white hover:bg-header/90"
+                  >
+                    View profile
+                  </Link>
                 </li>
               ))}
             </ul>

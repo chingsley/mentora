@@ -1,9 +1,11 @@
 import {
   CalendarDays,
+  Flag,
   GraduationCap,
   LayoutDashboard,
   Search,
   Settings,
+  Shield,
   UserCircle2,
   Users,
   UsersRound,
@@ -20,6 +22,8 @@ const ICONS: Record<AppNavIconKey, LucideIcon> = {
   policies: Settings,
   users: Users,
   profile: UserCircle2,
+  reports: Flag,
+  ward: Shield,
 };
 
 export interface AppNavIconProps {

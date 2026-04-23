@@ -5,6 +5,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/Button";
 import { isClassLive, joinClassSession } from "@/lib/classSession";
 import { DAY_LABEL, minutesToTime } from "@/lib/time";
+import { joinAsStudentAction } from "@/app/(app)/actions/joinClass";
 
 export interface JoinClassButtonProps {
   offeringId: string;
@@ -25,6 +26,8 @@ export function JoinClassButton({
 }: JoinClassButtonProps) {
   const [, setTick] = React.useState(0);
   const [joining, setJoining] = React.useState(false);
+  const [joined, setJoined] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const id = setInterval(() => setTick((t) => (t + 1) % 1_000_000), 30_000);
@@ -35,8 +38,15 @@ export function JoinClassButton({
 
   async function handleJoin() {
     setJoining(true);
+    setError(null);
     try {
       await joinClassSession({ offeringId, offeringTitle, studentName });
+      const res = await joinAsStudentAction({ offeringId });
+      if (!res.ok) {
+        setError(res.error ?? "Could not join");
+      } else {
+        setJoined(true);
+      }
     } finally {
       setJoining(false);
     }
@@ -44,9 +54,12 @@ export function JoinClassButton({
 
   if (live) {
     return (
-      <Button type="button" onClick={handleJoin} isLoading={joining}>
-        Join class session
-      </Button>
+      <div className="flex flex-col gap-1">
+        <Button type="button" onClick={handleJoin} isLoading={joining} disabled={joined}>
+          {joined ? "Joined" : "Join class session"}
+        </Button>
+        {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      </div>
     );
   }
 

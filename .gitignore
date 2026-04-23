@@ -25,3 +25,4 @@ pnpm-debug.log*
 
 # uploads (local dev only — not production-safe)
 /public/uploads
+/uploads

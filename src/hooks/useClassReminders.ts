@@ -60,7 +60,8 @@ export function useClassReminders({ enabled, studentName }: UseClassRemindersOpt
         const occurrence = nextOccurrence(c.dayOfWeek, c.startMinutes, now);
         const stage = stageForOccurrence(occurrence, now);
         if (!stage) continue;
-        const key = `${STORAGE_PREFIX}${c.offeringId}:${occurrence.toISOString()}:${stage}`;
+        const scope = c.studentProfileId ?? "self";
+        const key = `${STORAGE_PREFIX}${scope}:${c.offeringId}:${occurrence.toISOString()}:${stage}`;
         try {
           if (window.sessionStorage.getItem(key)) continue;
           window.sessionStorage.setItem(key, "1");
@@ -84,7 +85,10 @@ function fireReminder(
   showToast: ReturnType<typeof useToast>["show"],
 ) {
   const isStart = stage === "T-0";
-  const title = isStart ? `${c.subject} starts now` : `${c.subject} starts in 10 minutes`;
+  const forWard = c.studentName ? `${c.studentName} · ` : "";
+  const title = isStart
+    ? `${forWard}${c.subject} starts now`
+    : `${forWard}${c.subject} starts in 10 minutes`;
   const description = `${c.title} · ${formatTime(c.startMinutes)}`;
 
   showToast({

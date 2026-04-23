@@ -9,17 +9,35 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import { TeacherScheduleClient } from "./TeacherScheduleClient";
+import { TodayAttendance, type TodayAttendanceSession } from "./TodayAttendance";
 import { getMyTeacherProfile } from "@/server/teachers";
+import { getTeacherTodaySessions } from "@/server/attendance";
 import { getPolicy } from "@/server/policies";
 
 export const metadata: Metadata = { title: "My schedule" };
 
 export default async function TeacherSchedulePage() {
   const session = await requireRole("TEACHER");
-  const [data, policy] = await Promise.all([
+  const [data, policy, todayRaw] = await Promise.all([
     getMyTeacherProfile(session.user.id),
     getPolicy(),
+    getTeacherTodaySessions(session.user.id),
   ]);
+  const todaySessions: TodayAttendanceSession[] = todayRaw.map((s) => ({
+    offeringId: s.offeringId,
+    offeringTitle: s.offeringTitle,
+    subjectName: s.subjectName,
+    startMinutes: s.startMinutes,
+    endMinutes: s.endMinutes,
+    sessionDate: s.sessionDate.toISOString(),
+    inJoinWindow: s.inJoinWindow,
+    students: s.students.map((stu) => ({
+      enrollmentId: stu.enrollmentId,
+      studentName: stu.studentName,
+      status: stu.status,
+      source: stu.source,
+    })),
+  }));
   if (!data) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -75,15 +93,62 @@ export default async function TeacherSchedulePage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent>
-            <TeacherScheduleClient
-              offerings={offerings}
-              subjects={subjects}
-              globalCap={policy.globalClassCap}
-            />
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardContent>
+              <TeacherScheduleClient
+                offerings={offerings}
+                subjects={subjects}
+                globalCap={policy.globalClassCap}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Today&apos;s attendance</CardTitle>
+              <CardDescription>
+                Override or mark attendance for today&apos;s sessions. Auto-join entries
+                from students are preserved unless you change them.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TodayAttendance sessions={todaySessions} />
+            </CardContent>
+          </Card>
+
+          {offerings.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Assignments</CardTitle>
+                <CardDescription>
+                  Post assignments and grade submissions for each class.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="flex flex-col divide-y divide-border">
+                  {offerings.map((o) => (
+                    <li
+                      key={o.id}
+                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-header">{o.title}</p>
+                        <p className="text-xs text-muted-foreground">{o.subjectName}</p>
+                      </div>
+                      <Link
+                        href={`/classes/${o.id}/assignments`}
+                        className="inline-flex h-9 items-center rounded-md border border-border bg-foreground px-3 text-xs font-medium text-header hover:bg-header/[0.06]"
+                      >
+                        Manage assignments
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          ) : null}
+        </>
       )}
     </div>
   );

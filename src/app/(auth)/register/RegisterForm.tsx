@@ -14,7 +14,7 @@ export interface RegionOption {
 }
 
 export interface RegisterFormProps {
-  defaultRole?: "STUDENT" | "TEACHER" | "GUARDIAN";
+  defaultRole?: "STUDENT" | "TEACHER";
   regions: RegionOption[];
 }
 
@@ -49,9 +49,15 @@ export function RegisterForm({ defaultRole = "STUDENT", regions }: RegisterFormP
         options={[
           { value: "STUDENT", label: "A student" },
           { value: "TEACHER", label: "A teacher" },
-          { value: "GUARDIAN", label: "A guardian" },
         ]}
       />
+      <p className="text-xs text-muted-foreground">
+        Signing up as a guardian? You need an invite code from your student.{" "}
+        <Link href="/register/guardian" className="font-medium text-header hover:underline">
+          Use guardian signup
+        </Link>
+        .
+      </p>
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
           name="firstName"

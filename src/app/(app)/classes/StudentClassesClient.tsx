@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Button } from "@/components/ui/Button";
@@ -140,6 +141,12 @@ export function StudentClassesClient({ rows, viewerName }: StudentClassesClientP
                 >
                   View details
                 </Button>
+                <Link
+                  href={`/classes/${r.entry.offeringId}/assignments`}
+                  className="inline-flex h-10 items-center rounded-md border border-border bg-foreground px-3 text-sm font-medium text-header hover:bg-header/[0.06]"
+                >
+                  Assignments
+                </Link>
                 <Button
                   type="button"
                   variant="destructive"
