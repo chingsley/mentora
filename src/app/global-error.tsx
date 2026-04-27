@@ -1,5 +1,69 @@
 "use client";
 
+import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
+
+const Body = styled.body`
+  min-height: 100dvh;
+  background-color: ${COLORS.BACKGROUND};
+  color: ${COLORS.TEXT};
+  margin: 0;
+`;
+
+const Main = styled.main`
+  margin: 0 auto;
+  display: flex;
+  min-height: 100dvh;
+  max-width: 32rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: ${SPACING.FOUR};
+  padding: 2.5rem ${SPACING.FOUR};
+
+  ${LAYOUT.MEDIA.SM} {
+    padding-left: ${SPACING.SIX};
+    padding-right: ${SPACING.SIX};
+  }
+`;
+
+const Title = styled.h1`
+  font-size: ${FONTS.SIZE["2XL"]};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const Body2 = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Ref = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const RetryBtn = styled.button`
+  display: inline-flex;
+  height: 2.5rem;
+  width: fit-content;
+  align-items: center;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: ${COLORS.HEADER};
+  padding: 0 ${SPACING.FOUR};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.WHITE};
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(23, 32, 51, 0.9);
+  }
+`;
+
 export default function GlobalError({
   error,
   reset,
@@ -9,23 +73,14 @@ export default function GlobalError({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-dvh bg-background text-text">
-        <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-4 px-4 py-10 sm:px-6">
-          <h1 className="text-2xl font-semibold text-header">Something went wrong</h1>
-          <p className="text-sm text-muted-foreground">
-            We hit an unexpected error. Please try again.
-          </p>
-          {error.digest ? (
-            <p className="text-xs text-muted-foreground">Ref: {error.digest}</p>
-          ) : null}
-          <button
-            onClick={reset}
-            className="inline-flex h-10 w-fit items-center rounded-md bg-header px-4 text-sm font-medium text-white hover:bg-header/90"
-          >
-            Try again
-          </button>
-        </main>
-      </body>
+      <Body>
+        <Main>
+          <Title>Something went wrong</Title>
+          <Body2>We hit an unexpected error. Please try again.</Body2>
+          {error.digest ? <Ref>Ref: {error.digest}</Ref> : null}
+          <RetryBtn onClick={reset}>Try again</RetryBtn>
+        </Main>
+      </Body>
     </html>
   );
 }

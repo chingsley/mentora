@@ -2,6 +2,10 @@
 
 import type { DayOfWeek } from "@prisma/client";
 import * as React from "react";
+import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, minutesToTime } from "@/lib/time";
 import { ClassTile } from "./ClassTile";
 import type { CalendarEntry } from "./types";
@@ -15,6 +19,77 @@ export interface DayGridProps {
   onEntryClick?: (entry: CalendarEntry) => void;
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
 }
+
+const DayHeader = styled.div`
+  margin-bottom: ${SPACING.TWO};
+  padding: 0 ${SPACING.ONE};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const DateLabel = styled.span`
+  margin-left: ${SPACING.TWO};
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.NORMAL};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+`;
+
+const TimeColumn = styled.div`
+  position: relative;
+  height: ${SLOTS * SLOT_PX}px;
+  border-top: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+`;
+
+const TimeLabel = styled.div`
+  position: absolute;
+  right: ${SPACING.TWO};
+  transform: translateY(-50%);
+  font-size: 0.625rem;
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Column = styled.div<{ $clickable: boolean }>`
+  position: relative;
+  height: ${SLOTS * SLOT_PX}px;
+  border-top: 1px solid ${COLORS.BORDER};
+  border-left: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  cursor: ${(p) => (p.$clickable ? "cell" : "default")};
+`;
+
+const HourLine = styled.div`
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  border-top: 1px dashed rgba(226, 232, 240, 0.6);
+`;
+
+const Empty = styled.div`
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Tile = styled.div`
+  position: absolute;
+  left: ${SPACING.ONE};
+  right: ${SPACING.ONE};
+
+  & > button {
+    height: 100%;
+    width: 100%;
+  }
+`;
 
 export function DayGrid({ entries, date, onEntryClick, onEmptySlotClick }: DayGridProps) {
   const day = WEEKDAY_TO_ENUM[date.getDay()]!;
@@ -42,60 +117,39 @@ export function DayGrid({ entries, date, onEntryClick, onEmptySlotClick }: DayGr
 
   return (
     <div>
-      <div className="mb-2 px-1 text-sm font-semibold text-header">
+      <DayHeader>
         {DAY_LABEL[day]}
-        <span className="ml-2 text-xs font-normal text-muted-foreground">
+        <DateLabel>
           {date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-        </span>
-      </div>
-      <div className="grid" style={{ gridTemplateColumns: "5rem 1fr" }}>
-        <div
-          className="relative border-t border-border bg-foreground"
-          style={{ height: SLOTS * SLOT_PX }}
-        >
+        </DateLabel>
+      </DayHeader>
+      <Grid>
+        <TimeColumn>
           {Array.from({ length: HOURS + 1 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute right-2 -translate-y-1/2 text-[10px] text-muted-foreground"
-              style={{ top: i * (SLOT_PX * (60 / SLOT_MINUTES)) }}
-            >
+            <TimeLabel key={i} style={{ top: i * (SLOT_PX * (60 / SLOT_MINUTES)) }}>
               {minutesToTime((START_HOUR + i) * 60)}
-            </div>
+            </TimeLabel>
           ))}
-        </div>
-        <div
-          className={`relative border-t border-l border-border bg-foreground ${onEmptySlotClick ? "cursor-cell" : ""}`}
-          style={{ height: SLOTS * SLOT_PX }}
+        </TimeColumn>
+        <Column
+          $clickable={!!onEmptySlotClick}
           onClick={onColumnClick}
           role={onEmptySlotClick ? "button" : undefined}
         >
           {Array.from({ length: HOURS }).map((_, i) => (
-            <div
-              key={i}
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 border-t border-dashed border-border/60"
-              style={{ top: (i + 1) * (SLOT_PX * (60 / SLOT_MINUTES)) }}
-            />
+            <HourLine key={i} aria-hidden style={{ top: (i + 1) * (SLOT_PX * (60 / SLOT_MINUTES)) }} />
           ))}
-          {list.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              No classes scheduled for this day.
-            </div>
-          ) : null}
+          {list.length === 0 ? <Empty>No classes scheduled for this day.</Empty> : null}
           {list.map((entry) => {
             const { top, height } = tileGeometry(entry.startMinutes, entry.endMinutes);
             return (
-              <div
-                key={entry.id}
-                className="absolute left-1 right-1"
-                style={{ top, height }}
-              >
-                <ClassTile entry={entry} onClick={onEntryClick} className="h-full w-full" />
-              </div>
+              <Tile key={entry.id} style={{ top, height }}>
+                <ClassTile entry={entry} onClick={onEntryClick} />
+              </Tile>
             );
           })}
-        </div>
-      </div>
+        </Column>
+      </Grid>
     </div>
   );
 }

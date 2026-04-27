@@ -1,7 +1,44 @@
 "use client";
 
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
+
+const Banner = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.THREE};
+  border-radius: ${LAYOUT.RADIUS.XL};
+  border: 1px solid #fcd34d;
+  background-color: #fffbeb;
+  padding: ${SPACING.FOUR};
+  color: #78350f;
+
+  ${LAYOUT.MEDIA.SM} {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+`;
+
+const BannerTitle = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+`;
+
+const BannerBody = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  opacity: 0.9;
+`;
+
+const BannerActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${SPACING.TWO};
+`;
 
 const DISMISS_KEY = "notif:dismissed";
 
@@ -49,23 +86,23 @@ export function NotificationPermissionBanner() {
   if (state !== "prompt") return null;
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+    <Banner>
       <div>
-        <p className="text-sm font-semibold">Get class reminders</p>
-        <p className="text-xs opacity-90">
+        <BannerTitle>Get class reminders</BannerTitle>
+        <BannerBody>
           We&apos;ll nudge you 10 minutes before each class starts and again
           when it goes live. Notifications only fire while Mentora is open in
           your browser.
-        </p>
+        </BannerBody>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <BannerActions>
         <Button type="button" size="sm" onClick={handleEnable}>
           Enable notifications
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={handleDismiss}>
           Not now
         </Button>
-      </div>
-    </div>
+      </BannerActions>
+    </Banner>
   );
 }

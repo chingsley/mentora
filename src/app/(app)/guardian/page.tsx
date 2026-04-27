@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth";
@@ -8,9 +7,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
 import { listGuardianWards } from "@/server/guardians";
+import { WardGrid, WardLink } from "./WardLink";
 
 export const metadata: Metadata = { title: "My wards" };
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  return parts.map((p) => p[0] ?? "").join("").toUpperCase() || "?";
+}
 
 export default async function GuardianIndexPage() {
   const session = await requireRole("GUARDIAN");
@@ -22,57 +28,42 @@ export default async function GuardianIndexPage() {
 
   if (wards.length === 0) {
     return (
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-header sm:text-3xl">My wards</h1>
-          <p className="text-sm text-muted-foreground">
-            Ask a student to invite you with a 9-character invite code.
-          </p>
-        </div>
+      <PageWrap>
+        <PageHeader>
+          <PageTitle>My wards</PageTitle>
+          <Muted>Ask a student to invite you with a 9-character invite code.</Muted>
+        </PageHeader>
         <Card>
           <CardHeader>
             <CardTitle>No linked students yet</CardTitle>
             <CardDescription>
-              Once a student sends you an invite code, sign in and enter it to accept. After
-              that, each ward will appear here.
+              Once a student sends you an invite code, sign in and enter it to
+              accept. After that, each ward will appear here.
             </CardDescription>
           </CardHeader>
         </Card>
-      </div>
+      </PageWrap>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-header sm:text-3xl">My wards</h1>
-        <p className="text-sm text-muted-foreground">
+    <PageWrap>
+      <PageHeader>
+        <PageTitle>My wards</PageTitle>
+        <Muted>
           Pick a student to view their timetable, attendance, teachers, and grades.
-        </p>
-      </div>
-      <ul className="grid gap-3 sm:grid-cols-2">
+        </Muted>
+      </PageHeader>
+      <WardGrid>
         {wards.map((w) => (
-          <li key={w.studentProfileId}>
-            <Link
-              href={`/guardian/w/${w.studentProfileId}`}
-              className="flex items-center gap-3 rounded-xl bg-foreground p-4 ring-1 ring-black/5 transition-colors hover:bg-header/[0.03]"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-header/10 text-sm font-semibold uppercase text-header">
-                {initials(w.name)}
-              </span>
-              <div className="min-w-0">
-                <p className="truncate font-medium text-header">{w.name}</p>
-                <p className="text-xs text-muted-foreground">View profile & schedule</p>
-              </div>
-            </Link>
-          </li>
+          <WardLink
+            key={w.studentProfileId}
+            studentProfileId={w.studentProfileId}
+            name={w.name}
+            initials={initials(w.name)}
+          />
         ))}
-      </ul>
-    </div>
+      </WardGrid>
+    </PageWrap>
   );
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).slice(0, 2);
-  return parts.map((p) => p[0] ?? "").join("").toUpperCase() || "?";
 }

@@ -2,7 +2,12 @@
 
 import type { DayOfWeek } from "@prisma/client";
 import * as React from "react";
+import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, DAY_ORDER, minutesToTime } from "@/lib/time";
 import { OfferingDialog, type OfferingDialogSubject, type OfferingDialogValue } from "./OfferingDialog";
 
@@ -33,18 +38,24 @@ export interface WeeklyScheduleCalendarProps {
   readOnly?: boolean;
 }
 
-const SUBJECT_PALETTE = [
-  "bg-indigo-100 text-indigo-900 border-indigo-300",
-  "bg-emerald-100 text-emerald-900 border-emerald-300",
-  "bg-amber-100 text-amber-900 border-amber-300",
-  "bg-sky-100 text-sky-900 border-sky-300",
-  "bg-rose-100 text-rose-900 border-rose-300",
-  "bg-violet-100 text-violet-900 border-violet-300",
-  "bg-teal-100 text-teal-900 border-teal-300",
-  "bg-orange-100 text-orange-900 border-orange-300",
-] as const;
+interface SubjectTheme {
+  bg: string;
+  border: string;
+  text: string;
+}
 
-function subjectColor(subjectId: string): string {
+const SUBJECT_PALETTE: SubjectTheme[] = [
+  { bg: "#e0e7ff", border: "#a5b4fc", text: "#312e81" },
+  { bg: "#d1fae5", border: "#6ee7b7", text: "#064e3b" },
+  { bg: "#fef3c7", border: "#fcd34d", text: "#78350f" },
+  { bg: "#e0f2fe", border: "#7dd3fc", text: "#0c4a6e" },
+  { bg: "#ffe4e6", border: "#fda4af", text: "#881337" },
+  { bg: "#ede9fe", border: "#c4b5fd", text: "#4c1d95" },
+  { bg: "#ccfbf1", border: "#5eead4", text: "#134e4a" },
+  { bg: "#ffedd5", border: "#fdba74", text: "#7c2d12" },
+];
+
+function subjectColor(subjectId: string): SubjectTheme {
   let hash = 0;
   for (let i = 0; i < subjectId.length; i += 1) {
     hash = (hash * 31 + subjectId.charCodeAt(i)) | 0;
@@ -56,6 +67,201 @@ function subjectColor(subjectId: string): string {
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
 }
+
+const DesktopOnly = styled.div`
+  display: none;
+
+  ${LAYOUT.MEDIA.MD} {
+    display: block;
+  }
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 5rem repeat(7, minmax(0, 1fr));
+`;
+
+const TopLeftCell = styled.div`
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: ${COLORS.FOREGROUND};
+`;
+
+const HeaderCell = styled.div`
+  border-bottom: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.TWO};
+  text-align: center;
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const TimeColumn = styled.div`
+  position: relative;
+  height: ${SLOTS * SLOT_PX}px;
+  border-top: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+`;
+
+const TimeLabel = styled.div`
+  position: absolute;
+  right: ${SPACING.TWO};
+  transform: translateY(-50%);
+  font-size: 0.625rem;
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Column = styled.div<{ $clickable: boolean }>`
+  position: relative;
+  height: ${SLOTS * SLOT_PX}px;
+  border-top: 1px solid ${COLORS.BORDER};
+  border-left: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  cursor: ${(p) => (p.$clickable ? "cell" : "default")};
+`;
+
+const HourLine = styled.div`
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  border-top: 1px dashed rgba(226, 232, 240, 0.6);
+`;
+
+const Tile = styled.button<{ $bg: string; $border: string; $text: string; $clickable: boolean }>`
+  position: absolute;
+  left: ${SPACING.ONE};
+  right: ${SPACING.ONE};
+  overflow: hidden;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${(p) => p.$border};
+  background-color: ${(p) => p.$bg};
+  color: ${(p) => p.$text};
+  padding: ${SPACING.ONE} ${SPACING.TWO};
+  text-align: left;
+  font-size: 0.6875rem;
+  line-height: 1.25;
+  box-shadow: ${LAYOUT.SHADOW.SM};
+  transition: box-shadow 0.15s ease;
+  cursor: ${(p) => (p.$clickable ? "pointer" : "default")};
+
+  ${(p) =>
+    p.$clickable &&
+    css`
+      &:hover {
+        box-shadow: ${LAYOUT.SHADOW.MD};
+      }
+    `}
+`;
+
+const TileTitle = styled.p`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+`;
+
+const TileSub = styled.p`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.8;
+`;
+
+const MobileOnly = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+
+  ${LAYOUT.MEDIA.MD} {
+    display: none;
+  }
+`;
+
+const Section = styled.section`
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  overflow: hidden;
+`;
+
+const SectionHeader = styled.header`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid ${COLORS.BORDER};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+`;
+
+const SectionTitle = styled.h3`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const Empty = styled.p`
+  padding: ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const ItemList = styled.ul`
+  display: flex;
+  flex-direction: column;
+
+  & > li + li {
+    border-top: 1px solid ${COLORS.BORDER};
+  }
+`;
+
+const ItemButton = styled.button<{ $clickable: boolean }>`
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${SPACING.THREE};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  text-align: left;
+  background-color: transparent;
+  cursor: ${(p) => (p.$clickable ? "pointer" : "default")};
+  transition: background-color 0.15s ease;
+
+  ${(p) =>
+    p.$clickable &&
+    css`
+      &:hover {
+        background-color: rgba(23, 32, 51, 0.03);
+      }
+    `}
+`;
+
+const ItemBody = styled.div`
+  min-width: 0;
+`;
+
+const ItemTitle = styled.p`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const ItemMeta = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Badge = styled.span`
+  flex-shrink: 0;
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid ${COLORS.BORDER};
+  padding: 0.125rem ${SPACING.TWO};
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.HEADER};
+`;
 
 export function WeeklyScheduleCalendar({
   offerings,
@@ -96,36 +302,20 @@ export function WeeklyScheduleCalendar({
 
   return (
     <div>
-      {/* Desktop weekly grid */}
-      <div className="hidden md:block">
-        <div
-          className="grid border-border"
-          style={{ gridTemplateColumns: "5rem repeat(7, minmax(0, 1fr))" }}
-        >
-          <div aria-hidden className="sticky left-0 z-10 bg-foreground" />
+      <DesktopOnly>
+        <Grid>
+          <TopLeftCell aria-hidden />
           {DAY_ORDER.map((d) => (
-            <div
-              key={d}
-              className="border-b border-border bg-foreground px-2 py-2 text-center text-xs font-semibold text-header"
-            >
-              {DAY_LABEL[d].slice(0, 3)}
-            </div>
+            <HeaderCell key={d}>{DAY_LABEL[d].slice(0, 3)}</HeaderCell>
           ))}
 
-          <div
-            className="relative border-t border-border bg-foreground"
-            style={{ height: SLOTS * SLOT_PX }}
-          >
+          <TimeColumn>
             {Array.from({ length: HOURS + 1 }).map((_, i) => (
-              <div
-                key={i}
-                className="absolute right-2 -translate-y-1/2 text-[10px] text-muted-foreground"
-                style={{ top: i * (SLOT_PX * (60 / SLOT_MINUTES)) }}
-              >
+              <TimeLabel key={i} style={{ top: i * (SLOT_PX * (60 / SLOT_MINUTES)) }}>
                 {minutesToTime((START_HOUR + i) * 60)}
-              </div>
+              </TimeLabel>
             ))}
-          </div>
+          </TimeColumn>
 
           {DAY_ORDER.map((d) => (
             <DayColumn
@@ -137,17 +327,16 @@ export function WeeklyScheduleCalendar({
               readOnly={readOnly}
             />
           ))}
-        </div>
-      </div>
+        </Grid>
+      </DesktopOnly>
 
-      {/* Mobile stacked list */}
-      <div className="flex flex-col gap-4 md:hidden">
+      <MobileOnly>
         {DAY_ORDER.map((d) => {
           const list = byDay.get(d) ?? [];
           return (
-            <section key={d} className="rounded-lg border border-border bg-foreground">
-              <header className="flex items-center justify-between border-b border-border px-3 py-2">
-                <h3 className="text-sm font-semibold text-header">{DAY_LABEL[d]}</h3>
+            <Section key={d}>
+              <SectionHeader>
+                <SectionTitle>{DAY_LABEL[d]}</SectionTitle>
                 {!readOnly ? (
                   <Button
                     type="button"
@@ -158,40 +347,38 @@ export function WeeklyScheduleCalendar({
                     + Add
                   </Button>
                 ) : null}
-              </header>
+              </SectionHeader>
               {list.length === 0 ? (
-                <p className="px-3 py-3 text-sm text-muted-foreground">No periods.</p>
+                <Empty>No periods.</Empty>
               ) : (
-                <ul className="divide-y divide-border">
+                <ItemList>
                   {list.map((o) => (
                     <li key={o.id}>
-                      <button
+                      <ItemButton
                         type="button"
                         onClick={() => openEdit(o)}
                         disabled={readOnly}
-                        className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left transition-colors ${
-                          readOnly ? "cursor-default" : "hover:bg-header/[0.03]"
-                        }`}
+                        $clickable={!readOnly}
                       >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-header">{o.title}</p>
-                          <p className="text-xs text-muted-foreground">
+                        <ItemBody>
+                          <ItemTitle>{o.title}</ItemTitle>
+                          <ItemMeta>
                             {o.subjectName} &middot; {minutesToTime(o.startMinutes)}–
                             {minutesToTime(o.endMinutes)}
-                          </p>
-                        </div>
-                        <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-header">
+                          </ItemMeta>
+                        </ItemBody>
+                        <Badge>
                           {o.enrolled}/{o.teacherCap}
-                        </span>
-                      </button>
+                        </Badge>
+                      </ItemButton>
                     </li>
                   ))}
-                </ul>
+                </ItemList>
               )}
-            </section>
+            </Section>
           );
         })}
-      </div>
+      </MobileOnly>
 
       <OfferingDialog
         open={dialog !== null}
@@ -227,28 +414,23 @@ function DayColumn({
   }
 
   return (
-    <div
-      className={`relative border-t border-l border-border bg-foreground ${readOnly ? "" : "cursor-cell"}`}
-      style={{ height: SLOTS * SLOT_PX }}
+    <Column
+      $clickable={!readOnly}
       onClick={onColumnClick}
       role={readOnly ? undefined : "button"}
       aria-label={readOnly ? undefined : `Add period on ${DAY_LABEL[day]}`}
     >
       {Array.from({ length: HOURS }).map((_, i) => (
-        <div
-          key={i}
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 border-t border-dashed border-border/60"
-          style={{ top: (i + 1) * (SLOT_PX * (60 / SLOT_MINUTES)) }}
-        />
+        <HourLine key={i} aria-hidden style={{ top: (i + 1) * (SLOT_PX * (60 / SLOT_MINUTES)) }} />
       ))}
       {offerings.map((o) => {
         const startSlot = Math.max(0, (o.startMinutes - START_HOUR * 60) / SLOT_MINUTES);
         const endSlot = Math.min(SLOTS, (o.endMinutes - START_HOUR * 60) / SLOT_MINUTES);
         const top = startSlot * SLOT_PX;
         const height = Math.max(SLOT_PX, (endSlot - startSlot) * SLOT_PX - 2);
+        const theme = subjectColor(o.subjectId);
         return (
-          <button
+          <Tile
             key={o.id}
             type="button"
             onClick={(e) => {
@@ -256,21 +438,22 @@ function DayColumn({
               onEdit(o);
             }}
             disabled={readOnly}
-            className={`absolute left-1 right-1 overflow-hidden rounded-md border px-2 py-1 text-left text-[11px] leading-tight shadow-sm transition-shadow ${
-              readOnly ? "cursor-default" : "hover:shadow-md"
-            } ${subjectColor(o.subjectId)}`}
+            $bg={theme.bg}
+            $border={theme.border}
+            $text={theme.text}
+            $clickable={!readOnly}
             style={{ top, height }}
           >
-            <p className="truncate font-semibold">{o.title}</p>
-            <p className="truncate opacity-80">
+            <TileTitle>{o.title}</TileTitle>
+            <TileSub>
               {minutesToTime(o.startMinutes)}–{minutesToTime(o.endMinutes)}
-            </p>
-            <p className="truncate opacity-80">
+            </TileSub>
+            <TileSub>
               {o.enrolled}/{o.teacherCap}
-            </p>
-          </button>
+            </TileSub>
+          </Tile>
         );
       })}
-    </div>
+    </Column>
   );
 }

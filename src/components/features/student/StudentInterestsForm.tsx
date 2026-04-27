@@ -2,7 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import {
   saveStudentInterestsAction,
   type ActionResult,
@@ -17,6 +22,94 @@ export interface StudentInterestsFormProps {
   allSubjects: InterestSubject[];
   initialSubjectIds: string[];
 }
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
+const Hint = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Grid = styled.ul`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${SPACING.TWO};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+`;
+
+const Pill = styled.button<{ $active: boolean }>`
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${SPACING.TWO};
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${COLORS.BORDER};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  text-align: left;
+  font-size: ${FONTS.SIZE.SM};
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  ${(p) =>
+    p.$active
+      ? css`
+          border-color: ${COLORS.HEADER};
+          background-color: ${COLORS.HEADER};
+          color: ${COLORS.WHITE};
+        `
+      : css`
+          background-color: ${COLORS.FOREGROUND};
+          color: ${COLORS.HEADER};
+
+          &:hover {
+            background-color: rgba(23, 32, 51, 0.03);
+          }
+        `}
+`;
+
+const PillName = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+`;
+
+const Check = styled.span<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid ${(p) => (p.$active ? COLORS.WHITE : COLORS.BORDER)};
+  background-color: ${(p) => (p.$active ? COLORS.WHITE : "transparent")};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const Footer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${SPACING.THREE};
+`;
+
+const Counter = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
 
 export function StudentInterestsForm({
   allSubjects,
@@ -50,58 +143,47 @@ export function StudentInterestsForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
+    <Form onSubmit={onSubmit}>
+      <Hint>
         Pick the subjects you want to learn. We use these to recommend the right
         teachers for you.
-      </p>
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      </Hint>
+      <Grid>
         {allSubjects.map((s) => {
           const isOn = selected.has(s.id);
           return (
             <li key={s.id}>
-              <button
+              <Pill
                 type="button"
                 onClick={() => toggle(s.id)}
                 aria-pressed={isOn}
-                className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                  isOn
-                    ? "border-header bg-header text-white"
-                    : "border-border bg-foreground text-header hover:bg-header/[0.03]"
-                }`}
+                $active={isOn}
               >
-                <span className="truncate font-medium">{s.name}</span>
-                <span
-                  aria-hidden
-                  className={`h-4 w-4 shrink-0 rounded-full border ${
-                    isOn ? "border-white bg-white" : "border-border"
-                  }`}
-                >
+                <PillName>{s.name}</PillName>
+                <Check $active={isOn} aria-hidden>
                   {isOn ? (
-                    <svg viewBox="0 0 16 16" className="h-full w-full text-header" aria-hidden>
+                    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden>
                       <path
-                        fill="currentColor"
+                        fill={COLORS.HEADER}
                         d="M6.173 11.47a.75.75 0 0 1-1.06 0L2.72 9.078a.75.75 0 0 1 1.06-1.06l1.863 1.863 5.74-5.741a.75.75 0 1 1 1.06 1.06l-6.27 6.27Z"
                       />
                     </svg>
                   ) : null}
-                </span>
-              </button>
+                </Check>
+              </Pill>
             </li>
           );
         })}
-      </ul>
-      {result && !result.ok ? (
-        <p className="text-sm text-destructive">{result.error}</p>
-      ) : null}
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
+      </Grid>
+      {result && !result.ok ? <ErrorText>{result.error}</ErrorText> : null}
+      <Footer>
+        <Counter>
           {selected.size} interest{selected.size === 1 ? "" : "s"} selected
-        </p>
+        </Counter>
         <Button type="submit" isLoading={isPending}>
           Save interests
         </Button>
-      </div>
-    </form>
+      </Footer>
+    </Form>
   );
 }

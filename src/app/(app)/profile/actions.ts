@@ -28,8 +28,8 @@ import { db } from "@/lib/db";
 import { BelowMinimumRateError } from "@/lib/pricing";
 
 export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+  | { ok: true; }
+  | { ok: false; error: string; fieldErrors?: Record<string, string>; };
 
 function flatten(fieldErrors: Record<string, string[] | undefined>): Record<string, string> {
   return Object.fromEntries(

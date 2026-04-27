@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
 import { computeCapacity } from "@/lib/capacity";
 import { listStudentEnrollments } from "@/server/enrollments";
 import { getPolicy } from "@/server/policies";
@@ -79,14 +80,14 @@ export default async function MyClassesPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold text-header sm:text-3xl">My classes</h1>
-        <p className="text-sm text-muted-foreground">
+    <PageWrap>
+      <PageHeader>
+        <PageTitle>My classes</PageTitle>
+        <Muted>
           Your weekly timetable — tap a class for details, to drop, or to join
           when it&apos;s live.
-        </p>
-      </div>
+        </Muted>
+      </PageHeader>
 
       <NotificationPermissionBanner />
 
@@ -96,15 +97,15 @@ export default async function MyClassesPage() {
             <CardTitle>No active classes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
+            <Muted>
               Head over to the <strong>Find teachers</strong> page to discover
               classes that fit your schedule.
-            </p>
+            </Muted>
           </CardContent>
         </Card>
       ) : (
         <StudentClassesClient rows={rows} viewerName={session.user.name ?? null} />
       )}
-    </div>
+    </PageWrap>
   );
 }

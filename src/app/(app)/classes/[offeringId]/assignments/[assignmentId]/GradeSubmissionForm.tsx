@@ -2,12 +2,69 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import {
   gradeSubmissionAction,
   type ActionResult,
 } from "../actions";
+
+const Form = styled.form`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: ${SPACING.THREE};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-template-columns: 160px 1fr auto;
+  }
+`;
+
+const Field = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+`;
+
+const FieldLabel = styled.span`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const Textarea = styled.textarea`
+  width: 100%;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.TWO};
+  font-family: inherit;
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.TEXT};
+  outline: none;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(23, 32, 51, 0.3);
+  }
+`;
+
+const SubmitWrap = styled.div`
+  display: flex;
+  align-items: flex-end;
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.DESTRUCTIVE};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-column: span 3;
+  }
+`;
 
 export interface GradeSubmissionFormProps {
   submissionId: string;
@@ -44,7 +101,7 @@ export function GradeSubmissionForm({
   const fieldErrors = result && !result.ok ? result.fieldErrors : undefined;
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-[160px_1fr_auto]">
+    <Form onSubmit={onSubmit}>
       <Input
         name="grade"
         type="number"
@@ -56,24 +113,23 @@ export function GradeSubmissionForm({
         label="Grade"
         error={fieldErrors?.grade}
       />
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-header">Feedback</span>
-        <textarea
+      <Field>
+        <FieldLabel>Feedback</FieldLabel>
+        <Textarea
           name="feedback"
           rows={2}
           maxLength={5000}
           defaultValue={initialFeedback}
-          className="w-full rounded-md border border-border bg-foreground p-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-header/30"
         />
-      </label>
-      <div className="flex items-end">
+      </Field>
+      <SubmitWrap>
         <Button type="submit" isLoading={isPending}>
           Save
         </Button>
-      </div>
+      </SubmitWrap>
       {result && !result.ok && !result.fieldErrors ? (
-        <p className="sm:col-span-3 text-xs text-destructive">{result.error}</p>
+        <ErrorText>{result.error}</ErrorText>
       ) : null}
-    </form>
+    </Form>
   );
 }

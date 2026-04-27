@@ -2,6 +2,11 @@
 
 import type { DayOfWeek } from "@prisma/client";
 import * as React from "react";
+import styled, { css } from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, DAY_ORDER } from "@/lib/time";
 import { ClassTile } from "./ClassTile";
 import type { CalendarEntry } from "./types";
@@ -15,6 +20,92 @@ export interface MonthGridProps {
   onEntryClick?: (entry: CalendarEntry) => void;
   onDayClick?: (date: Date) => void;
 }
+
+const Wrap = styled.div`
+  overflow: hidden;
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+`;
+
+const HeaderRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-bottom: 1px solid ${COLORS.BORDER};
+`;
+
+const HeaderCell = styled.div`
+  padding: ${SPACING.TWO};
+  text-align: center;
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const Body = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+`;
+
+const DayCell = styled.button<{ $inMonth: boolean; $clickable: boolean }>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+  min-height: 5.5rem;
+  border-bottom: 1px solid ${COLORS.BORDER};
+  border-left: 1px solid ${COLORS.BORDER};
+  padding: ${SPACING.ONE} 0.375rem;
+  text-align: left;
+  background-color: ${(p) => (p.$inMonth ? COLORS.FOREGROUND : "rgba(245, 245, 247, 0.5)")};
+  transition: background-color 0.15s ease;
+  cursor: ${(p) => (p.$clickable ? "pointer" : "default")};
+
+  ${(p) =>
+    p.$clickable &&
+    css`
+      &:hover {
+        background-color: rgba(23, 32, 51, 0.03);
+      }
+    `}
+
+  &:disabled {
+    cursor: default;
+  }
+`;
+
+const DateNumber = styled.span<{ $inMonth: boolean; $isToday: boolean }>`
+  font-size: 0.6875rem;
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${(p) => (p.$inMonth ? COLORS.HEADER : COLORS.MUTED_FOREGROUND)};
+
+  ${(p) =>
+    p.$isToday &&
+    css`
+      display: inline-flex;
+      height: 1.25rem;
+      width: 1.25rem;
+      align-items: center;
+      justify-content: center;
+      border-radius: ${LAYOUT.RADIUS.FULL};
+      background-color: ${COLORS.HEADER};
+      color: ${COLORS.WHITE};
+    `}
+`;
+
+const Tiles = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+`;
+
+const More = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.625rem;
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
 
 export function MonthGrid({ entries, anchorDate, onEntryClick, onDayClick }: MonthGridProps) {
   const entriesByDay = React.useMemo(() => {
@@ -37,18 +128,13 @@ export function MonthGrid({ entries, anchorDate, onEntryClick, onDayClick }: Mon
   today.setHours(0, 0, 0, 0);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-foreground">
-      <div className="grid grid-cols-7 border-b border-border">
+    <Wrap>
+      <HeaderRow>
         {DAY_ORDER.map((d) => (
-          <div
-            key={d}
-            className="px-2 py-2 text-center text-xs font-semibold text-header"
-          >
-            {DAY_LABEL[d].slice(0, 3)}
-          </div>
+          <HeaderCell key={d}>{DAY_LABEL[d].slice(0, 3)}</HeaderCell>
         ))}
-      </div>
-      <div className="grid grid-cols-7">
+      </HeaderRow>
+      <Body>
         {cells.map((date) => {
           const dow = WEEKDAY_TO_ENUM[date.getDay()]!;
           const inMonth = date.getMonth() === anchorDate.getMonth();
@@ -58,23 +144,18 @@ export function MonthGrid({ entries, anchorDate, onEntryClick, onDayClick }: Mon
           const more = dayEntries.length - visible.length;
 
           return (
-            <button
+            <DayCell
               key={date.toISOString()}
               type="button"
               onClick={onDayClick ? () => onDayClick(date) : undefined}
               disabled={!onDayClick}
-              className={`relative flex min-h-[5.5rem] flex-col gap-1 border-b border-l border-border px-1.5 py-1 text-left transition-colors ${
-                inMonth ? "bg-foreground" : "bg-background/50"
-              } ${onDayClick ? "hover:bg-header/[0.03]" : ""}`}
+              $inMonth={inMonth}
+              $clickable={!!onDayClick}
             >
-              <span
-                className={`text-[11px] font-semibold ${
-                  inMonth ? "text-header" : "text-muted-foreground"
-                } ${isToday ? "inline-flex h-5 w-5 items-center justify-center rounded-full bg-header text-white" : ""}`}
-              >
+              <DateNumber $inMonth={inMonth} $isToday={isToday}>
                 {date.getDate()}
-              </span>
-              <div className="flex flex-col gap-0.5">
+              </DateNumber>
+              <Tiles>
                 {visible.map((entry) => (
                   <ClassTile
                     key={`${entry.id}-${date.toISOString()}`}
@@ -83,16 +164,12 @@ export function MonthGrid({ entries, anchorDate, onEntryClick, onDayClick }: Mon
                     variant="pill"
                   />
                 ))}
-                {more > 0 ? (
-                  <span className="truncate text-[10px] text-muted-foreground">
-                    +{more} more
-                  </span>
-                ) : null}
-              </div>
-            </button>
+                {more > 0 ? <More>+{more} more</More> : null}
+              </Tiles>
+            </DayCell>
           );
         })}
-      </div>
-    </div>
+      </Body>
+    </Wrap>
   );
 }

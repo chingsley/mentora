@@ -1,6 +1,11 @@
 "use client";
 
 import * as React from "react";
+import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 
 export type ToastTone = "default" | "success" | "warning" | "error";
 
@@ -27,6 +32,102 @@ interface ToastContextValue {
 }
 
 const ToastContext = React.createContext<ToastContextValue | null>(null);
+
+const TONE_PALETTE: Record<
+  ToastTone,
+  { bg: string; border: string; text: string }
+> = {
+  default: { bg: COLORS.FOREGROUND, border: COLORS.BORDER, text: COLORS.TEXT },
+  success: { bg: "#ecfdf5", border: "#6ee7b7", text: "#064e3b" },
+  warning: { bg: "#fffbeb", border: "#fcd34d", text: "#78350f" },
+  error: { bg: "#fef2f2", border: "#fca5a5", text: "#7f1d1d" },
+};
+
+const Region = styled.div`
+  position: fixed;
+  inset-inline: 0;
+  bottom: ${SPACING.FOUR};
+  z-index: ${LAYOUT.Z.TOAST};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${SPACING.TWO};
+  padding: 0 ${SPACING.FOUR};
+  pointer-events: none;
+
+  ${LAYOUT.MEDIA.SM} {
+    inset-inline: auto ${SPACING.SIX};
+    bottom: ${SPACING.SIX};
+    align-items: flex-end;
+  }
+`;
+
+const Card = styled.div<{ $tone: ToastTone }>`
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: ${SPACING.THREE};
+  width: 100%;
+  max-width: 24rem;
+  padding: ${SPACING.THREE} ${SPACING.FOUR};
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${(p) => TONE_PALETTE[p.$tone].border};
+  background-color: ${(p) => TONE_PALETTE[p.$tone].bg};
+  color: ${(p) => TONE_PALETTE[p.$tone].text};
+  box-shadow: ${LAYOUT.SHADOW.LG};
+`;
+
+const Body = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const Title = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+`;
+
+const Description = styled.p`
+  margin-top: 0.125rem;
+  font-size: ${FONTS.SIZE.SM};
+  opacity: 0.9;
+`;
+
+const Actions = styled.div`
+  margin-top: ${SPACING.TWO};
+  display: flex;
+  gap: ${SPACING.TWO};
+`;
+
+const ActionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  height: 1.75rem;
+  padding: 0 ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.WHITE};
+  background-color: ${COLORS.HEADER};
+  border-radius: ${LAYOUT.RADIUS.MD};
+
+  &:hover { background-color: rgba(23, 32, 51, 0.92); }
+`;
+
+const DismissButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  height: 1.75rem;
+  padding: 0 ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid currentColor;
+  background-color: transparent;
+  color: inherit;
+  opacity: 0.6;
+
+  &:hover { opacity: 1; }
+`;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<ToastItem[]>([]);
@@ -56,62 +157,40 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={ctx}>
       {children}
-      <div
-        aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4 sm:bottom-6 sm:right-6 sm:left-auto sm:items-end"
-      >
+      <Region aria-live="polite">
         {toasts.map((t) => (
           <ToastCard key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
         ))}
-      </div>
+      </Region>
     </ToastContext.Provider>
   );
 }
 
 function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }) {
   const tone = toast.tone ?? "default";
-  const toneClass =
-    tone === "success"
-      ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-      : tone === "warning"
-        ? "border-amber-300 bg-amber-50 text-amber-900"
-        : tone === "error"
-          ? "border-rose-300 bg-rose-50 text-rose-900"
-          : "border-border bg-foreground text-text";
-
   return (
-    <div
-      role="status"
-      className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border px-4 py-3 shadow-lg ${toneClass}`}
-    >
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold">{toast.title}</p>
-        {toast.description ? (
-          <p className="mt-0.5 text-sm opacity-90">{toast.description}</p>
-        ) : null}
-        <div className="mt-2 flex gap-2">
+    <Card role="status" $tone={tone}>
+      <Body>
+        <Title>{toast.title}</Title>
+        {toast.description ? <Description>{toast.description}</Description> : null}
+        <Actions>
           {toast.action ? (
-            <button
+            <ActionButton
               type="button"
               onClick={() => {
                 toast.action?.onClick();
                 onDismiss();
               }}
-              className="inline-flex h-7 items-center rounded-md bg-header px-2.5 text-xs font-medium text-white hover:bg-header/90"
             >
               {toast.action.label}
-            </button>
+            </ActionButton>
           ) : null}
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="inline-flex h-7 items-center rounded-md border border-current/30 px-2.5 text-xs font-medium hover:bg-current/5"
-          >
+          <DismissButton type="button" onClick={onDismiss}>
             Dismiss
-          </button>
-        </div>
-      </div>
-    </div>
+          </DismissButton>
+        </Actions>
+      </Body>
+    </Card>
   );
 }
 

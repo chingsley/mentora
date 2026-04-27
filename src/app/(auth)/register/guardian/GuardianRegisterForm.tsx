@@ -3,14 +3,61 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { guardianRegisterAction, type RegisterActionResult } from "../actions";
 
 export interface GuardianRegisterFormProps {
   defaultEmail?: string;
   defaultCode?: string;
 }
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
+const NameGrid = styled.div`
+  display: grid;
+  gap: ${SPACING.FOUR};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const Footer = styled.p`
+  text-align: center;
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const FooterLink = styled(Link)`
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const CodeInput = styled(Input)`
+  font-family: ${FONTS.FAMILY.MONO};
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+`;
 
 export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: GuardianRegisterFormProps) {
   const router = useRouter();
@@ -33,8 +80,8 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
   const fieldErrors = result && !result.ok ? result.fieldErrors : undefined;
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <Form onSubmit={onSubmit}>
+      <NameGrid>
         <Input
           name="firstName"
           label="First name"
@@ -51,7 +98,7 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
           minLength={2}
           error={fieldErrors?.lastName}
         />
-      </div>
+      </NameGrid>
       <Input
         name="email"
         type="email"
@@ -62,13 +109,12 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
         hint="Use the same email the student invited."
         error={fieldErrors?.email}
       />
-      <Input
+      <CodeInput
         name="inviteCode"
         label="Invite code"
         placeholder="ABC-DEF-GHJ"
         required
         defaultValue={defaultCode}
-        className="font-mono tracking-widest uppercase"
         hint="9 characters. Dashes are optional."
         error={fieldErrors?.inviteCode}
       />
@@ -92,17 +138,14 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
         error={fieldErrors?.confirmPassword}
       />
       {result && !result.ok && !result.fieldErrors ? (
-        <p className="text-sm text-destructive">{result.error}</p>
+        <ErrorText>{result.error}</ErrorText>
       ) : null}
       <Button type="submit" isLoading={isPending}>
         Create guardian account
       </Button>
-      <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-header hover:underline">
-          Log in
-        </Link>
-      </p>
-    </form>
+      <Footer>
+        Already have an account? <FooterLink href="/login">Log in</FooterLink>
+      </Footer>
+    </Form>
   );
 }

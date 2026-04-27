@@ -3,9 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { registerAction, type RegisterActionResult } from "./actions";
 
 export interface RegionOption {
@@ -17,6 +22,60 @@ export interface RegisterFormProps {
   defaultRole?: "STUDENT" | "TEACHER";
   regions: RegionOption[];
 }
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
+const Hint = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Inline = styled.span`
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const InlineLink = styled(Link)`
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const NameGrid = styled.div`
+  display: grid;
+  gap: ${SPACING.FOUR};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+const Callout = styled.p`
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: rgba(79, 70, 229, 0.1);
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.HEADER};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const Footer = styled.p`
+  text-align: center;
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
 
 export function RegisterForm({ defaultRole = "STUDENT", regions }: RegisterFormProps) {
   const router = useRouter();
@@ -40,7 +99,7 @@ export function RegisterForm({ defaultRole = "STUDENT", regions }: RegisterFormP
   const fieldErrors = result && !result.ok ? result.fieldErrors : undefined;
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <Form onSubmit={onSubmit}>
       <Select
         name="role"
         label="I am signing up as"
@@ -51,14 +110,12 @@ export function RegisterForm({ defaultRole = "STUDENT", regions }: RegisterFormP
           { value: "TEACHER", label: "A teacher" },
         ]}
       />
-      <p className="text-xs text-muted-foreground">
+      <Hint>
         Signing up as a guardian? You need an invite code from your student.{" "}
-        <Link href="/register/guardian" className="font-medium text-header hover:underline">
-          Use guardian signup
-        </Link>
-        .
-      </p>
-      <div className="grid gap-4 sm:grid-cols-2">
+        <InlineLink href="/register/guardian">Use guardian signup</InlineLink>
+        <Inline>.</Inline>
+      </Hint>
+      <NameGrid>
         <Input
           name="firstName"
           label="First name"
@@ -75,7 +132,7 @@ export function RegisterForm({ defaultRole = "STUDENT", regions }: RegisterFormP
           minLength={2}
           error={fieldErrors?.lastName}
         />
-      </div>
+      </NameGrid>
       <Input
         name="email"
         type="email"
@@ -111,29 +168,26 @@ export function RegisterForm({ defaultRole = "STUDENT", regions }: RegisterFormP
         options={regions.map((r) => ({ value: r.code, label: r.name }))}
       />
       {role === "STUDENT" ? (
-        <p className="rounded-md bg-accent/10 px-3 py-2 text-sm text-header">
+        <Callout>
           Right after sign-up you&apos;ll set up your profile: photo, a short bio,
           and the subjects you want to learn (we use this to recommend teachers).
-        </p>
+        </Callout>
       ) : null}
       {role === "TEACHER" ? (
-        <p className="rounded-md bg-accent/10 px-3 py-2 text-sm text-header">
+        <Callout>
           After sign-up you&apos;ll finish your teacher profile: photo, subjects,
           rates, and weekly schedule.
-        </p>
+        </Callout>
       ) : null}
       {result && !result.ok && !result.fieldErrors ? (
-        <p className="text-sm text-destructive">{result.error}</p>
+        <ErrorText>{result.error}</ErrorText>
       ) : null}
       <Button type="submit" isLoading={isPending}>
         Create account
       </Button>
-      <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-header hover:underline">
-          Log in
-        </Link>
-      </p>
-    </form>
+      <Footer>
+        Already have an account? <InlineLink href="/login">Log in</InlineLink>
+      </Footer>
+    </Form>
   );
 }

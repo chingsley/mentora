@@ -2,10 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, DAY_ORDER, minutesToTime } from "@/lib/time";
 import type { DayOfWeek } from "@prisma/client";
 import {
@@ -14,6 +19,63 @@ import {
   updateOfferingAction,
   type ActionResult,
 } from "@/app/(app)/profile/actions";
+
+const EmptyWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.THREE};
+`;
+
+const EmptyText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const EmptyActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const FormGrid = styled.form`
+  display: grid;
+  gap: ${SPACING.FOUR};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+const Span2 = styled.div`
+  ${LAYOUT.MEDIA.SM} {
+    grid-column: span 2 / span 2;
+  }
+`;
+
+const FormError = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-column: span 2 / span 2;
+  }
+`;
+
+const Footer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${SPACING.TWO};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-column: span 2 / span 2;
+  }
+`;
+
+const FooterActions = styled.div`
+  display: flex;
+  gap: ${SPACING.TWO};
+`;
 
 export interface OfferingDialogSubject {
   id: string;
@@ -103,22 +165,22 @@ export function OfferingDialog({
       open={open}
       onClose={handleClose}
       title={isEdit ? "Edit class period" : "Add class period"}
-      className="max-w-lg"
+      size="lg"
     >
       {subjects.length === 0 ? (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">
+        <EmptyWrap>
+          <EmptyText>
             Pick at least one subject in your profile before scheduling classes.
-          </p>
-          <div className="flex justify-end">
+          </EmptyText>
+          <EmptyActions>
             <Button type="button" variant="secondary" onClick={handleClose}>
               Close
             </Button>
-          </div>
-        </div>
+          </EmptyActions>
+        </EmptyWrap>
       ) : (
-        <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
+        <FormGrid onSubmit={onSubmit}>
+          <Span2>
             <Input
               name="title"
               label="Title"
@@ -127,7 +189,7 @@ export function OfferingDialog({
               required
               error={errs?.title}
             />
-          </div>
+          </Span2>
           <Select
             name="subjectId"
             label="Subject"
@@ -172,17 +234,17 @@ export function OfferingDialog({
             hint="Capped at the admin's global limit."
             error={errs?.teacherCap}
           />
-          <div className="sm:col-span-2">
+          <Span2>
             <Input
               name="description"
               label="Description (optional)"
               defaultValue={initial.description ?? ""}
             />
-          </div>
+          </Span2>
           {result && !result.ok && !result.fieldErrors ? (
-            <p className="text-sm text-destructive sm:col-span-2">{result.error}</p>
+            <FormError>{result.error}</FormError>
           ) : null}
-          <div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
+          <Footer>
             <div>
               {isEdit ? (
                 <Button
@@ -196,16 +258,16 @@ export function OfferingDialog({
                 </Button>
               ) : null}
             </div>
-            <div className="flex gap-2">
+            <FooterActions>
               <Button type="button" variant="ghost" onClick={handleClose}>
                 Cancel
               </Button>
               <Button type="submit" isLoading={isPending}>
                 {isEdit ? "Save changes" : "Add period"}
               </Button>
-            </div>
-          </div>
-        </form>
+            </FooterActions>
+          </Footer>
+        </FormGrid>
       )}
     </Dialog>
   );

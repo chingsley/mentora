@@ -2,7 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import {
   saveStudentBioAction,
   type ActionResult,
@@ -11,6 +16,60 @@ import {
 export interface StudentBioFormProps {
   initial: { bio: string };
 }
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
+const Field = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+`;
+
+const FieldLabel = styled.span`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const Textarea = styled.textarea`
+  min-height: 6rem;
+  width: 100%;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.TEXT};
+  outline: none;
+  resize: vertical;
+
+  &::placeholder {
+    color: ${COLORS.MUTED_FOREGROUND};
+  }
+
+  &:hover {
+    border-color: ${COLORS.PRIMARY};
+  }
+
+  &:focus {
+    border-color: ${COLORS.PRIMARY};
+    box-shadow: 0 0 0 2px ${COLORS.RING_BLACK_10};
+  }
+`;
+
+const FieldError = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
 
 export function StudentBioForm({ initial }: StudentBioFormProps) {
   const router = useRouter();
@@ -30,27 +89,26 @@ export function StudentBioForm({ initial }: StudentBioFormProps) {
   const errs = result && !result.ok ? result.fieldErrors : undefined;
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-header">About you</span>
-        <textarea
+    <Form onSubmit={onSubmit}>
+      <Field>
+        <FieldLabel>About you</FieldLabel>
+        <Textarea
           name="bio"
           rows={4}
           defaultValue={initial.bio}
           maxLength={2000}
-          className="min-h-[6rem] w-full rounded-md border border-border bg-foreground px-3 py-2 text-sm text-text outline-none placeholder:text-muted-foreground hover:border-primary"
           placeholder="Share a bit about yourself — your goals, grade, or what you're preparing for."
         />
-        {errs?.bio ? <p className="text-xs text-destructive">{errs.bio}</p> : null}
-      </label>
+        {errs?.bio ? <FieldError>{errs.bio}</FieldError> : null}
+      </Field>
       {result && !result.ok && !result.fieldErrors ? (
-        <p className="text-sm text-destructive">{result.error}</p>
+        <ErrorText>{result.error}</ErrorText>
       ) : null}
       <div>
         <Button type="submit" isLoading={isPending}>
           Save about you
         </Button>
       </div>
-    </form>
+    </Form>
   );
 }

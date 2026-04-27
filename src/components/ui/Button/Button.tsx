@@ -1,5 +1,11 @@
+"use client";
+
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import styled, { keyframes } from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 
 type Variant = "primary" | "secondary" | "ghost" | "destructive";
 type Size = "sm" | "md" | "lg";
@@ -10,51 +16,122 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   isLoading?: boolean;
 }
 
-const variantClasses: Record<Variant, string> = {
-  primary: "bg-header text-white disabled:opacity-60",
-  secondary:
-    "bg-foreground text-header border border-header/15 disabled:opacity-60",
-  ghost: "bg-transparent text-header disabled:opacity-60",
-  destructive: "bg-destructive text-white disabled:opacity-60",
+const SIZE_STYLES: Record<Size, { height: string; padX: string; fontSize: string }> = {
+  sm: { height: "2rem", padX: SPACING.THREE, fontSize: FONTS.SIZE.SM },
+  md: { height: "2.5rem", padX: SPACING.FOUR, fontSize: FONTS.SIZE.SM },
+  lg: { height: "3rem", padX: SPACING.FIVE, fontSize: FONTS.SIZE.BASE },
 };
 
-const sizeClasses: Record<Size, string> = {
-  sm: "h-8 px-3 text-sm",
-  md: "h-10 px-4 text-sm",
-  lg: "h-12 px-5 text-base",
+const variantStyles = (variant: Variant): string => {
+  switch (variant) {
+    case "primary":
+      return `
+        background-color: ${COLORS.HEADER};
+        color: ${COLORS.WHITE};
+        &:hover:not(:disabled) { background-color: rgba(23, 32, 51, 0.92); }
+      `;
+    case "secondary":
+      return `
+        background-color: ${COLORS.FOREGROUND};
+        color: ${COLORS.HEADER};
+        border: 1px solid ${COLORS.HEADER_BORDER_15};
+        &:hover:not(:disabled) { border-color: ${COLORS.HEADER_BORDER_25}; }
+      `;
+    case "ghost":
+      return `
+        background-color: ${COLORS.TRANSPARENT};
+        color: ${COLORS.HEADER};
+        &:hover:not(:disabled) { background-color: ${COLORS.MUTED}; }
+      `;
+    case "destructive":
+      return `
+        background-color: ${COLORS.DESTRUCTIVE};
+        color: ${COLORS.WHITE};
+        &:hover:not(:disabled) { background-color: rgba(220, 38, 38, 0.9); }
+      `;
+  }
 };
+
+const StyledButton = styled.button<{ $variant: Variant; $size: Size }>`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${SPACING.TWO};
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+
+  height: ${(p) => SIZE_STYLES[p.$size].height};
+  padding: 0 ${(p) => SIZE_STYLES[p.$size].padX};
+  font-size: ${(p) => SIZE_STYLES[p.$size].fontSize};
+
+  ${(p) => variantStyles(p.$variant)}
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const Inner = styled.span<{ $hidden: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${SPACING.TWO};
+  opacity: ${(p) => (p.$hidden ? 0 : 1)};
+`;
+
+const SpinnerWrapper = styled.span`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+`;
+
+const spin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
+const Spinner = styled.span`
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: ${spin} 0.6s linear infinite;
+`;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, variant = "primary", size = "md", isLoading, disabled, children, type, ...rest },
+  { variant = "primary", size = "md", isLoading, disabled, children, type, ...rest },
   ref,
 ) {
   return (
-    <button
+    <StyledButton
       ref={ref}
       type={type ?? "button"}
+      $variant={variant}
+      $size={size}
       disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}
-      className={cn(
-        "relative inline-flex cursor-pointer items-center justify-center gap-2 rounded-md font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:cursor-not-allowed",
-        variantClasses[variant],
-        sizeClasses[size],
-        className,
-      )}
       {...rest}
     >
-      <span className={cn("inline-flex items-center justify-center", isLoading && "opacity-0")}>
-        {children}
-      </span>
+      <Inner $hidden={!!isLoading}>{children}</Inner>
       {isLoading ? (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 flex items-center justify-center"
-        >
-          <span className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        </span>
+        <SpinnerWrapper aria-hidden>
+          <Spinner />
+        </SpinnerWrapper>
       ) : null}
-    </button>
+    </StyledButton>
   );
 });

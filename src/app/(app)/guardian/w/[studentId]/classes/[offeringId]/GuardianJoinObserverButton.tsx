@@ -3,7 +3,9 @@
 import type { DayOfWeek } from "@prisma/client";
 import { useParams } from "next/navigation";
 import * as React from "react";
+import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
 import { isClassLive } from "@/lib/classSession";
 import { DAY_LABEL, minutesToTime } from "@/lib/time";
 import { joinAsObserverAction } from "./actions";
@@ -17,6 +19,24 @@ export interface GuardianJoinObserverButtonProps {
   endMinutes: number;
 }
 
+const Wrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+`;
+
+const Message = styled.p<{ $tone: "ok" | "error" }>`
+  font-size: 11px;
+  ${({ $tone }) =>
+    $tone === "ok"
+      ? css`
+          color: ${COLORS.SUCCESS};
+        `
+      : css`
+          color: ${COLORS.DESTRUCTIVE};
+        `}
+`;
+
 export function GuardianJoinObserverButton({
   enrollmentId,
   dayOfWeek,
@@ -27,9 +47,9 @@ export function GuardianJoinObserverButton({
   const studentProfileId = params?.studentId ?? "";
   const [, setTick] = React.useState(0);
   const [joining, setJoining] = React.useState(false);
-  const [message, setMessage] = React.useState<{ tone: "ok" | "error"; text: string } | null>(
-    null,
-  );
+  const [message, setMessage] = React.useState<
+    { tone: "ok" | "error"; text: string } | null
+  >(null);
 
   React.useEffect(() => {
     const id = setInterval(() => setTick((t) => (t + 1) % 1_000_000), 30_000);
@@ -60,7 +80,7 @@ export function GuardianJoinObserverButton({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <Wrap>
       {live ? (
         <Button
           type="button"
@@ -75,15 +95,7 @@ export function GuardianJoinObserverButton({
           Next session {DAY_LABEL[dayOfWeek]} · {minutesToTime(startMinutes)}
         </Button>
       )}
-      {message ? (
-        <p
-          className={`text-[11px] ${
-            message.tone === "ok" ? "text-success" : "text-destructive"
-          }`}
-        >
-          {message.text}
-        </p>
-      ) : null}
-    </div>
+      {message ? <Message $tone={message.tone}>{message.text}</Message> : null}
+    </Wrap>
   );
 }

@@ -1,12 +1,11 @@
 "use client";
 
+import styled from "styled-components";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { minutesToTime } from "@/lib/time";
-import {
-  FILL_CLASSES,
-  FILL_LABEL,
-  fillStatus,
-  type CalendarEntry,
-} from "./types";
+import { FILL_LABEL, FILL_THEME, fillStatus, type CalendarEntry, type FillStatus } from "./types";
 
 export interface ClassTileProps {
   entry: CalendarEntry;
@@ -15,39 +14,79 @@ export interface ClassTileProps {
   className?: string;
 }
 
-export function ClassTile({ entry, onClick, variant = "block", className = "" }: ClassTileProps) {
-  const status = fillStatus(entry);
-  const base =
-    variant === "block"
-      ? "flex flex-col gap-0.5 overflow-hidden rounded-md border px-2 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors"
-      : "inline-flex w-full items-center gap-1.5 truncate rounded-md border px-1.5 py-0.5 text-left text-[10px] leading-tight transition-colors";
-  const interactive = onClick ? "cursor-pointer" : "cursor-default";
+const TileBase = styled.button<{ $status: FillStatus; $variant: "block" | "pill"; $interactive: boolean }>`
+  display: ${(p) => (p.$variant === "block" ? "flex" : "inline-flex")};
+  flex-direction: ${(p) => (p.$variant === "block" ? "column" : "row")};
+  align-items: ${(p) => (p.$variant === "block" ? "stretch" : "center")};
+  gap: ${(p) => (p.$variant === "block" ? "0.125rem" : "0.375rem")};
+  width: 100%;
+  overflow: hidden;
+  text-align: left;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${(p) => FILL_THEME[p.$status].border};
+  padding: ${(p) =>
+    p.$variant === "block"
+      ? `${SPACING.ONE} ${SPACING.TWO}`
+      : `0.125rem ${SPACING.THREE}`};
+  font-size: ${(p) => (p.$variant === "block" ? "0.6875rem" : "0.625rem")};
+  line-height: ${FONTS.LINE_HEIGHT.SNUG};
+  background-color: ${(p) => FILL_THEME[p.$status].bg};
+  color: ${(p) => FILL_THEME[p.$status].text};
+  cursor: ${(p) => (p.$interactive ? "pointer" : "default")};
+  box-shadow: ${(p) => (p.$variant === "block" ? LAYOUT.SHADOW.SM : "none")};
+  transition: background-color 0.15s ease;
 
+  &:hover:not(:disabled) {
+    background-color: ${(p) => FILL_THEME[p.$status].bgHover};
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+`;
+
+const TitleSpan = styled.span`
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const DimSpan = styled.span`
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export function ClassTile({ entry, onClick, variant = "block", className }: ClassTileProps) {
+  const status = fillStatus(entry);
   return (
-    <button
+    <TileBase
       type="button"
       onClick={onClick ? () => onClick(entry) : undefined}
       disabled={!onClick}
+      $status={status}
+      $variant={variant}
+      $interactive={!!onClick}
       aria-label={`${entry.title} — ${FILL_LABEL[status]} (${entry.enrolled}/${entry.effectiveCap})`}
-      className={`${base} ${FILL_CLASSES[status]} ${interactive} ${className}`.trim()}
+      className={className}
     >
       {variant === "block" ? (
         <>
-          <span className="truncate font-semibold">{entry.title}</span>
-          <span className="truncate opacity-80">
+          <TitleSpan>{entry.title}</TitleSpan>
+          <DimSpan>
             {minutesToTime(entry.startMinutes)}–{minutesToTime(entry.endMinutes)}
-          </span>
-          <span className="truncate opacity-80">
-            {status === "full"
-              ? "Full"
-              : `${entry.enrolled}/${entry.effectiveCap} enrolled`}
-          </span>
+          </DimSpan>
+          <DimSpan>
+            {status === "full" ? "Full" : `${entry.enrolled}/${entry.effectiveCap} enrolled`}
+          </DimSpan>
         </>
       ) : (
-        <span className="truncate">
+        <DimSpan>
           {minutesToTime(entry.startMinutes)} · {entry.title}
-        </span>
+        </DimSpan>
       )}
-    </button>
+    </TileBase>
   );
 }

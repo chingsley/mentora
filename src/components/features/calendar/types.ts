@@ -25,10 +25,32 @@ export function fillStatus(entry: Pick<CalendarEntry, "enrolled" | "effectiveCap
   return "open";
 }
 
-export const FILL_CLASSES: Record<FillStatus, string> = {
-  open: "bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200",
-  almost: "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200",
-  full: "bg-rose-100 text-rose-900 border-rose-300 hover:bg-rose-200",
+export interface FillTheme {
+  bg: string;
+  bgHover: string;
+  border: string;
+  text: string;
+}
+
+export const FILL_THEME: Record<FillStatus, FillTheme> = {
+  open: {
+    bg: "#dcfce7",
+    bgHover: "#bbf7d0",
+    border: "#86efac",
+    text: "#064e3b",
+  },
+  almost: {
+    bg: "#fef3c7",
+    bgHover: "#fde68a",
+    border: "#fcd34d",
+    text: "#78350f",
+  },
+  full: {
+    bg: "#fee2e2",
+    bgHover: "#fecaca",
+    border: "#fca5a5",
+    text: "#7f1d1d",
+  },
 };
 
 export const FILL_LABEL: Record<FillStatus, string> = {

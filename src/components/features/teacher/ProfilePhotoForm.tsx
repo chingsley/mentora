@@ -3,7 +3,12 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 
 export interface ProfilePhotoFormProps {
   currentImage: string | null;
@@ -13,6 +18,72 @@ export interface ProfilePhotoFormProps {
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ACCEPT = "image/png,image/jpeg,image/webp";
+
+const Wrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+
+  ${LAYOUT.MEDIA.SM} {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+`;
+
+const Avatar = styled.div`
+  position: relative;
+  height: 7rem;
+  width: 7rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  background-color: ${COLORS.MUTED};
+  outline: 1px solid ${COLORS.BORDER};
+  outline-offset: -1px;
+
+  ${LAYOUT.MEDIA.SM} {
+    height: 8rem;
+    width: 8rem;
+  }
+`;
+
+const Fallback = styled.div`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: ${FONTS.SIZE["2XL"]};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Body = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+`;
+
+const HiddenInput = styled.input`
+  display: none;
+`;
+
+const Actions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${SPACING.TWO};
+`;
+
+const Hint = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
 
 export function ProfilePhotoForm({
   currentImage,
@@ -78,32 +149,29 @@ export function ProfilePhotoForm({
   }
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-      <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border sm:h-32 sm:w-32">
+    <Wrap>
+      <Avatar>
         {display ? (
           <Image
             src={display}
             alt="Your profile photo"
             fill
             sizes="128px"
-            className="object-cover"
+            style={{ objectFit: "cover" }}
             unoptimized
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-muted-foreground">
-            {fallbackInitials}
-          </div>
+          <Fallback>{fallbackInitials}</Fallback>
         )}
-      </div>
-      <div className="flex flex-1 flex-col gap-2">
-        <input
+      </Avatar>
+      <Body>
+        <HiddenInput
           ref={inputRef}
           type="file"
           accept={ACCEPT}
-          className="hidden"
           onChange={handleFile}
         />
-        <div className="flex flex-wrap gap-2">
+        <Actions>
           <Button type="button" variant="secondary" onClick={handlePick}>
             {currentImage ? "Replace photo" : "Choose photo"}
           </Button>
@@ -112,10 +180,10 @@ export function ProfilePhotoForm({
               Upload
             </Button>
           ) : null}
-        </div>
-        <p className="text-xs text-muted-foreground">{hint}</p>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      </div>
-    </div>
+        </Actions>
+        <Hint>{hint}</Hint>
+        {error ? <ErrorText>{error}</ErrorText> : null}
+      </Body>
+    </Wrap>
   );
 }

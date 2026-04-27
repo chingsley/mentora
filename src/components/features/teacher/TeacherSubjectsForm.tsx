@@ -2,8 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { saveSubjectsAction, type ActionResult } from "@/app/(app)/profile/actions";
 
 export interface SubjectOption {
@@ -21,6 +25,103 @@ interface Row {
   selected: boolean;
   defaultCap: number;
 }
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
+const Hint = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Grid = styled.ul`
+  display: grid;
+  gap: ${SPACING.TWO};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+const RowItem = styled.li<{ $selected: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: ${SPACING.THREE};
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid;
+  padding: ${SPACING.THREE};
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  ${(p) =>
+    p.$selected
+      ? css`
+          border-color: rgba(23, 32, 51, 0.3);
+          background-color: rgba(23, 32, 51, 0.03);
+        `
+      : css`
+          border-color: ${COLORS.BORDER};
+        `}
+`;
+
+const RowLabel = styled.label`
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: ${SPACING.THREE};
+`;
+
+const Checkbox = styled.input`
+  height: 1rem;
+  width: 1rem;
+  accent-color: ${COLORS.HEADER};
+`;
+
+const SubjectName = styled.span`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const CapInput = styled.input`
+  height: 2.25rem;
+  width: 6rem;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: 0 ${SPACING.TWO};
+  text-align: right;
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.TEXT};
+
+  &:disabled {
+    opacity: 0.5;
+  }
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const Footer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${SPACING.TWO};
+`;
+
+const Counter = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
 
 export function TeacherSubjectsForm({
   allSubjects,
@@ -75,33 +176,25 @@ export function TeacherSubjectsForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
+    <Form onSubmit={onSubmit}>
+      <Hint>
         Pick the subjects you teach. For each, set a class size limit that
         applies to new class periods (admin cap: {globalCap}).
-      </p>
-      <ul className="grid gap-2 sm:grid-cols-2">
+      </Hint>
+      <Grid>
         {allSubjects.map((s) => {
           const row = rows[s.id]!;
           return (
-            <li
-              key={s.id}
-              className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
-                row.selected ? "border-header/30 bg-header/[0.03]" : "border-border"
-              }`}
-            >
-              <label className="flex min-w-0 flex-1 items-center gap-3">
-                <input
+            <RowItem key={s.id} $selected={row.selected}>
+              <RowLabel>
+                <Checkbox
                   type="checkbox"
                   checked={row.selected}
                   onChange={() => toggle(s.id)}
-                  className="h-4 w-4 accent-header"
                 />
-                <span className="min-w-0 truncate text-sm font-medium text-header">
-                  {s.name}
-                </span>
-              </label>
-              <Input
+                <SubjectName>{s.name}</SubjectName>
+              </RowLabel>
+              <CapInput
                 type="number"
                 aria-label={`Class size limit for ${s.name}`}
                 value={row.defaultCap}
@@ -109,23 +202,20 @@ export function TeacherSubjectsForm({
                 max={globalCap}
                 disabled={!row.selected}
                 onChange={(e) => setCap(s.id, Number(e.target.value))}
-                className="h-9 w-24 text-right"
               />
-            </li>
+            </RowItem>
           );
         })}
-      </ul>
-      {result && !result.ok ? (
-        <p className="text-sm text-destructive">{result.error}</p>
-      ) : null}
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
+      </Grid>
+      {result && !result.ok ? <ErrorText>{result.error}</ErrorText> : null}
+      <Footer>
+        <Counter>
           {selectedCount} subject{selectedCount === 1 ? "" : "s"} selected
-        </p>
+        </Counter>
         <Button type="submit" isLoading={isPending} disabled={selectedCount === 0}>
           Save subjects
         </Button>
-      </div>
-    </form>
+      </Footer>
+    </Form>
   );
 }

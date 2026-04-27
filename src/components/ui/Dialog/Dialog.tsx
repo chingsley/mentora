@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
+
+export type DialogSize = "sm" | "md" | "lg" | "xl";
 
 export interface DialogProps {
   open: boolean;
@@ -9,9 +15,55 @@ export interface DialogProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
+  size?: DialogSize;
 }
 
-export function Dialog({ open, onClose, title, children, className }: DialogProps) {
+const SIZE_MAX_WIDTH: Record<DialogSize, string> = {
+  sm: "24rem",
+  md: "28rem",
+  lg: "42rem",
+  xl: "56rem",
+};
+
+const Backdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: ${LAYOUT.Z.MODAL};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${SPACING.FOUR};
+`;
+
+const BackdropButton = styled.button`
+  position: absolute;
+  inset: 0;
+  background-color: ${COLORS.MODAL_BACKDROP};
+  border: none;
+  cursor: pointer;
+`;
+
+const Panel = styled.div<{ $size: DialogSize }>`
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: ${(p) => SIZE_MAX_WIDTH[p.$size]};
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  background-color: ${COLORS.FOREGROUND};
+  border-radius: ${LAYOUT.RADIUS.XL};
+  padding: ${SPACING.SIX};
+  box-shadow: ${LAYOUT.SHADOW.XL};
+`;
+
+const PanelTitle = styled.h2`
+  margin-bottom: ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.LG};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+export function Dialog({ open, onClose, title, children, className, size = "md" }: DialogProps) {
   React.useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -24,28 +76,12 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
   if (!open) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-    >
-      <button
-        aria-label="Close dialog"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40"
-      />
-      <div
-        className={cn(
-          "relative z-10 w-full max-w-md rounded-xl bg-foreground p-6 shadow-xl",
-          className,
-        )}
-      >
-        {title ? (
-          <h2 className="mb-3 text-lg font-semibold text-header">{title}</h2>
-        ) : null}
+    <Backdrop role="dialog" aria-modal="true" aria-label={title}>
+      <BackdropButton aria-label="Close dialog" onClick={onClose} />
+      <Panel className={className} $size={size}>
+        {title ? <PanelTitle>{title}</PanelTitle> : null}
         {children}
-      </div>
-    </div>
+      </Panel>
+    </Backdrop>
   );
 }

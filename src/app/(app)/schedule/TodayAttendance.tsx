@@ -2,6 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled, { css } from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { minutesToTime } from "@/lib/time";
 import { markAttendanceAction } from "./attendanceActions";
 
@@ -20,7 +25,6 @@ export interface TodayAttendanceSession {
   subjectName: string;
   startMinutes: number;
   endMinutes: number;
-  /** ISO string of the normalized session date. */
   sessionDate: string;
   inJoinWindow: boolean;
   students: TodayAttendanceStudent[];
@@ -31,6 +35,190 @@ export interface TodayAttendanceProps {
 }
 
 const STATUSES: AttendanceStatus[] = ["PRESENT", "LATE", "ABSENT", "EXCUSED"];
+
+const Wrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
+const SessionCard = styled.div`
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.FOUR};
+`;
+
+const SessionHeader = styled.div`
+  margin-bottom: ${SPACING.THREE};
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${SPACING.TWO};
+`;
+
+const SessionTitle = styled.h3`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const SubjectPill = styled.span`
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.BACKGROUND};
+  padding: 0.125rem ${SPACING.TWO};
+  font-size: 11px;
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const TimeText = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const LivePill = styled.span`
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid #6ee7b7;
+  background-color: #ecfdf5;
+  padding: 0.125rem ${SPACING.TWO};
+  font-size: 11px;
+  color: #064e3b;
+`;
+
+const Empty = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const StudentList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  & > li + li {
+    border-top: 1px solid ${COLORS.BORDER};
+  }
+`;
+
+const StudentRow = styled.li`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+  padding: ${SPACING.THREE} 0;
+
+  ${LAYOUT.MEDIA.SM} {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+`;
+
+const StudentTop = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${SPACING.TWO};
+`;
+
+const StudentName = styled.span`
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const StatusBadge = styled.span<{ $status: AttendanceStatus | "unmarked" }>`
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  padding: 0.125rem ${SPACING.TWO};
+  font-size: 11px;
+  border: 1px solid;
+
+  ${(p) => {
+    switch (p.$status) {
+      case "PRESENT":
+        return css`
+          border-color: #6ee7b7;
+          background-color: #ecfdf5;
+          color: #064e3b;
+        `;
+      case "LATE":
+        return css`
+          border-color: #fcd34d;
+          background-color: #fffbeb;
+          color: #78350f;
+        `;
+      case "ABSENT":
+        return css`
+          border-color: #fda4af;
+          background-color: #fff1f2;
+          color: #881337;
+        `;
+      case "EXCUSED":
+        return css`
+          border-color: #7dd3fc;
+          background-color: #f0f9ff;
+          color: #0c4a6e;
+        `;
+      default:
+        return css`
+          border-color: ${COLORS.BORDER};
+          background-color: ${COLORS.BACKGROUND};
+          color: ${COLORS.MUTED_FOREGROUND};
+        `;
+    }
+  }}
+`;
+
+const SourceText = styled.span`
+  font-size: 10px;
+  text-transform: uppercase;
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const ActionRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${SPACING.ONE};
+`;
+
+const ActionBtn = styled.button<{ $active: boolean }>`
+  height: 1.75rem;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  padding: 0 ${SPACING.TWO};
+  font-size: 11px;
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  border: 1px solid;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  ${(p) =>
+    p.$active
+      ? css`
+          border-color: ${COLORS.HEADER};
+          background-color: ${COLORS.HEADER};
+          color: ${COLORS.WHITE};
+        `
+      : css`
+          border-color: ${COLORS.BORDER};
+          background-color: ${COLORS.FOREGROUND};
+          color: ${COLORS.HEADER};
+
+          &:hover {
+            background-color: rgba(23, 32, 51, 0.06);
+          }
+        `}
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const ErrorText = styled.span`
+  font-size: 11px;
+  color: ${COLORS.DESTRUCTIVE};
+`;
 
 export function TodayAttendance({ sessions }: TodayAttendanceProps) {
   const router = useRouter();
@@ -59,102 +247,68 @@ export function TodayAttendance({ sessions }: TodayAttendanceProps) {
   }
 
   if (sessions.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">No classes on your schedule for today.</p>
-    );
+    return <Empty>No classes on your schedule for today.</Empty>;
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <Wrap>
       {sessions.map((s) => (
-        <div key={s.offeringId} className="rounded-lg border border-border bg-foreground p-4">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-header">{s.offeringTitle}</h3>
-            <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
-              {s.subjectName}
-            </span>
-            <span className="text-xs text-muted-foreground">
+        <SessionCard key={s.offeringId}>
+          <SessionHeader>
+            <SessionTitle>{s.offeringTitle}</SessionTitle>
+            <SubjectPill>{s.subjectName}</SubjectPill>
+            <TimeText>
               {minutesToTime(s.startMinutes)}–{minutesToTime(s.endMinutes)}
-            </span>
-            {s.inJoinWindow ? (
-              <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-900">
-                Live now
-              </span>
-            ) : null}
-          </div>
+            </TimeText>
+            {s.inJoinWindow ? <LivePill>Live now</LivePill> : null}
+          </SessionHeader>
           {s.students.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No students enrolled.</p>
+            <Empty>No students enrolled.</Empty>
           ) : (
-            <ul className="flex flex-col divide-y divide-border">
+            <StudentList>
               {s.students.map((stu) => (
-                <li
-                  key={stu.enrollmentId}
-                  className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-header">{stu.studentName}</span>
+                <StudentRow key={stu.enrollmentId}>
+                  <StudentTop>
+                    <StudentName>{stu.studentName}</StudentName>
                     {stu.status ? (
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadge(stu.status)}`}
-                      >
+                      <StatusBadge $status={stu.status}>
                         {stu.status.toLowerCase()}
-                      </span>
+                      </StatusBadge>
                     ) : (
-                      <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
-                        unmarked
-                      </span>
+                      <StatusBadge $status="unmarked">unmarked</StatusBadge>
                     )}
                     {stu.source ? (
-                      <span className="text-[10px] uppercase text-muted-foreground">
+                      <SourceText>
                         {stu.source === "AUTO_JOIN" ? "auto" : "override"}
-                      </span>
+                      </SourceText>
                     ) : null}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
+                  </StudentTop>
+                  <ActionRow>
                     {STATUSES.map((st) => {
                       const key = `${stu.enrollmentId}:${st}`;
                       const isActive = stu.status === st;
                       return (
-                        <button
+                        <ActionBtn
                           key={st}
                           type="button"
+                          $active={isActive}
                           disabled={pendingKey !== null}
                           onClick={() => mark(stu.enrollmentId, s.sessionDate, st)}
-                          className={`h-7 rounded-md border px-2 text-[11px] font-medium transition-colors ${
-                            isActive
-                              ? "border-header bg-header text-white"
-                              : "border-border bg-foreground text-header hover:bg-header/[0.06]"
-                          } disabled:opacity-60`}
                         >
                           {pendingKey === key ? "..." : st.toLowerCase()}
-                        </button>
+                        </ActionBtn>
                       );
                     })}
-                  </div>
+                  </ActionRow>
                   {errors[stu.enrollmentId] ? (
-                    <span className="text-[11px] text-destructive">
-                      {errors[stu.enrollmentId]}
-                    </span>
+                    <ErrorText>{errors[stu.enrollmentId]}</ErrorText>
                   ) : null}
-                </li>
+                </StudentRow>
               ))}
-            </ul>
+            </StudentList>
           )}
-        </div>
+        </SessionCard>
       ))}
-    </div>
+    </Wrap>
   );
-}
-
-function statusBadge(status: AttendanceStatus): string {
-  switch (status) {
-    case "PRESENT":
-      return "border border-emerald-300 bg-emerald-50 text-emerald-900";
-    case "LATE":
-      return "border border-amber-300 bg-amber-50 text-amber-900";
-    case "ABSENT":
-      return "border border-rose-300 bg-rose-50 text-rose-900";
-    case "EXCUSED":
-      return "border border-sky-300 bg-sky-50 text-sky-900";
-  }
 }

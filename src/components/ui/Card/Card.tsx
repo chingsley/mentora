@@ -1,56 +1,78 @@
+"use client";
+
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 
-export function Card({
-  className,
-  children,
-  ...rest
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl bg-foreground p-5 shadow-sm ring-1 ring-black/5 sm:p-6",
-        className,
-      )}
-      {...rest}
-    >
-      {children}
-    </div>
-  );
+const StyledCard = styled.div`
+  background-color: ${COLORS.FOREGROUND};
+  border-radius: ${LAYOUT.RADIUS.XL};
+  padding: ${SPACING.FIVE};
+  box-shadow: ${LAYOUT.SHADOW.SM};
+  outline: 1px solid ${COLORS.RING_BLACK_5};
+  outline-offset: -1px;
+
+  ${LAYOUT.MEDIA.SM} {
+    padding: ${SPACING.SIX};
+  }
+`;
+
+const StyledHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+  margin-bottom: ${SPACING.FOUR};
+`;
+
+const StyledTitle = styled.h2`
+  font-size: ${FONTS.SIZE.LG};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+  line-height: ${FONTS.LINE_HEIGHT.SNUG};
+`;
+
+const StyledDescription = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+`;
+
+const StyledContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
+const StyledFooter = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${SPACING.TWO};
+  margin-top: ${SPACING.FIVE};
+`;
+
+export function Card(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <StyledCard {...props} />;
 }
 
-export function CardHeader({
-  className,
-  ...rest
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mb-4 flex flex-col gap-1", className)} {...rest} />;
+export function CardHeader(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <StyledHeader {...props} />;
 }
 
-export function CardTitle({ className, ...rest }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h2 className={cn("text-lg font-semibold text-header", className)} {...rest} />
-  );
+export function CardTitle(props: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <StyledTitle {...props} />;
 }
 
-export function CardDescription({
-  className,
-  ...rest
-}: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm text-muted-foreground", className)} {...rest} />;
+export function CardDescription(props: React.HTMLAttributes<HTMLParagraphElement>) {
+  return <StyledDescription {...props} />;
 }
 
-export function CardContent({
-  className,
-  ...rest
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex flex-col gap-4", className)} {...rest} />;
+export function CardContent(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <StyledContent {...props} />;
 }
 
-export function CardFooter({
-  className,
-  ...rest
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn("mt-5 flex items-center gap-2", className)} {...rest} />
-  );
+export function CardFooter(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <StyledFooter {...props} />;
 }

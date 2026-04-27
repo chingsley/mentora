@@ -2,7 +2,11 @@
 
 import { useParams, usePathname, useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { ChevronDown } from "lucide-react";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 
 export interface WardOption {
   studentProfileId: string;
@@ -14,6 +18,117 @@ export interface WardSelectorProps {
   wards: WardOption[];
   collapsed?: boolean;
 }
+
+const CollapsedWrap = styled.div`
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: ${SPACING.TWO} 0;
+`;
+
+const CollapsedRow = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
+const Avatar = styled.div<{ $size: "sm" | "md" }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: ${(p) => (p.$size === "sm" ? "1.5rem" : "2.25rem")};
+  height: ${(p) => (p.$size === "sm" ? "1.5rem" : "2.25rem")};
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-transform: uppercase;
+  font-size: ${(p) => (p.$size === "sm" ? "0.6875rem" : FONTS.SIZE.XS)};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+`;
+
+const ExpandedWrap = styled.div`
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: ${SPACING.THREE};
+`;
+
+const Eyebrow = styled.p`
+  margin-bottom: ${SPACING.ONE};
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.5);
+`;
+
+const Trigger = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${SPACING.TWO};
+  width: 100%;
+  padding: ${SPACING.TWO};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: ${FONTS.SIZE.SM};
+  text-align: left;
+  outline: none;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const TriggerLabel = styled.span`
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const TriggerCaret = styled(ChevronDown)`
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+`;
+
+const List = styled.ul`
+  margin-top: ${SPACING.ONE};
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: ${SPACING.ONE};
+  max-height: 16rem;
+  overflow-y: auto;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: rgba(255, 255, 255, 0.05);
+`;
+
+const Option = styled.button<{ $selected: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: ${SPACING.TWO};
+  width: 100%;
+  padding: 0.375rem ${SPACING.TWO};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  text-align: left;
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${(p) => (p.$selected ? FONTS.WEIGHT.MEDIUM : FONTS.WEIGHT.NORMAL)};
+  color: ${(p) => (p.$selected ? "white" : "rgba(255, 255, 255, 0.9)")};
+  background-color: ${(p) => (p.$selected ? "rgba(255, 255, 255, 0.15)" : "transparent")};
+  outline: none;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  }
+`;
 
 export function WardSelector({ wards, collapsed = false }: WardSelectorProps) {
   const router = useRouter();
@@ -60,64 +175,51 @@ export function WardSelector({ wards, collapsed = false }: WardSelectorProps) {
 
   if (collapsed) {
     return (
-      <div className="border-t border-white/10 py-2" aria-label="Ward selector">
-        <div className="flex justify-center">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-xs font-semibold uppercase text-white"
-            title={current ? `Ward: ${current.name}` : "Select a ward"}
-          >
+      <CollapsedWrap aria-label="Ward selector">
+        <CollapsedRow>
+          <Avatar $size="md" title={current ? `Ward: ${current.name}` : "Select a ward"}>
             {current ? initials(current.name) : "?"}
-          </div>
-        </div>
-      </div>
+          </Avatar>
+        </CollapsedRow>
+      </CollapsedWrap>
     );
   }
 
   return (
-    <div className="border-t border-white/10 p-3" ref={containerRef}>
-      <p className="mb-1 text-[10px] uppercase tracking-wider text-white/50">Viewing ward</p>
-      <button
+    <ExpandedWrap ref={containerRef}>
+      <Eyebrow>Viewing ward</Eyebrow>
+      <Trigger
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-md bg-white/5 px-2 py-2 text-left text-sm text-white outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-[11px] font-semibold uppercase">
-          {current ? initials(current.name) : "?"}
-        </span>
-        <span className="min-w-0 flex-1 truncate">{current?.name ?? "Select a ward"}</span>
-        <ChevronDown className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
-      </button>
+        <Avatar $size="sm">{current ? initials(current.name) : "?"}</Avatar>
+        <TriggerLabel>{current?.name ?? "Select a ward"}</TriggerLabel>
+        <TriggerCaret aria-hidden />
+      </Trigger>
       {open ? (
-        <ul
-          role="listbox"
-          className="mt-1 flex max-h-64 flex-col gap-0.5 overflow-y-auto rounded-md bg-white/5 p-1"
-        >
+        <List role="listbox">
           {wards.map((w) => {
             const selected = w.studentProfileId === active;
             return (
               <li key={w.studentProfileId}>
-                <button
+                <Option
                   type="button"
                   role="option"
                   aria-selected={selected}
+                  $selected={selected}
                   onClick={() => selectWard(w.studentProfileId)}
-                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
-                    selected ? "bg-white/15 font-medium text-white" : "text-white/90 hover:bg-white/10"
-                  }`}
                 >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-[11px] font-semibold uppercase">
-                    {initials(w.name)}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{w.name}</span>
-                </button>
+                  <Avatar $size="sm">{initials(w.name)}</Avatar>
+                  <TriggerLabel>{w.name}</TriggerLabel>
+                </Option>
               </li>
             );
           })}
-        </ul>
+        </List>
       ) : null}
-    </div>
+    </ExpandedWrap>
   );
 }
 

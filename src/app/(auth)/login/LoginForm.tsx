@@ -3,9 +3,40 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { loginAction, type LoginActionResult } from "./actions";
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const Footer = styled.p`
+  text-align: center;
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const FooterLink = styled(Link)`
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
 
 export function LoginForm() {
   const router = useRouter();
@@ -26,7 +57,7 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <Form onSubmit={onSubmit}>
       <Input
         name="email"
         type="email"
@@ -44,17 +75,14 @@ export function LoginForm() {
         error={result && !result.ok ? result.fieldErrors?.password : undefined}
       />
       {result && !result.ok && !result.fieldErrors ? (
-        <p className="text-sm text-destructive">{result.error}</p>
+        <ErrorText>{result.error}</ErrorText>
       ) : null}
       <Button type="submit" isLoading={isPending}>
         Log in
       </Button>
-      <p className="text-center text-sm text-muted-foreground">
-        New here?{" "}
-        <Link href="/register" className="font-medium text-header hover:underline">
-          Create an account
-        </Link>
-      </p>
-    </form>
+      <Footer>
+        New here? <FooterLink href="/register">Create an account</FooterLink>
+      </Footer>
+    </Form>
   );
 }

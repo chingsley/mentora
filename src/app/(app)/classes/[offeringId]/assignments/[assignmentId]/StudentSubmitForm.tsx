@@ -2,11 +2,57 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import {
   submitAssignmentAction,
   type ActionResult,
 } from "../actions";
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.THREE};
+`;
+
+const Label = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+`;
+
+const LabelText = styled.span`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const FileInput = styled.input`
+  font-size: ${FONTS.SIZE.SM};
+`;
+
+const Hint = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const SuccessText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: #047857;
+`;
+
+const Footer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
 
 export interface StudentSubmitFormProps {
   offeringId: string;
@@ -36,33 +82,26 @@ export function StudentSubmitForm({ offeringId, assignmentId, hasExisting }: Stu
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-header">
+    <Form ref={formRef} onSubmit={onSubmit}>
+      <Label>
+        <LabelText>
           {hasExisting ? "Replace submission" : "Upload your submission"}
-        </span>
-        <input
+        </LabelText>
+        <FileInput
           name="file"
           type="file"
           required
           accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg,.zip"
-          className="text-sm"
         />
-        <span className="text-xs text-muted-foreground">
-          Max 10 MB. Re-uploading clears any previous grade.
-        </span>
-      </label>
-      {result && !result.ok ? (
-        <p className="text-sm text-destructive">{result.error}</p>
-      ) : null}
-      {result && result.ok ? (
-        <p className="text-sm text-emerald-700">Submitted.</p>
-      ) : null}
-      <div className="flex justify-end">
+        <Hint>Max 10 MB. Re-uploading clears any previous grade.</Hint>
+      </Label>
+      {result && !result.ok ? <ErrorText>{result.error}</ErrorText> : null}
+      {result && result.ok ? <SuccessText>Submitted.</SuccessText> : null}
+      <Footer>
         <Button type="submit" isLoading={isPending}>
           {hasExisting ? "Replace file" : "Submit"}
         </Button>
-      </div>
-    </form>
+      </Footer>
+    </Form>
   );
 }

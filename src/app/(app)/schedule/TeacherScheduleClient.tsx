@@ -2,6 +2,7 @@
 
 import type { DayOfWeek } from "@prisma/client";
 import * as React from "react";
+import styled from "styled-components";
 import { CalendarShell } from "@/components/features/calendar/CalendarShell";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import {
@@ -9,6 +10,19 @@ import {
   type OfferingDialogSubject,
   type OfferingDialogValue,
 } from "@/components/features/teacher/OfferingDialog";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
+
+const EmptyState = styled.div`
+  border-radius: ${LAYOUT.RADIUS.LG};
+  background-color: ${COLORS.BACKGROUND};
+  padding: ${SPACING.SIX};
+  text-align: center;
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
 
 export interface TeacherScheduleOffering {
   id: string;
@@ -77,10 +91,10 @@ export function TeacherScheduleClient({
         onEntryClick={onEntryClick}
         onEmptySlotClick={onEmptySlotClick}
         emptyState={
-          <div className="rounded-lg bg-background p-6 text-center text-sm text-muted-foreground">
+          <EmptyState>
             No class periods yet. Click an empty slot on the week or day view to
             add one.
-          </div>
+          </EmptyState>
         }
       />
       <OfferingDialog

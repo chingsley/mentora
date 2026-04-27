@@ -2,10 +2,25 @@
 
 import type { DayOfWeek } from "@prisma/client";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { isClassLive, joinClassSession } from "@/lib/classSession";
 import { DAY_LABEL, minutesToTime } from "@/lib/time";
 import { joinAsStudentAction } from "@/app/(app)/actions/joinClass";
+
+const Stack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.DESTRUCTIVE};
+`;
 
 export interface JoinClassButtonProps {
   offeringId: string;
@@ -54,12 +69,12 @@ export function JoinClassButton({
 
   if (live) {
     return (
-      <div className="flex flex-col gap-1">
+      <Stack>
         <Button type="button" onClick={handleJoin} isLoading={joining} disabled={joined}>
           {joined ? "Joined" : "Join class session"}
         </Button>
-        {error ? <p className="text-xs text-destructive">{error}</p> : null}
-      </div>
+        {error ? <ErrorText>{error}</ErrorText> : null}
+      </Stack>
     );
   }
 

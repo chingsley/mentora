@@ -1,9 +1,14 @@
 "use client";
 
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Select } from "@/components/ui/Select";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { submitTeacherReportAction } from "@/app/(app)/actions/teacherReport";
 
 const REASON_OPTIONS = [
@@ -20,6 +25,68 @@ export interface ReportTeacherDialogProps {
   teacherProfileId: string;
   teacherName: string;
 }
+
+const Stack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.THREE};
+`;
+
+const SuccessText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: rgba(2, 8, 23, 0.8);
+`;
+
+const Hint = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.THREE};
+`;
+
+const FieldLabel = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+`;
+
+const FieldLabelText = styled.span`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const Textarea = styled.textarea`
+  width: 100%;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.TWO};
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.TEXT};
+  outline: none;
+  resize: vertical;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(23, 32, 51, 0.3);
+  }
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const Footer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: ${SPACING.TWO};
+`;
 
 export function ReportTeacherDialog({
   open,
@@ -45,12 +112,12 @@ export function ReportTeacherDialog({
   return (
     <Dialog open={open} onClose={onClose} title={`Report ${teacherName}`}>
       {result?.ok ? (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-text/80">
+        <Stack>
+          <SuccessText>
             Thanks — admins have been notified. They&apos;ll review this report and follow up if
             needed. Your name stays hidden from the teacher.
-          </p>
-          <div className="flex justify-end">
+          </SuccessText>
+          <Footer>
             <Button
               type="button"
               onClick={() => {
@@ -60,43 +127,40 @@ export function ReportTeacherDialog({
             >
               Close
             </Button>
-          </div>
-        </div>
+          </Footer>
+        </Stack>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <p className="text-xs text-muted-foreground">
+        <Form onSubmit={handleSubmit}>
+          <Hint>
             Reports are private and only visible to platform admins. Use reviews/ratings for
             general feedback instead.
-          </p>
+          </Hint>
           <Select
             name="reason"
             label="Reason"
             defaultValue="HARASSMENT"
             options={REASON_OPTIONS}
           />
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-header">What happened?</span>
-            <textarea
+          <FieldLabel>
+            <FieldLabelText>What happened?</FieldLabelText>
+            <Textarea
               name="description"
               required
               minLength={10}
               maxLength={5000}
               rows={5}
-              className="w-full rounded-md border border-border bg-foreground p-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-header/30"
             />
-          </label>
-          {result && !result.ok ? (
-            <p className="text-xs text-destructive">{result.error}</p>
-          ) : null}
-          <div className="flex items-center justify-end gap-2">
+          </FieldLabel>
+          {result && !result.ok ? <ErrorText>{result.error}</ErrorText> : null}
+          <Footer>
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit" isLoading={isPending}>
               Submit report
             </Button>
-          </div>
-        </form>
+          </Footer>
+        </Form>
       )}
     </Dialog>
   );

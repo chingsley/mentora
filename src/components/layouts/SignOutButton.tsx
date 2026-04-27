@@ -2,6 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { signOutAction } from "./actions";
 
 export interface SignOutButtonProps {
@@ -9,13 +13,48 @@ export interface SignOutButtonProps {
   compact?: boolean;
 }
 
+const Base = styled.button<{ $compact: boolean }>`
+  display: ${(p) => (p.$compact ? "flex" : "block")};
+  align-items: center;
+  justify-content: ${(p) => (p.$compact ? "center" : "flex-start")};
+  width: ${(p) => (p.$compact ? "2.25rem" : "100%")};
+  height: ${(p) => (p.$compact ? "2.25rem" : "auto")};
+  flex-shrink: ${(p) => (p.$compact ? 0 : "initial")};
+  padding: ${(p) => (p.$compact ? "0" : `${SPACING.HALF} ${SPACING.THREE}`)};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: ${FONTS.SIZE.SM};
+  text-align: left;
+  outline: none;
+  transition: background-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+`;
+
+const IconSvg = styled.svg`
+  width: 1.25rem;
+  height: 1.25rem;
+`;
+
 export function SignOutButton({ compact = false }: SignOutButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
   return (
-    <button
+    <Base
       type="button"
+      $compact={compact}
       aria-label={compact ? (isPending ? "Signing out" : "Sign out") : undefined}
       onClick={() => {
         startTransition(async () => {
@@ -24,27 +63,22 @@ export function SignOutButton({ compact = false }: SignOutButtonProps) {
           router.refresh();
         });
       }}
-      className={
-        compact
-          ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white/90 outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-60"
-          : "w-full rounded-md px-3 py-1.5 text-left text-sm text-white/90 outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-60"
-      }
       disabled={isPending}
     >
       {compact ? (
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-            <path
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 18l-6-6 6-6M5 12h14"
-            />
-          </svg>
+        <IconSvg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+          <path
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 18l-6-6 6-6M5 12h14"
+          />
+        </IconSvg>
       ) : isPending ? (
         "Signing out..."
       ) : (
         "Sign out"
       )}
-    </button>
+    </Base>
   );
 }

@@ -2,9 +2,72 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { createAssignmentAction, type ActionResult } from "./actions";
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
+const Field = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+`;
+
+const FieldLabel = styled.span`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const Textarea = styled.textarea`
+  width: 100%;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.TWO};
+  font-family: inherit;
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.TEXT};
+  outline: none;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(23, 32, 51, 0.3);
+  }
+`;
+
+const FileInput = styled.input`
+  font-size: ${FONTS.SIZE.SM};
+`;
+
+const Hint = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const SuccessText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: #047857;
+`;
+
+const Footer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
 
 export interface NewAssignmentFormProps {
   offeringId: string;
@@ -33,17 +96,12 @@ export function NewAssignmentForm({ offeringId }: NewAssignmentFormProps) {
   const fieldErrors = result && !result.ok ? result.fieldErrors : undefined;
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-4">
+    <Form ref={formRef} onSubmit={onSubmit}>
       <Input name="title" label="Title" required minLength={3} error={fieldErrors?.title} />
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-header">Description</span>
-        <textarea
-          name="description"
-          rows={3}
-          maxLength={5000}
-          className="w-full rounded-md border border-border bg-foreground p-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-header/30"
-        />
-      </label>
+      <Field>
+        <FieldLabel>Description</FieldLabel>
+        <Textarea name="description" rows={3} maxLength={5000} />
+      </Field>
       <Input
         name="dueAt"
         type="datetime-local"
@@ -51,27 +109,24 @@ export function NewAssignmentForm({ offeringId }: NewAssignmentFormProps) {
         required
         error={fieldErrors?.dueAt}
       />
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-header">Attachment (optional)</span>
-        <input
+      <Field>
+        <FieldLabel>Attachment (optional)</FieldLabel>
+        <FileInput
           name="file"
           type="file"
           accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg,.zip"
-          className="text-sm"
         />
-        <span className="text-xs text-muted-foreground">Max 10 MB.</span>
-      </label>
+        <Hint>Max 10 MB.</Hint>
+      </Field>
       {result && !result.ok && !result.fieldErrors ? (
-        <p className="text-sm text-destructive">{result.error}</p>
+        <ErrorText>{result.error}</ErrorText>
       ) : null}
-      {result && result.ok ? (
-        <p className="text-sm text-emerald-700">Assignment created.</p>
-      ) : null}
-      <div className="flex justify-end">
+      {result && result.ok ? <SuccessText>Assignment created.</SuccessText> : null}
+      <Footer>
         <Button type="submit" isLoading={isPending}>
           Post assignment
         </Button>
-      </div>
-    </form>
+      </Footer>
+    </Form>
   );
 }

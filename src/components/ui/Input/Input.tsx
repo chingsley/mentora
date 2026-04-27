@@ -1,5 +1,11 @@
+"use client";
+
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -7,43 +13,74 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   hint?: string;
 }
 
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.HALF};
+  width: 100%;
+`;
+
+const Label = styled.label`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const StyledInput = styled.input<{ $hasError: boolean }>`
+  height: 2.5rem;
+  width: 100%;
+  padding: 0 ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.SM};
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  color: ${COLORS.TEXT};
+  background-color: ${COLORS.FOREGROUND};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${(p) => (p.$hasError ? COLORS.DESTRUCTIVE : COLORS.BORDER)};
+  outline: none;
+  transition: border-color 0.15s ease;
+
+  &::placeholder {
+    color: ${COLORS.MUTED_FOREGROUND};
+  }
+
+  &:hover:not(:disabled) {
+    border-color: ${(p) => (p.$hasError ? COLORS.DESTRUCTIVE : COLORS.PRIMARY)};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+`;
+
+const HintText = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
-  { className, label, error, hint, id, ...rest },
+  { label, error, hint, id, ...rest },
   ref,
 ) {
   const autoId = React.useId();
   const inputId = id ?? autoId;
   return (
-    <div className="flex flex-col gap-1.5">
-      {label ? (
-        <label htmlFor={inputId} className="text-sm font-medium text-header">
-          {label}
-        </label>
-      ) : null}
-      <input
+    <Field>
+      {label ? <Label htmlFor={inputId}>{label}</Label> : null}
+      <StyledInput
         id={inputId}
         ref={ref}
-        className={cn(
-          "h-10 w-full rounded-md border bg-foreground px-3 text-sm text-text outline-none",
-          "placeholder:text-muted-foreground",
-          "hover:border-primary transition-colors",
-          error ? "border-destructive" : "border-border",
-          className,
-        )}
+        $hasError={!!error}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
         {...rest}
       />
-      {hint && !error ? (
-        <p id={`${inputId}-hint`} className="text-xs text-muted-foreground">
-          {hint}
-        </p>
-      ) : null}
-      {error ? (
-        <p id={`${inputId}-error`} className="text-xs text-destructive">
-          {error}
-        </p>
-      ) : null}
-    </div>
+      {hint && !error ? <HintText id={`${inputId}-hint`}>{hint}</HintText> : null}
+      {error ? <ErrorText id={`${inputId}-error`}>{error}</ErrorText> : null}
+    </Field>
   );
 });

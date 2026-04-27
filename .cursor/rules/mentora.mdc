@@ -63,15 +63,18 @@ prisma/               # schema.prisma, migrations, seed.ts
 
 ## 6. Styling
 
-- **Tailwind CSS v4** utility-first. No CSS-in-JS, no CSS modules unless justified.
-- Theme tokens are defined in `src/styles/globals.css` via `@theme`:
-  - `--color-background: #f5f5f7`
-  - `--color-foreground: #ffffff` (cards, forms, surfaces)
-  - `--color-text: #020817`
-  - `--color-header: #172033`
-- Use token classes (`bg-background`, `bg-foreground`, `text-text`, `bg-header`). Do not hardcode hex values in components.
-- Mobile-first breakpoints: start unprefixed, add `sm:` / `md:` / `lg:` as needed.
-- Use semantic elements (`header`, `main`, `nav`, `section`). Respect focus states (the global `:focus-visible` ring is already set up).
+- **styled-components v6** is the only styling system. No Tailwind, no CSS modules, no inline `style={{ ... }}` outside genuinely dynamic cases.
+- Define styled-components inline at the top of each `.tsx` file, above the React component that uses them. One file = one component + its styles.
+- Theme tokens live in `src/constants/`:
+  - `colors.constants.ts` (`COLORS`)
+  - `fonts.constants.ts` (`FONTS`)
+  - `layout.constants.ts` (`LAYOUT`, includes `RADIUS`, `SHADOW`, `Z`, `MEDIA`, `BREAKPOINTS`)
+  - `spacing.constants.ts` (`SPACING`)
+- Always reference tokens (e.g. `${COLORS.HEADER}`, `${LAYOUT.RADIUS.LG}`, `${SPACING.FOUR}`). Do not hardcode hex values, px sizes, or magic spacing.
+- Mobile-first: write the base styles, then layer on `${LAYOUT.MEDIA.SM}`, `MD`, `LG`, etc. for breakpoints.
+- Global resets, focus ring, and reduced-motion handling live in `src/styles/GlobalStyles.tsx`. The styled-components SSR registry lives in `src/lib/registry.tsx` and is wired in `src/app/layout.tsx`.
+- Because styled-components is a runtime CSS-in-JS library, **any file that defines or uses styled-components must be a Client Component** (`"use client"` at the top). Keep server pages as data-fetching shells that pass props into a `*Client.tsx` view, mirroring the existing `StudentClassesClient` / `TeacherScheduleClient` pattern.
+- Use semantic elements (`header`, `main`, `nav`, `section`). Respect focus states — the global `:focus-visible` ring is already set up in `GlobalStyles`.
 
 ## 7. State management
 

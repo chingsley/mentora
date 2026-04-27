@@ -1,5 +1,37 @@
 "use client";
 
+import styled from "styled-components";
+import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
+
+const Wrap = styled.div`
+  border-radius: ${LAYOUT.RADIUS.XL};
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.SIX};
+  box-shadow: ${LAYOUT.SHADOW.SM};
+  outline: 1px solid ${COLORS.RING_BLACK_5};
+  outline-offset: -1px;
+`;
+
+const Title = styled.h2`
+  font-size: ${FONTS.SIZE.LG};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const Body = styled.p`
+  margin-top: ${SPACING.TWO};
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Actions = styled.div`
+  margin-top: ${SPACING.FOUR};
+`;
+
 export default function AuthError({
   error,
   reset,
@@ -8,15 +40,12 @@ export default function AuthError({
   reset: () => void;
 }) {
   return (
-    <div className="rounded-xl bg-foreground p-6 shadow-sm ring-1 ring-black/5">
-      <h2 className="text-lg font-semibold text-header">Authentication error</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
-      <button
-        onClick={reset}
-        className="mt-4 inline-flex h-10 items-center rounded-md bg-header px-4 text-sm font-medium text-white hover:bg-header/90"
-      >
-        Try again
-      </button>
-    </div>
+    <Wrap>
+      <Title>Authentication error</Title>
+      <Body>{error.message}</Body>
+      <Actions>
+        <Button onClick={reset}>Try again</Button>
+      </Actions>
+    </Wrap>
   );
 }

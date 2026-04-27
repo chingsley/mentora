@@ -2,10 +2,15 @@
 
 import type { DayOfWeek, Role } from "@prisma/client";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, formatPrice, minutesToTime } from "@/lib/time";
-import { FILL_CLASSES, FILL_LABEL, fillStatus } from "@/components/features/calendar/types";
+import { FILL_LABEL, FILL_THEME, fillStatus } from "@/components/features/calendar/types";
 import { JoinClassButton } from "@/components/features/student/JoinClassButton";
 
 export interface ClassDetailTestimonial {
@@ -44,6 +49,169 @@ export interface ClassDetailsDialogProps {
   onEnrol?: (offeringId: string) => void | Promise<void>;
   onDrop?: (enrollmentId: string) => void | Promise<void>;
 }
+
+const Header = styled.header`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+`;
+
+const TitleRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${SPACING.TWO};
+`;
+
+const Title = styled.h2`
+  font-size: ${FONTS.SIZE.LG};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const StatusPill = styled.span<{ $status: keyof typeof FILL_THEME }>`
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid ${(p) => FILL_THEME[p.$status].border};
+  background-color: ${(p) => FILL_THEME[p.$status].bg};
+  color: ${(p) => FILL_THEME[p.$status].text};
+  padding: 0.125rem ${SPACING.TWO};
+  font-size: 0.6875rem;
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+`;
+
+const Subtitle = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const StatGrid = styled.dl`
+  margin-top: ${SPACING.FOUR};
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.SM};
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+`;
+
+const StatBox = styled.div`
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: ${COLORS.BACKGROUND};
+  padding: ${SPACING.TWO};
+`;
+
+const StatLabel = styled.dt`
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const StatValue = styled.dd<{ $emphasised?: boolean }>`
+  margin-top: 0.125rem;
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${(p) => (p.$emphasised ? COLORS.DESTRUCTIVE : COLORS.HEADER)};
+`;
+
+const Section = styled.section`
+  margin-top: ${SPACING.FOUR};
+`;
+
+const SectionHeading = styled.h3`
+  margin-bottom: ${SPACING.ONE};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const SectionHeadingTight = styled(SectionHeading)`
+  margin-bottom: ${SPACING.TWO};
+`;
+
+const Description = styled.p`
+  white-space: pre-wrap;
+  font-size: ${FONTS.SIZE.SM};
+  color: rgba(2, 8, 23, 0.8);
+`;
+
+const Empty = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const RulesList = styled.ul`
+  list-style: disc;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+  font-size: ${FONTS.SIZE.SM};
+  color: rgba(2, 8, 23, 0.8);
+`;
+
+const TestimonialList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.THREE};
+`;
+
+const TestimonialCard = styled.li`
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.BACKGROUND};
+  padding: ${SPACING.THREE};
+`;
+
+const TestimonialHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const TestimonialName = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const TestimonialStars = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  color: #b45309;
+`;
+
+const StarsMuted = styled.span`
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const TestimonialBody = styled.p`
+  margin-top: ${SPACING.ONE};
+  font-size: ${FONTS.SIZE.SM};
+  color: rgba(2, 8, 23, 0.8);
+`;
+
+const Message = styled.p<{ $tone: "success" | "error" }>`
+  margin-top: ${SPACING.FOUR};
+  font-size: ${FONTS.SIZE.SM};
+  color: ${(p) => (p.$tone === "success" ? COLORS.SUCCESS : COLORS.DESTRUCTIVE)};
+`;
+
+const Footer = styled.footer`
+  margin-top: ${SPACING.FIVE};
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+  border-top: 1px solid ${COLORS.BORDER};
+  padding-top: ${SPACING.FOUR};
+
+  ${LAYOUT.MEDIA.SM} {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+  }
+`;
 
 export function ClassDetailsDialog({
   open,
@@ -84,33 +252,25 @@ export function ClassDetailsDialog({
   const canEnrol = isStudent && !isEnrolled && status !== "full";
 
   return (
-    <Dialog open={open} onClose={onClose} className="max-w-2xl">
-      <header className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold text-header">{detail.title}</h2>
-          <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${FILL_CLASSES[status]}`}>
-            {FILL_LABEL[status]}
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground">
+    <Dialog open={open} onClose={onClose} size="lg">
+      <Header>
+        <TitleRow>
+          <Title>{detail.title}</Title>
+          <StatusPill $status={status}>{FILL_LABEL[status]}</StatusPill>
+        </TitleRow>
+        <Subtitle>
           {detail.subjectName} · with {detail.teacherName}
-        </p>
-      </header>
+        </Subtitle>
+      </Header>
 
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+      <StatGrid>
         <Stat label="Day" value={DAY_LABEL[detail.dayOfWeek]} />
         <Stat
           label="Time"
           value={`${minutesToTime(detail.startMinutes)}–${minutesToTime(detail.endMinutes)}`}
         />
-        <Stat
-          label="Duration"
-          value={formatDuration(durationMinutes)}
-        />
-        <Stat
-          label="Hourly rate"
-          value={hourlyPrice ? `${hourlyPrice}/hr` : "—"}
-        />
+        <Stat label="Duration" value={formatDuration(durationMinutes)} />
+        <Stat label="Hourly rate" value={hourlyPrice ? `${hourlyPrice}/hr` : "—"} />
         <Stat label="Class limit" value={detail.effectiveCap.toString()} />
         <Stat label="Currently enrolled" value={detail.enrolled.toString()} />
         <Stat
@@ -118,73 +278,54 @@ export function ClassDetailsDialog({
           value={status === "full" ? "Full" : slotsRemaining.toString()}
           emphasised={status === "full"}
         />
-        <Stat
-          label="Session total"
-          value={classPrice ?? "—"}
-        />
-      </dl>
+        <Stat label="Session total" value={classPrice ?? "—"} />
+      </StatGrid>
 
       {detail.description?.trim() ? (
-        <section className="mt-4">
-          <h3 className="mb-1 text-sm font-semibold text-header">About this class</h3>
-          <p className="whitespace-pre-wrap text-sm text-text/80">{detail.description}</p>
-        </section>
+        <Section>
+          <SectionHeading>About this class</SectionHeading>
+          <Description>{detail.description}</Description>
+        </Section>
       ) : null}
 
-      <section className="mt-4">
-        <h3 className="mb-2 text-sm font-semibold text-header">Rules &amp; expectations</h3>
+      <Section>
+        <SectionHeadingTight>Rules &amp; expectations</SectionHeadingTight>
         {ruleLines.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            The teacher hasn&apos;t posted specific rules for this class yet.
-          </p>
+          <Empty>The teacher hasn&apos;t posted specific rules for this class yet.</Empty>
         ) : (
-          <ul className="list-disc space-y-1 pl-5 text-sm text-text/80">
+          <RulesList>
             {ruleLines.map((line, i) => (
               <li key={i}>{line}</li>
             ))}
-          </ul>
+          </RulesList>
         )}
-      </section>
+      </Section>
 
-      <section className="mt-4">
-        <h3 className="mb-2 text-sm font-semibold text-header">
-          What previous students said
-        </h3>
+      <Section>
+        <SectionHeadingTight>What previous students said</SectionHeadingTight>
         {detail.testimonials.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No testimonials yet. Be the first to share feedback.
-          </p>
+          <Empty>No testimonials yet. Be the first to share feedback.</Empty>
         ) : (
-          <ul className="flex flex-col gap-3">
+          <TestimonialList>
             {detail.testimonials.slice(0, 5).map((t) => (
-              <li key={t.id} className="rounded-lg border border-border bg-background p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-header">{t.studentName}</p>
-                  <span className="text-xs text-amber-700" aria-label={`${t.rating} out of 5`}>
+              <TestimonialCard key={t.id}>
+                <TestimonialHead>
+                  <TestimonialName>{t.studentName}</TestimonialName>
+                  <TestimonialStars aria-label={`${t.rating} out of 5`}>
                     {"★".repeat(t.rating)}
-                    <span className="text-muted-foreground">
-                      {"★".repeat(5 - t.rating)}
-                    </span>
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-text/80">{t.body}</p>
-              </li>
+                    <StarsMuted>{"★".repeat(5 - t.rating)}</StarsMuted>
+                  </TestimonialStars>
+                </TestimonialHead>
+                <TestimonialBody>{t.body}</TestimonialBody>
+              </TestimonialCard>
             ))}
-          </ul>
+          </TestimonialList>
         )}
-      </section>
+      </Section>
 
-      {message ? (
-        <p
-          className={`mt-4 text-sm ${
-            message.tone === "success" ? "text-success" : "text-destructive"
-          }`}
-        >
-          {message.text}
-        </p>
-      ) : null}
+      {message ? <Message $tone={message.tone}>{message.text}</Message> : null}
 
-      <footer className="mt-5 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-end">
+      <Footer>
         <Button type="button" variant="ghost" onClick={onClose}>
           Close
         </Button>
@@ -209,11 +350,7 @@ export function ClassDetailsDialog({
           </>
         ) : null}
         {canEnrol ? (
-          <Button
-            type="button"
-            isLoading={isBusy}
-            onClick={() => onEnrol?.(detail.offeringId)}
-          >
+          <Button type="button" isLoading={isBusy} onClick={() => onEnrol?.(detail.offeringId)}>
             Enrol in this class
           </Button>
         ) : null}
@@ -222,7 +359,7 @@ export function ClassDetailsDialog({
             Class full
           </Button>
         ) : null}
-      </footer>
+      </Footer>
     </Dialog>
   );
 }
@@ -237,18 +374,10 @@ function Stat({
   emphasised?: boolean;
 }) {
   return (
-    <div className="rounded-md bg-background p-2">
-      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </dt>
-      <dd
-        className={`mt-0.5 text-sm font-semibold ${
-          emphasised ? "text-destructive" : "text-header"
-        }`}
-      >
-        {value}
-      </dd>
-    </div>
+    <StatBox>
+      <StatLabel>{label}</StatLabel>
+      <StatValue $emphasised={emphasised}>{value}</StatValue>
+    </StatBox>
   );
 }
 

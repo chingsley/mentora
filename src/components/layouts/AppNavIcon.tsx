@@ -1,3 +1,5 @@
+"use client";
+
 import {
   CalendarDays,
   Flag,
@@ -11,6 +13,7 @@ import {
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
+import styled from "styled-components";
 import type { AppNavIconKey } from "./appNavConfig";
 
 const ICONS: Record<AppNavIconKey, LucideIcon> = {
@@ -26,18 +29,22 @@ const ICONS: Record<AppNavIconKey, LucideIcon> = {
   ward: Shield,
 };
 
+const Wrapper = styled.span`
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+`;
+
 export interface AppNavIconProps {
   name: AppNavIconKey;
-  className?: string;
 }
 
-export function AppNavIcon({ name, className }: AppNavIconProps) {
+export function AppNavIcon({ name }: AppNavIconProps) {
   const Icon = ICONS[name];
   return (
-    <Icon
-      className={className ? `h-5 w-5 shrink-0 ${className}` : "h-5 w-5 shrink-0"}
-      strokeWidth={2}
-      aria-hidden
-    />
+    <Wrapper>
+      <Icon size={20} strokeWidth={2} aria-hidden />
+    </Wrapper>
   );
 }

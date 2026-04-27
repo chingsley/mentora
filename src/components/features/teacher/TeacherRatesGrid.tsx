@@ -2,7 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import {
   clearRateAction,
   saveRateAction,
@@ -33,6 +38,150 @@ export interface TeacherRatesGridProps {
   regions: RateRegion[];
   rates: RateCell[];
 }
+
+const Empty = styled.p`
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: ${COLORS.BACKGROUND};
+  padding: ${SPACING.FOUR};
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Scroll = styled.div`
+  overflow-x: auto;
+`;
+
+const Table = styled.table`
+  width: 100%;
+  min-width: 640px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: ${FONTS.SIZE.SM};
+`;
+
+const StickyTh = styled.th`
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  text-align: left;
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const Th = styled.th`
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  text-align: left;
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const ThStack = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const ThMeta = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.NORMAL};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Row = styled.tr`
+  vertical-align: top;
+`;
+
+const RowHead = styled.th`
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.THREE};
+  text-align: left;
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const Cell = styled.td`
+  border-top: 1px solid ${COLORS.BORDER};
+  padding: ${SPACING.THREE};
+  vertical-align: middle;
+`;
+
+const EditStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+`;
+
+const EditRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${SPACING.TWO};
+`;
+
+const NumberInput = styled.input`
+  height: 2.25rem;
+  width: 7rem;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: 0 ${SPACING.TWO};
+  text-align: right;
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.TEXT};
+`;
+
+const Suffix = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  gap: ${SPACING.TWO};
+`;
+
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const RateButton = styled.button`
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${SPACING.TWO};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px dashed ${COLORS.BORDER};
+  background-color: transparent;
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: rgba(23, 32, 51, 0.3);
+    background-color: rgba(23, 32, 51, 0.03);
+  }
+`;
+
+const RateValue = styled.span`
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const RatePlaceholder = styled.span`
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const RateAction = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
 
 export function TeacherRatesGrid({ subjects, regions, rates }: TeacherRatesGridProps) {
   const router = useRouter();
@@ -88,58 +237,45 @@ export function TeacherRatesGrid({ subjects, regions, rates }: TeacherRatesGridP
 
   if (subjects.length === 0) {
     return (
-      <p className="rounded-md bg-background p-4 text-sm text-muted-foreground">
+      <Empty>
         Pick your subjects above first — you&apos;ll then be able to set a
         per-subject hourly rate for each region.
-      </p>
+      </Empty>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] border-separate border-spacing-0 text-sm">
+    <Scroll>
+      <Table>
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 bg-foreground px-3 py-2 text-left font-medium text-header">
-              Subject
-            </th>
+            <StickyTh>Subject</StickyTh>
             {regions.map((r) => (
-              <th
-                key={r.code}
-                className="px-3 py-2 text-left font-medium text-header"
-              >
-                <div className="flex flex-col">
+              <Th key={r.code}>
+                <ThStack>
                   <span>{r.name}</span>
-                  <span className="text-xs font-normal text-muted-foreground">
+                  <ThMeta>
                     {r.currency} &middot; min {r.minMajor}
-                  </span>
-                </div>
-              </th>
+                  </ThMeta>
+                </ThStack>
+              </Th>
             ))}
           </tr>
         </thead>
         <tbody>
           {subjects.map((s) => (
-            <tr key={s.id} className="align-top">
-              <th
-                scope="row"
-                className="sticky left-0 z-10 bg-foreground px-3 py-3 text-left text-sm font-medium text-header"
-              >
-                {s.name}
-              </th>
+            <Row key={s.id}>
+              <RowHead scope="row">{s.name}</RowHead>
               {regions.map((r) => {
                 const cellKey = key(s.id, r.code);
                 const current = rateMap.get(cellKey);
                 const isEditing = editing === cellKey;
                 return (
-                  <td
-                    key={r.code}
-                    className="border-t border-border px-3 py-3 align-middle"
-                  >
+                  <Cell key={r.code}>
                     {isEditing ? (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                          <input
+                      <EditStack>
+                        <EditRow>
+                          <NumberInput
                             type="number"
                             inputMode="decimal"
                             min={0}
@@ -147,12 +283,11 @@ export function TeacherRatesGrid({ subjects, regions, rates }: TeacherRatesGridP
                             value={value}
                             onChange={(e) => setValue(e.target.value)}
                             placeholder={`${r.minMajor}`}
-                            className="h-9 w-28 rounded-md border border-border bg-foreground px-2 text-right text-sm"
                             autoFocus
                           />
-                          <span className="text-xs text-muted-foreground">{r.currency}/hr</span>
-                        </div>
-                        <div className="flex gap-2">
+                          <Suffix>{r.currency}/hr</Suffix>
+                        </EditRow>
+                        <ButtonRow>
                           <Button
                             type="button"
                             size="sm"
@@ -179,34 +314,30 @@ export function TeacherRatesGrid({ subjects, regions, rates }: TeacherRatesGridP
                               Remove
                             </Button>
                           ) : null}
-                        </div>
-                        {error ? <p className="text-xs text-destructive">{error}</p> : null}
-                      </div>
+                        </ButtonRow>
+                        {error ? <ErrorText>{error}</ErrorText> : null}
+                      </EditStack>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => startEdit(s.id, r.code)}
-                        className="flex w-full items-center justify-between gap-2 rounded-md border border-dashed border-border px-3 py-2 text-left transition-colors hover:border-header/30 hover:bg-header/[0.03]"
-                      >
+                      <RateButton type="button" onClick={() => startEdit(s.id, r.code)}>
                         {current !== undefined ? (
-                          <span className="font-medium text-header">
+                          <RateValue>
                             {current} {r.currency}/hr
-                          </span>
+                          </RateValue>
                         ) : (
-                          <span className="text-muted-foreground">Set rate</span>
+                          <RatePlaceholder>Set rate</RatePlaceholder>
                         )}
-                        <span aria-hidden className="text-xs text-muted-foreground">
+                        <RateAction aria-hidden>
                           {current !== undefined ? "Edit" : "+"}
-                        </span>
-                      </button>
+                        </RateAction>
+                      </RateButton>
                     )}
-                  </td>
+                  </Cell>
                 );
               })}
-            </tr>
+            </Row>
           ))}
         </tbody>
-      </table>
-    </div>
+      </Table>
+    </Scroll>
   );
 }

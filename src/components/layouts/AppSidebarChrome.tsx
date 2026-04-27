@@ -3,10 +3,173 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
+import styled from "styled-components";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import type { AppNavItem } from "./appNavConfig";
 import { AppNavIcon } from "./AppNavIcon";
 import { SignOutButton } from "./SignOutButton";
 import { WardSelector, type WardOption } from "./WardSelector";
+
+const Shell = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+`;
+
+const Brand = styled.div<{ $collapsed: boolean }>`
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: ${(p) => (p.$collapsed ? "center" : "flex-start")};
+  padding: ${(p) => (p.$collapsed ? `${SPACING.FOUR} ${SPACING.TWO}` : `${SPACING.FOUR}`)};
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const BrandLink = styled(Link)<{ $collapsed: boolean }>`
+  display: ${(p) => (p.$collapsed ? "flex" : "inline")};
+  align-items: center;
+  justify-content: center;
+  ${(p) =>
+    p.$collapsed
+      ? `width: 2.25rem; height: 2.25rem; border-radius: ${LAYOUT.RADIUS.MD}; font-size: ${FONTS.SIZE.LG};`
+      : `font-size: ${FONTS.SIZE.LG};`}
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  letter-spacing: -0.01em;
+  color: white;
+  outline: none;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const Nav = styled.nav`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: ${SPACING.FOUR} ${SPACING.TWO};
+`;
+
+const NavList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+`;
+
+const NavItemLink = styled(Link)<{ $collapsed: boolean; $active: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: ${SPACING.THREE};
+  padding: ${SPACING.TWO} ${(p) => (p.$collapsed ? SPACING.TWO : SPACING.THREE)};
+  justify-content: ${(p) => (p.$collapsed ? "center" : "flex-start")};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${(p) => (p.$active ? FONTS.WEIGHT.MEDIUM : FONTS.WEIGHT.NORMAL)};
+  color: white;
+  outline: none;
+  background-color: ${(p) => (p.$active ? "rgba(255, 255, 255, 0.15)" : "transparent")};
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const NavLabel = styled.span`
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const SrOnly = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+`;
+
+const Footer = styled.div`
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: ${SPACING.TWO};
+`;
+
+const CollapseToggle = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${SPACING.TWO};
+  width: 100%;
+  padding: ${SPACING.TWO};
+  margin-bottom: ${SPACING.TWO};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: ${FONTS.SIZE.SM};
+  outline: none;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const ToggleSvg = styled.svg`
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+`;
+
+const UserPanel = styled.div<{ $collapsed: boolean }>`
+  display: ${(p) => (p.$collapsed ? "flex" : "block")};
+  flex-direction: column;
+  align-items: center;
+  gap: ${SPACING.TWO};
+  padding: ${SPACING.TWO};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: rgba(255, 255, 255, 0.05);
+  font-size: ${FONTS.SIZE.XS};
+  color: rgba(255, 255, 255, 0.8);
+`;
+
+const UserMeta = styled.p`
+  margin-bottom: ${SPACING.TWO};
+  word-break: break-word;
+`;
+
+const UserName = styled.span`
+  display: block;
+  color: white;
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+`;
+
+const UserRole = styled.span`
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.7);
+`;
 
 function isNavActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
@@ -23,30 +186,28 @@ function NavLinks({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
-  const pathname = usePathname();
-
+  const pathname = usePathname() ?? "";
   return (
-    <ul className="flex flex-col gap-0.5">
+    <NavList>
       {items.map((item) => {
         const active = isNavActive(pathname, item.href);
         return (
           <li key={item.href}>
-            <Link
+            <NavItemLink
               href={item.href}
               onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-md py-2 text-sm outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40 motion-reduce:transition-none ${
-                collapsed ? "justify-center px-2" : "px-3"
-              } ${active ? "bg-white/15 font-medium" : ""}`}
+              $collapsed={collapsed}
+              $active={active}
               title={collapsed ? item.label : undefined}
             >
               <AppNavIcon name={item.icon} />
-              {!collapsed ? <span className="min-w-0 truncate">{item.label}</span> : null}
-              {collapsed ? <span className="sr-only">{item.label}</span> : null}
-            </Link>
+              {!collapsed ? <NavLabel>{item.label}</NavLabel> : null}
+              {collapsed ? <SrOnly>{item.label}</SrOnly> : null}
+            </NavItemLink>
           </li>
         );
       })}
-    </ul>
+    </NavList>
   );
 }
 
@@ -70,77 +231,55 @@ export function AppSidebarChrome({
   wards,
 }: AppSidebarChromeProps) {
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div
-        className={`flex shrink-0 items-center border-b border-white/10 py-4 ${
-          navCollapsed ? "justify-center px-2" : "px-4"
-        }`}
-      >
-        <Link
-          href="/dashboard"
-          onClick={onNavigate}
-          className={`font-semibold tracking-tight text-white outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-white/40 ${
-            navCollapsed ? "flex h-9 w-9 items-center justify-center rounded-md text-lg" : "text-lg"
-          }`}
-          title="Mentora home"
-        >
+    <Shell>
+      <Brand $collapsed={navCollapsed}>
+        <BrandLink href="/dashboard" onClick={onNavigate} $collapsed={navCollapsed} title="Mentora home">
           {navCollapsed ? "M" : "Mentora"}
-        </Link>
-      </div>
+        </BrandLink>
+      </Brand>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-4" aria-label="Main">
+      <Nav aria-label="Main">
         <NavLinks items={items} collapsed={navCollapsed} onNavigate={onNavigate} />
-      </nav>
+      </Nav>
 
       {user.role === "GUARDIAN" && wards && wards.length > 0 ? (
         <WardSelector wards={wards} collapsed={navCollapsed} />
       ) : null}
 
-      <div className="shrink-0 border-t border-white/10 p-2">
+      <Footer>
         {showCollapseToggle ? (
-          <button
+          <CollapseToggle
             type="button"
             onClick={onToggleCollapse}
-            className="mb-2 flex w-full items-center justify-center gap-2 rounded-md py-2 text-sm text-white/90 outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40 motion-reduce:transition-none"
             aria-expanded={!navCollapsed}
             aria-label={navCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={navCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <svg
-              className="h-5 w-5 shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              aria-hidden
-            >
+            <ToggleSvg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
               {navCollapsed ? (
                 <path strokeWidth="2" strokeLinecap="round" d="M9 5l7 7-7 7" />
               ) : (
                 <path strokeWidth="2" strokeLinecap="round" d="M15 5l-7 7 7 7" />
               )}
-            </svg>
+            </ToggleSvg>
             {!navCollapsed ? <span>Collapse</span> : null}
-          </button>
+          </CollapseToggle>
         ) : null}
 
-        <div
-          className={`rounded-md bg-white/5 px-2 py-2 text-xs text-white/80 ${
-            navCollapsed ? "flex flex-col items-center gap-2" : ""
-          }`}
-        >
+        <UserPanel $collapsed={navCollapsed}>
           {!navCollapsed ? (
-            <p className="mb-2 break-words">
-              <span className="block font-medium text-white">{user.name ?? user.email}</span>
-              <span className="uppercase tracking-wide text-white/70">{user.role}</span>
-            </p>
+            <UserMeta>
+              <UserName>{user.name ?? user.email}</UserName>
+              <UserRole>{user.role}</UserRole>
+            </UserMeta>
           ) : (
-            <span className="sr-only">
+            <SrOnly>
               {user.name ?? user.email} · {user.role}
-            </span>
+            </SrOnly>
           )}
           <SignOutButton compact={navCollapsed} />
-        </div>
-      </div>
-    </div>
+        </UserPanel>
+      </Footer>
+    </Shell>
   );
 }

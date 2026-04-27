@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import "@/styles/globals.css";
+import { StyledComponentsRegistry } from "@/lib/registry";
+import { GlobalStyles } from "@/styles/GlobalStyles";
 
 export const metadata: Metadata = {
   title: {
@@ -21,7 +22,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="min-h-dvh bg-background text-text">{children}</body>
+      <body>
+        <StyledComponentsRegistry>
+          <GlobalStyles />
+          {children}
+        </StyledComponentsRegistry>
+      </body>
     </html>
   );
 }

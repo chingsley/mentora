@@ -2,6 +2,45 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import styled, { css } from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
+
+const Nav = styled.nav`
+  display: inline-flex;
+  align-self: flex-start;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: 0.125rem;
+`;
+
+const NavLink = styled(Link)<{ $active: boolean }>`
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  border-radius: ${LAYOUT.RADIUS.SM};
+  padding: 0 ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  ${(p) =>
+    p.$active
+      ? css`
+          background-color: ${COLORS.HEADER};
+          color: ${COLORS.WHITE};
+        `
+      : css`
+          color: ${COLORS.HEADER};
+          &:hover {
+            background-color: rgba(23, 32, 51, 0.06);
+          }
+        `}
+`;
 
 export interface WardSubNavProps {
   studentId: string;
@@ -16,31 +55,27 @@ export function WardSubNav({ studentId }: WardSubNavProps) {
   ];
 
   return (
-    <nav
-      aria-label="Ward sections"
-      className="inline-flex self-start rounded-md border border-border bg-foreground p-0.5"
-    >
-      {items.map((item) => {
-        const active = isActive(pathname, item.href, base);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`h-8 rounded-sm px-3 text-xs font-medium transition-colors ${
-              active ? "bg-header text-white" : "text-header hover:bg-header/[0.06]"
-            }`}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
-    </nav>
+    <Nav aria-label="Ward sections">
+      {items.map((item) => (
+        <NavLink
+          key={item.href}
+          href={item.href}
+          $active={isActive(pathname, item.href, base)}
+        >
+          {item.label}
+        </NavLink>
+      ))}
+    </Nav>
   );
 }
 
 function isActive(pathname: string, href: string, base: string): boolean {
   if (href === base) {
-    return pathname === base || pathname.startsWith(`${base}/classes`) || pathname.startsWith(`${base}/teachers`);
+    return (
+      pathname === base ||
+      pathname.startsWith(`${base}/classes`) ||
+      pathname.startsWith(`${base}/teachers`)
+    );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }

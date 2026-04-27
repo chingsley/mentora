@@ -2,6 +2,11 @@
 
 import type { DayOfWeek } from "@prisma/client";
 import * as React from "react";
+import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, DAY_ORDER, minutesToTime } from "@/lib/time";
 import { ClassTile } from "./ClassTile";
 import type { CalendarEntry } from "./types";
@@ -14,12 +19,142 @@ export interface WeekGridProps {
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
 }
 
-export function WeekGrid({
-  entries,
-  anchorDate,
-  onEntryClick,
-  onEmptySlotClick,
-}: WeekGridProps) {
+const DesktopOnly = styled.div`
+  display: none;
+
+  ${LAYOUT.MEDIA.MD} {
+    display: block;
+  }
+`;
+
+const MobileOnly = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.THREE};
+
+  ${LAYOUT.MEDIA.MD} {
+    display: none;
+  }
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 5rem repeat(7, minmax(0, 1fr));
+`;
+
+const TopLeftCell = styled.div`
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: ${COLORS.FOREGROUND};
+`;
+
+const HeaderCell = styled.div`
+  border-bottom: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.TWO};
+  text-align: center;
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const HeaderDate = styled.span`
+  display: block;
+  font-size: 0.625rem;
+  font-weight: ${FONTS.WEIGHT.NORMAL};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const TimeColumn = styled.div`
+  position: relative;
+  height: ${SLOTS * SLOT_PX}px;
+  border-top: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+`;
+
+const TimeLabel = styled.div`
+  position: absolute;
+  right: ${SPACING.TWO};
+  transform: translateY(-50%);
+  font-size: 0.625rem;
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const Column = styled.div<{ $clickable: boolean }>`
+  position: relative;
+  height: ${SLOTS * SLOT_PX}px;
+  border-top: 1px solid ${COLORS.BORDER};
+  border-left: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  cursor: ${(p) => (p.$clickable ? "cell" : "default")};
+`;
+
+const HourLine = styled.div`
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  border-top: 1px dashed rgba(226, 232, 240, 0.6);
+`;
+
+const Tile = styled.div`
+  position: absolute;
+  left: ${SPACING.ONE};
+  right: ${SPACING.ONE};
+
+  & > button {
+    height: 100%;
+    width: 100%;
+  }
+`;
+
+const Section = styled.section`
+  border: 1px solid ${COLORS.BORDER};
+  border-radius: ${LAYOUT.RADIUS.LG};
+  background-color: ${COLORS.FOREGROUND};
+  overflow: hidden;
+`;
+
+const SectionHeader = styled.header`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid ${COLORS.BORDER};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+`;
+
+const SectionTitle = styled.h3`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+`;
+
+const SectionDate = styled.span`
+  margin-left: ${SPACING.ONE};
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const SectionEmpty = styled.p`
+  padding: ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const SectionList = styled.ul`
+  display: flex;
+  flex-direction: column;
+
+  & > li {
+    padding: ${SPACING.TWO};
+  }
+
+  & > li + li {
+    border-top: 1px solid ${COLORS.BORDER};
+  }
+`;
+
+export function WeekGrid({ entries, anchorDate, onEntryClick, onEmptySlotClick }: WeekGridProps) {
   const byDay = React.useMemo(() => groupByDay(entries), [entries]);
   const weekStart = startOfISOWeek(anchorDate);
 
@@ -32,38 +167,23 @@ export function WeekGrid({
 
   return (
     <div>
-      <div className="hidden md:block">
-        <div
-          className="grid"
-          style={{ gridTemplateColumns: "5rem repeat(7, minmax(0, 1fr))" }}
-        >
-          <div aria-hidden className="sticky left-0 z-10 bg-foreground" />
+      <DesktopOnly>
+        <Grid>
+          <TopLeftCell aria-hidden />
           {DAY_ORDER.map((d) => (
-            <div
-              key={d}
-              className="border-b border-border bg-foreground px-2 py-2 text-center text-xs font-semibold text-header"
-            >
-              <span className="block">{DAY_LABEL[d].slice(0, 3)}</span>
-              <span className="block text-[10px] font-normal text-muted-foreground">
-                {dateByDay[d].getDate()}
-              </span>
-            </div>
+            <HeaderCell key={d}>
+              <span>{DAY_LABEL[d].slice(0, 3)}</span>
+              <HeaderDate>{dateByDay[d].getDate()}</HeaderDate>
+            </HeaderCell>
           ))}
 
-          <div
-            className="relative border-t border-border bg-foreground"
-            style={{ height: SLOTS * SLOT_PX }}
-          >
+          <TimeColumn>
             {Array.from({ length: HOURS + 1 }).map((_, i) => (
-              <div
-                key={i}
-                className="absolute right-2 -translate-y-1/2 text-[10px] text-muted-foreground"
-                style={{ top: i * (SLOT_PX * (60 / SLOT_MINUTES)) }}
-              >
+              <TimeLabel key={i} style={{ top: i * (SLOT_PX * (60 / SLOT_MINUTES)) }}>
                 {minutesToTime((START_HOUR + i) * 60)}
-              </div>
+              </TimeLabel>
             ))}
-          </div>
+          </TimeColumn>
 
           {DAY_ORDER.map((d) => (
             <DayColumn
@@ -75,34 +195,35 @@ export function WeekGrid({
               onEmptySlotClick={onEmptySlotClick}
             />
           ))}
-        </div>
-      </div>
+        </Grid>
+      </DesktopOnly>
 
-      <div className="flex flex-col gap-3 md:hidden">
+      <MobileOnly>
         {DAY_ORDER.map((d) => {
           const list = byDay.get(d) ?? [];
           return (
-            <section key={d} className="rounded-lg border border-border bg-foreground">
-              <header className="flex items-center justify-between border-b border-border px-3 py-2">
-                <h3 className="text-sm font-semibold text-header">
-                  {DAY_LABEL[d]} <span className="ml-1 text-xs text-muted-foreground">{dateByDay[d].getDate()}</span>
-                </h3>
-              </header>
+            <Section key={d}>
+              <SectionHeader>
+                <SectionTitle>
+                  {DAY_LABEL[d]}
+                  <SectionDate>{dateByDay[d].getDate()}</SectionDate>
+                </SectionTitle>
+              </SectionHeader>
               {list.length === 0 ? (
-                <p className="px-3 py-3 text-sm text-muted-foreground">No classes.</p>
+                <SectionEmpty>No classes.</SectionEmpty>
               ) : (
-                <ul className="divide-y divide-border">
+                <SectionList>
                   {list.map((entry) => (
-                    <li key={entry.id} className="p-2">
+                    <li key={entry.id}>
                       <ClassTile entry={entry} onClick={onEntryClick} variant="pill" />
                     </li>
                   ))}
-                </ul>
+                </SectionList>
               )}
-            </section>
+            </Section>
           );
         })}
-      </div>
+      </MobileOnly>
     </div>
   );
 }
@@ -134,34 +255,24 @@ function DayColumn({
   }
 
   return (
-    <div
-      className={`relative border-t border-l border-border bg-foreground ${onEmptySlotClick ? "cursor-cell" : ""}`}
-      style={{ height: SLOTS * SLOT_PX }}
+    <Column
+      $clickable={!!onEmptySlotClick}
       onClick={onColumnClick}
       role={onEmptySlotClick ? "button" : undefined}
       aria-label={onEmptySlotClick ? `Add period on ${day}` : undefined}
     >
       {Array.from({ length: HOURS }).map((_, i) => (
-        <div
-          key={i}
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 border-t border-dashed border-border/60"
-          style={{ top: (i + 1) * (SLOT_PX * (60 / SLOT_MINUTES)) }}
-        />
+        <HourLine key={i} aria-hidden style={{ top: (i + 1) * (SLOT_PX * (60 / SLOT_MINUTES)) }} />
       ))}
       {entries.map((entry) => {
         const { top, height } = tileGeometry(entry.startMinutes, entry.endMinutes);
         return (
-          <div
-            key={entry.id}
-            className="absolute left-1 right-1"
-            style={{ top, height }}
-          >
-            <ClassTile entry={entry} onClick={onEntryClick} className="h-full w-full" />
-          </div>
+          <Tile key={entry.id} style={{ top, height }}>
+            <ClassTile entry={entry} onClick={onEntryClick} />
+          </Tile>
         );
       })}
-    </div>
+    </Column>
   );
 }
 

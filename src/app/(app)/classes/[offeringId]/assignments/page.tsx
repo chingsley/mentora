@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { requireSession } from "@/lib/auth";
@@ -10,8 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
 import { listAssignmentsForOffering } from "@/server/assignments";
 import { NewAssignmentForm } from "./NewAssignmentForm";
+import { AssignmentList } from "./AssignmentList";
+import { AssignmentsHeading } from "./AssignmentsHeading";
 
 export const metadata: Metadata = { title: "Assignments" };
 
@@ -52,20 +54,15 @@ export default async function OfferingAssignmentsPage({ params }: PageProps) {
   const assignments = await listAssignmentsForOffering(offering.id);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold text-header sm:text-3xl">
-            Assignments
-          </h1>
-          <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
-            {offering.subject.name}
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground">
+    <PageWrap>
+      <PageHeader>
+        <AssignmentsHeading subjectName={offering.subject.name}>
+          <PageTitle>Assignments</PageTitle>
+        </AssignmentsHeading>
+        <Muted>
           {offering.title} · taught by {offering.teacherProfile.user.name}
-        </p>
-      </div>
+        </Muted>
+      </PageHeader>
 
       {isTeacher ? (
         <Card>
@@ -91,36 +88,24 @@ export default async function OfferingAssignmentsPage({ params }: PageProps) {
         </CardHeader>
         <CardContent>
           {assignments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No assignments yet.</p>
+            <Muted>No assignments yet.</Muted>
           ) : (
-            <ul className="flex flex-col divide-y divide-border">
-              {assignments.map((a) => {
-                const submissionsCount = a.submissions.length;
-                return (
-                  <li key={a.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/classes/${offering.id}/assignments/${a.id}`}
-                        className="font-medium text-header hover:underline"
-                      >
-                        {a.title}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">
-                        Due {a.dueAt.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
-                      </p>
-                    </div>
-                    {isTeacher ? (
-                      <span className="text-xs text-muted-foreground">
-                        {submissionsCount} submission{submissionsCount === 1 ? "" : "s"}
-                      </span>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
+            <AssignmentList
+              offeringId={offering.id}
+              showCounts={isTeacher}
+              items={assignments.map((a) => ({
+                id: a.id,
+                title: a.title,
+                dueAt: a.dueAt.toLocaleString(undefined, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                }),
+                submissionsCount: a.submissions.length,
+              }))}
+            />
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageWrap>
   );
 }

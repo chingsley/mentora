@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
+  compiler: {
+    // Enables SSR + className minification for styled-components.
+    styledComponents: true,
+  },
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },

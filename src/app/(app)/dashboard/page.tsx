@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { requireSession } from "@/lib/auth";
 import {
@@ -8,11 +7,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+import { PrimaryLink, TextLink } from "@/components/ui/Link";
+import {
+  Grid,
+  Muted,
+  PageHeader,
+  PageTitle,
+  PageWrap,
+  Stack,
+  Strong,
+} from "@/components/ui/primitives";
 import { listStudentEnrollments } from "@/server/enrollments";
 import { getMyTeacherProfile, listTeacherOfferings } from "@/server/teachers";
 import { listLinkedStudents } from "@/server/guardians";
 import { getPolicy } from "@/server/policies";
 import { NotificationPermissionBanner } from "@/components/features/student/NotificationPermissionBanner";
+import { GuardianWardCard, GuardianWardGrid } from "./GuardianWardCard";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -21,62 +31,54 @@ export default async function DashboardPage() {
   const { role, id: userId, name } = session.user;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-header sm:text-3xl">
-          Welcome{name ? `, ${name.split(" ")[0]}` : ""}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          You&apos;re signed in as <span className="font-medium">{role.toLowerCase()}</span>.
-        </p>
-      </div>
+    <PageWrap>
+      <PageHeader>
+        <PageTitle>Welcome{name ? `, ${name.split(" ")[0]}` : ""}</PageTitle>
+        <Muted>
+          You&apos;re signed in as <Strong>{role.toLowerCase()}</Strong>.
+        </Muted>
+      </PageHeader>
 
       {role === "STUDENT" ? <StudentDash userId={userId} /> : null}
       {role === "TEACHER" ? <TeacherDash userId={userId} /> : null}
       {role === "GUARDIAN" ? <GuardianDash userId={userId} /> : null}
       {role === "ADMIN" ? <AdminDash /> : null}
-    </div>
+    </PageWrap>
   );
 }
 
 async function StudentDash({ userId }: { userId: string }) {
   const enrollments = await listStudentEnrollments(userId);
   return (
-    <div className="flex flex-col gap-4">
+    <Stack $gap="FOUR">
       <NotificationPermissionBanner />
-      <div className="grid gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>Find a teacher</CardTitle>
-          <CardDescription>
-            Search by subject, price, and region to find the right fit.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link
-            href="/teachers"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-header px-4 text-sm font-medium text-white hover:bg-header/90"
-          >
-            Browse teachers
-          </Link>
-        </CardContent>
-      </Card>
+      <Grid $gap="FOUR" $mdCols={2}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Find a teacher</CardTitle>
+            <CardDescription>
+              Search by subject, price, and region to find the right fit.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PrimaryLink href="/teachers">Browse teachers</PrimaryLink>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Your active classes</CardTitle>
-          <CardDescription>
-            You are enrolled in {enrollments.length} period{enrollments.length === 1 ? "" : "s"}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/classes" className="text-sm font-medium text-header hover:underline">
-            View my classes →
-          </Link>
-        </CardContent>
-      </Card>
-      </div>
-    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Your active classes</CardTitle>
+            <CardDescription>
+              You are enrolled in {enrollments.length} period
+              {enrollments.length === 1 ? "" : "s"}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TextLink href="/classes">View my classes →</TextLink>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Stack>
   );
 }
 
@@ -88,7 +90,7 @@ async function TeacherDash({ userId }: { userId: string }) {
   const profile = data?.profile ?? null;
   const activeStudents = data?.activeStudentCount ?? 0;
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <Grid $gap="FOUR" $mdCols={2}>
       <Card>
         <CardHeader>
           <CardTitle>My teacher profile</CardTitle>
@@ -99,12 +101,9 @@ async function TeacherDash({ userId }: { userId: string }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Link
-            href="/profile"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-header px-4 text-sm font-medium text-white hover:bg-header/90"
-          >
+          <PrimaryLink href="/profile">
             {profile?.profileCompleted ? "View my profile" : "Complete profile"}
-          </Link>
+          </PrimaryLink>
         </CardContent>
       </Card>
       <Card>
@@ -116,70 +115,54 @@ async function TeacherDash({ userId }: { userId: string }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Link
-            href="/schedule"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-header px-4 text-sm font-medium text-white hover:bg-header/90"
-          >
-            Manage schedule
-          </Link>
+          <PrimaryLink href="/schedule">Manage schedule</PrimaryLink>
         </CardContent>
       </Card>
-    </div>
+    </Grid>
   );
 }
 
 async function GuardianDash({ userId }: { userId: string }) {
   const links = await listLinkedStudents(userId);
   return (
-    <div className="flex flex-col gap-4">
+    <Stack $gap="FOUR">
       <NotificationPermissionBanner />
       <Card>
         <CardHeader>
           <CardTitle>My wards</CardTitle>
           <CardDescription>
-            You have read-only access to {links.length} student record{links.length === 1 ? "" : "s"}.
+            You have read-only access to {links.length} student record
+            {links.length === 1 ? "" : "s"}.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {links.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <Muted>
               A student needs to invite you. Ask them to send you an invite code from their
               guardians page.
-            </p>
+            </Muted>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2">
+            <GuardianWardGrid>
               {links.map((l) => (
-                <li
+                <GuardianWardCard
                   key={l.id}
-                  className="flex flex-col gap-2 rounded-md border border-border bg-foreground p-3"
-                >
-                  <div>
-                    <p className="font-medium text-header">{l.studentProfile.user.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {l.studentProfile.enrollments.length} active class
-                      {l.studentProfile.enrollments.length === 1 ? "" : "es"}
-                    </p>
-                  </div>
-                  <Link
-                    href={`/guardian/w/${l.studentProfile.id}`}
-                    className="inline-flex h-9 items-center justify-center rounded-md bg-header px-3 text-xs font-medium text-white hover:bg-header/90"
-                  >
-                    View profile
-                  </Link>
-                </li>
+                  studentProfileId={l.studentProfile.id}
+                  studentName={l.studentProfile.user.name}
+                  enrollmentCount={l.studentProfile.enrollments.length}
+                />
               ))}
-            </ul>
+            </GuardianWardGrid>
           )}
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
 async function AdminDash() {
   const policy = await getPolicy();
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <Grid $gap="FOUR" $mdCols={2}>
       <Card>
         <CardHeader>
           <CardTitle>Platform policy</CardTitle>
@@ -188,9 +171,7 @@ async function AdminDash() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Link href="/admin/policies" className="text-sm font-medium text-header hover:underline">
-            Manage policies →
-          </Link>
+          <TextLink href="/admin/policies">Manage policies →</TextLink>
         </CardContent>
       </Card>
       <Card>
@@ -199,11 +180,9 @@ async function AdminDash() {
           <CardDescription>View and manage accounts on the platform.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Link href="/admin/users" className="text-sm font-medium text-header hover:underline">
-            View users →
-          </Link>
+          <TextLink href="/admin/users">View users →</TextLink>
         </CardContent>
       </Card>
-    </div>
+    </Grid>
   );
 }

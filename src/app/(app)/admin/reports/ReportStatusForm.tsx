@@ -2,8 +2,24 @@
 
 import type { ReportStatus } from "@prisma/client";
 import * as React from "react";
+import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { updateReportStatusAction } from "./actions";
+
+const Wrap = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${SPACING.TWO};
+`;
+
+const Label = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
 
 export interface ReportStatusFormProps {
   reportId: string;
@@ -25,8 +41,8 @@ export function ReportStatusForm({ reportId, currentStatus }: ReportStatusFormPr
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs text-muted-foreground">Set status:</span>
+    <Wrap>
+      <Label>Set status:</Label>
       {(["OPEN", "REVIEWED", "DISMISSED"] as const).map((s) => (
         <Button
           key={s}
@@ -39,6 +55,6 @@ export function ReportStatusForm({ reportId, currentStatus }: ReportStatusFormPr
           {s[0] + s.slice(1).toLowerCase()}
         </Button>
       ))}
-    </div>
+    </Wrap>
   );
 }

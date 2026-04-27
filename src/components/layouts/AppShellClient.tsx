@@ -4,6 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
 import * as React from "react";
+import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
+import { SPACING } from "@/constants/spacing.constants";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { APP_NAV } from "./appNavConfig";
 import { AppSidebarChrome } from "./AppSidebarChrome";
@@ -13,10 +18,163 @@ const STORAGE_KEY = "mentora-sidebar-collapsed";
 const LG = "(min-width: 1024px)";
 
 export interface AppShellClientProps {
-  user: { name?: string | null; email?: string | null; role: Role };
+  user: { name?: string | null; email?: string | null; role: Role; };
   wards?: WardOption[];
   children: React.ReactNode;
 }
+
+const Root = styled.div`
+  display: flex;
+  min-height: 100dvh;
+  background-color: ${COLORS.BACKGROUND};
+`;
+
+const Sidebar = styled.aside<{ $open: boolean; $collapsed: boolean; }>`
+  position: fixed;
+  inset-block: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: min(100%, 18rem);
+  background-color: ${COLORS.HEADER};
+  color: white;
+  box-shadow: ${LAYOUT.SHADOW.XL};
+  transform: translateX(${(p) => (p.$open ? "0" : "-100%")});
+  transition: transform 0.2s ease-out;
+
+  ${LAYOUT.MEDIA.REDUCED_MOTION} {
+    transition: none;
+  }
+
+  ${LAYOUT.MEDIA.LG} {
+    position: relative;
+    z-index: 0;
+    height: auto;
+    min-height: 100dvh;
+    max-width: none;
+    transform: none;
+    box-shadow: none;
+    width: ${(p) => (p.$collapsed ? LAYOUT.SIDEBAR_WIDTH_COLLAPSED : LAYOUT.SIDEBAR_WIDTH)};
+    transition: width 0.2s ease-out;
+  }
+`;
+
+const MobileBackdrop = styled.button`
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: none;
+
+  ${LAYOUT.MEDIA.LG} {
+    display: none;
+  }
+`;
+
+const Body = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+`;
+
+const MobileHeader = styled.header`
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${SPACING.THREE};
+  height: 3.5rem;
+  flex-shrink: 0;
+  padding: 0 ${SPACING.THREE};
+  background-color: ${COLORS.HEADER};
+  color: white;
+  border-bottom: 1px solid ${COLORS.BORDER};
+
+  ${LAYOUT.MEDIA.SM} {
+    padding: 0 ${SPACING.FOUR};
+  }
+
+  ${LAYOUT.MEDIA.LG} {
+    display: none;
+  }
+`;
+
+const MobileMenuButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background: transparent;
+  color: inherit;
+  outline: none;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const MobileLogo = styled(Link)`
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: ${FONTS.SIZE.BASE};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: inherit;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const Spacer = styled.div`
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+`;
+
+const SrOnly = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+`;
+
+const HamburgerSvg = styled.svg`
+  width: 1.5rem;
+  height: 1.5rem;
+`;
+
+const Main = styled.main`
+  flex: 1;
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: ${SPACING.SIX} ${SPACING.FOUR};
+
+  ${LAYOUT.MEDIA.SM} {
+    padding: ${SPACING.TEN} ${SPACING.SIX};
+  }
+`;
 
 export function AppShellClient({ user, wards, children }: AppShellClientProps) {
   const items = APP_NAV.filter((i) => i.roles.includes(user.role));
@@ -31,8 +189,8 @@ export function AppShellClient({ user, wards, children }: AppShellClientProps) {
     void Promise.resolve().then(() => {
       try {
         if (localStorage.getItem(STORAGE_KEY) === "1") setCollapsed(true);
-      } catch {
-        /* ignore */
+      } catch (error) {
+        console.error(error);
       }
     });
   }, []);
@@ -41,8 +199,8 @@ export function AppShellClient({ user, wards, children }: AppShellClientProps) {
     void Promise.resolve().then(() => {
       try {
         localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
-      } catch {
-        /* ignore */
+      } catch (error) {
+        console.error(error);
       }
     });
   }, [collapsed]);
@@ -73,14 +231,11 @@ export function AppShellClient({ user, wards, children }: AppShellClientProps) {
   const closeMobile = React.useCallback(() => setMobileOpen(false), []);
 
   return (
-    <div className="flex min-h-dvh bg-background">
-      <aside
+    <Root>
+      <Sidebar
         id="app-mobile-sidebar"
-        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(100%,18rem)] flex-col bg-header text-white shadow-xl motion-reduce:transition-none ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-200 ease-out lg:relative lg:z-0 lg:h-auto lg:min-h-dvh lg:max-w-none lg:translate-x-0 lg:shadow-none lg:transition-[width] motion-reduce:lg:transition-none ${
-          navCollapsed ? "lg:w-16" : "lg:w-60"
-        }`}
+        $open={mobileOpen}
+        $collapsed={navCollapsed}
         aria-label="Sidebar"
       >
         <AppSidebarChrome
@@ -92,50 +247,37 @@ export function AppShellClient({ user, wards, children }: AppShellClientProps) {
           user={user}
           wards={wards}
         />
-      </aside>
+      </Sidebar>
 
       {mobileOpen ? (
-        <button
-          type="button"
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          aria-label="Close menu"
-          onClick={closeMobile}
-        />
+        <MobileBackdrop type="button" aria-label="Close menu" onClick={closeMobile} />
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-header px-3 text-white sm:px-4 lg:hidden">
-          <button
+      <Body>
+        <MobileHeader>
+          <MobileMenuButton
             ref={openButtonRef}
             type="button"
             tabIndex={isLg ? -1 : 0}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
             aria-expanded={mobileOpen}
             aria-controls="app-mobile-sidebar"
             onClick={() => setMobileOpen((o) => !o)}
           >
-            <span className="sr-only">{mobileOpen ? "Close menu" : "Open menu"}</span>
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+            <SrOnly>{mobileOpen ? "Close menu" : "Open menu"}</SrOnly>
+            <HamburgerSvg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
               {mobileOpen ? (
                 <path strokeWidth="2" strokeLinecap="round" d="M6 6l12 12M6 18L18 6" />
               ) : (
                 <path strokeWidth="2" strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
               )}
-            </svg>
-          </button>
-          <Link
-            href="/dashboard"
-            className="min-w-0 truncate text-center text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-          >
-            Mentora
-          </Link>
-          <div className="h-10 w-10 shrink-0" aria-hidden />
-        </header>
+            </HamburgerSvg>
+          </MobileMenuButton>
+          <MobileLogo href="/dashboard">Mentora</MobileLogo>
+          <Spacer aria-hidden />
+        </MobileHeader>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
-          {children}
-        </main>
-      </div>
-    </div>
+        <Main>{children}</Main>
+      </Body>
+    </Root>
   );
 }

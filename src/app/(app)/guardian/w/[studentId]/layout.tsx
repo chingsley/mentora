@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { findGuardianStudent } from "@/server/guardians";
-import { WardSubNav } from "./WardSubNav";
+import { WardLayoutShell } from "./WardLayoutShell";
 
 interface Props {
   children: React.ReactNode;
@@ -14,10 +14,5 @@ export default async function WardLayout({ children, params }: Props) {
   const link = await findGuardianStudent(session.user.id, studentId);
   if (!link) notFound();
 
-  return (
-    <div className="flex flex-col gap-4">
-      <WardSubNav studentId={studentId} />
-      {children}
-    </div>
-  );
+  return <WardLayoutShell studentId={studentId}>{children}</WardLayoutShell>;
 }
