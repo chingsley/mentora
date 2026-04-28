@@ -2,6 +2,7 @@ import "server-only";
 import type { Role } from "@prisma/client";
 import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
+import { splitFullName } from "@/lib/displayName";
 import { generateTeacherDisplayId } from "@/lib/teacherId";
 import { registerSchema, type RegisterInput } from "./schemas/register";
 
@@ -18,12 +19,9 @@ export async function registerUser(input: RegisterInput) {
   const existing = await db.user.findUnique({ where: { email: input.email } });
   if (existing) throw new EmailTakenError();
 
-  const region = input.regionCode
-    ? await db.region.findUnique({ where: { code: input.regionCode } })
-    : null;
-
   const passwordHash = await hashPassword(input.password);
-  const fullName = `${input.firstName} ${input.lastName}`.trim();
+  const fullName = input.name.trim().replace(/\s+/g, " ");
+  const { firstName, lastName } = splitFullName(input.name);
 
   const displayId =
     input.role === "TEACHER" ? await generateTeacherDisplayId() : null;
@@ -31,12 +29,11 @@ export async function registerUser(input: RegisterInput) {
   const user = await db.user.create({
     data: {
       name: fullName,
-      firstName: input.firstName,
-      lastName: input.lastName,
+      firstName,
+      lastName,
       email: input.email,
       passwordHash,
       role: input.role as Role,
-      regionId: region?.id,
       teacherProfile:
         input.role === "TEACHER" && displayId
           ? {

@@ -16,13 +16,11 @@ export type RegisterActionResult =
 
 export async function registerAction(formData: FormData): Promise<RegisterActionResult> {
   const raw = {
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName"),
+    name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
     role: formData.get("role"),
-    regionCode: formData.get("regionCode") || undefined,
   };
 
   const parsed = registerSchema.safeParse(raw);
@@ -71,8 +69,7 @@ export async function guardianRegisterAction(
   formData: FormData,
 ): Promise<RegisterActionResult> {
   const raw = {
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName"),
+    name: formData.get("name"),
     email: formData.get("email"),
     inviteCode: formData.get("inviteCode"),
     password: formData.get("password"),
@@ -112,8 +109,7 @@ export async function guardianRegisterAction(
 
   try {
     await registerUser({
-      firstName: parsed.data.firstName,
-      lastName: parsed.data.lastName,
+      name: parsed.data.name,
       email,
       password: parsed.data.password,
       confirmPassword: parsed.data.confirmPassword,

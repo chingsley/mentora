@@ -32,8 +32,12 @@ cp .env.example .env
 
 pnpm db:push     # apply the Prisma schema to your database
 pnpm db:seed     # seed admin + demo teacher + regions + subjects
-pnpm dev         # start http://localhost:3000
+pnpm dev         # Next.js dev server (default http://localhost:3000)
 ```
+
+The dev and production servers listen on **`PORT`** (default **3000**). Next.js reads **`PORT`** for `pnpm dev` and `pnpm start`.
+
+**Public site URL (one rule for every consumer—client, Auth.js, emails):** if **`NEXT_PUBLIC_APP_URL`** is set, that is the canonical origin. If it is omitted, the canonical origin is **`http://localhost:${PORT}`**. `next.config.ts` writes that value into both **`NEXT_PUBLIC_APP_URL`** and **`AUTH_URL`**, so you configure at most one URL. In production, set **`NEXT_PUBLIC_APP_URL`** to your real HTTPS origin; **`PORT`** is then only the process listen port (often set by the host) and does not need to match the public URL.
 
 Demo accounts created by the seed:
 
@@ -47,9 +51,10 @@ Register a student via `/register?role=STUDENT` to explore the full student → 
 ## Scripts
 
 ```bash
+PORT=4000 pnpm dev   # optional: dev server on port 4000 (default 3000)
 pnpm dev          # Next.js dev server
 pnpm build        # Production build
-pnpm start        # Run production build
+pnpm start        # Run production build (respects PORT)
 pnpm lint         # Lint with Next/ESLint
 pnpm typecheck    # Strict TypeScript check
 pnpm test         # Run Jest tests (capacity, pricing, ...)

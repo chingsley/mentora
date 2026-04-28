@@ -3,21 +3,15 @@ import { isValidInviteCodeShape } from "@/lib/inviteCode";
 
 export const registerSchema = z
   .object({
-    firstName: z
+    name: z
       .string()
       .trim()
-      .min(2, "First name must be at least 2 characters")
-      .max(60, "First name is too long"),
-    lastName: z
-      .string()
-      .trim()
-      .min(2, "Last name must be at least 2 characters")
-      .max(60, "Last name is too long"),
+      .min(2, "Name must be at least 2 characters")
+      .max(120, "Name is too long"),
     email: z.string().email("Invalid email"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
     role: z.enum(["STUDENT", "TEACHER", "GUARDIAN"]),
-    regionCode: z.string().min(2).max(8).optional(),
     bio: z.string().max(2000).optional(),
   })
   .refine((v) => v.password === v.confirmPassword, {
@@ -29,16 +23,11 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 
 export const guardianRegisterSchema = z
   .object({
-    firstName: z
+    name: z
       .string()
       .trim()
-      .min(2, "First name must be at least 2 characters")
-      .max(60, "First name is too long"),
-    lastName: z
-      .string()
-      .trim()
-      .min(2, "Last name must be at least 2 characters")
-      .max(60, "Last name is too long"),
+      .min(2, "Name must be at least 2 characters")
+      .max(120, "Name is too long"),
     email: z.string().email("Invalid email"),
     inviteCode: z
       .string()

@@ -26,7 +26,7 @@ const Label = styled.label`
   color: ${COLORS.HEADER};
 `;
 
-const StyledInput = styled.input<{ $hasError: boolean }>`
+const StyledInput = styled.input<{ $hasError: boolean; }>`
   height: 2.5rem;
   width: 100%;
   padding: 0 ${SPACING.THREE};
@@ -41,6 +41,15 @@ const StyledInput = styled.input<{ $hasError: boolean }>`
 
   &::placeholder {
     color: ${COLORS.MUTED_FOREGROUND};
+  }
+
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px ${COLORS.FOREGROUND} inset;
+    box-shadow: 0 0 0 1000px ${COLORS.FOREGROUND} inset;
+    -webkit-text-fill-color: ${COLORS.TEXT};
   }
 
   &:hover:not(:disabled) {

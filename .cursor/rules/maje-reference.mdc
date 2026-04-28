@@ -1,0 +1,14 @@
+---
+description: When the user mentions Maje, use the sibling Maje frontend repo for reference or parity.
+alwaysApply: true
+---
+
+# Maje reference project
+
+Whenever the user’s prompt mentions **Maje** or **maje** (with or without quotes, any casing such as `Maje`, `maje`, `MAJE`), treat that as a signal to use the **Maje frontend** codebase as the primary reference for behavior, UI, routing, or patterns they are asking about.
+
+- **Repository path:** `/Users/kingsleyeneja/study_projects/my-apps/Maje/frontend`
+- **What to do:** Read or search files under that path as needed (e.g. matching routes, components, styles, auth flows) before inferring from memory. Prefer aligning Mentora with concrete Maje implementations when the user is comparing, porting, or matching behavior.
+- **Scope:** This applies only when **Maje** / **maje** appears in the user message; it does not require loading that repo on unrelated prompts.
+
+If that path is missing or inaccessible, say so and proceed with Mentora-only context.

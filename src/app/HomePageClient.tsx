@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import styled from "styled-components";
+import { SiteHeader } from "@/components/layouts/SiteHeader";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
@@ -9,64 +10,6 @@ import { SPACING } from "@/constants/spacing.constants";
 
 const Main = styled.main`
   min-height: 100dvh;
-`;
-
-const Header = styled.header`
-  background-color: ${COLORS.HEADER};
-  color: ${COLORS.WHITE};
-`;
-
-const HeaderInner = styled.div`
-  margin: 0 auto;
-  display: flex;
-  max-width: 72rem;
-  align-items: center;
-  justify-content: space-between;
-  padding: ${SPACING.FIVE} ${SPACING.FOUR};
-
-  ${LAYOUT.MEDIA.SM} {
-    padding-left: ${SPACING.SIX};
-    padding-right: ${SPACING.SIX};
-  }
-`;
-
-const Brand = styled(Link)`
-  font-size: ${FONTS.SIZE.XL};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  letter-spacing: -0.025em;
-  color: inherit;
-  text-decoration: none;
-`;
-
-const Nav = styled.nav`
-  display: flex;
-  align-items: center;
-  gap: ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.SM};
-`;
-
-const NavLink = styled(Link)`
-  border-radius: ${LAYOUT.RADIUS.MD};
-  padding: ${SPACING.TWO} ${SPACING.THREE};
-  color: inherit;
-  text-decoration: none;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-`;
-
-const NavCta = styled(Link)`
-  border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: ${COLORS.WHITE};
-  padding: ${SPACING.TWO} ${SPACING.THREE};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-  text-decoration: none;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
 `;
 
 const Hero = styled.section`
@@ -220,15 +163,7 @@ const Footer = styled.footer`
 export function HomePageClient() {
   return (
     <Main>
-      <Header>
-        <HeaderInner>
-          <Brand href="/">Mentora</Brand>
-          <Nav>
-            <NavLink href="/login">Log in</NavLink>
-            <NavCta href="/register">Sign up</NavCta>
-          </Nav>
-        </HeaderInner>
-      </Header>
+      <SiteHeader />
 
       <Hero>
         <HeroGrid>
@@ -243,6 +178,9 @@ export function HomePageClient() {
               <PrimaryCta href="/register?role=STUDENT">I&apos;m a student</PrimaryCta>
               <SecondaryCta href="/register?role=TEACHER">I&apos;m a teacher</SecondaryCta>
               <SecondaryCta href="/register?role=GUARDIAN">I&apos;m a guardian</SecondaryCta>
+            </CtaRow>
+            <CtaRow>
+              <PrimaryCta href="/">Sign up with Google</PrimaryCta>
             </CtaRow>
           </div>
 

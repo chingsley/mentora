@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
+import { resolveCanonicalSiteUrl } from "./src/lib/localOrigin";
+
+const siteUrl = resolveCanonicalSiteUrl();
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_APP_URL: siteUrl,
+    AUTH_URL: siteUrl,
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,

@@ -81,6 +81,7 @@ export async function TeacherProfilePage({ userId }: { userId: string }) {
 
   const checklist = [
     { label: "Profile photo", done: Boolean(profile.user.image) },
+    { label: "Teaching region", done: Boolean(profile.user.region?.id) },
     { label: "Headline & bio", done: profile.headline.trim().length > 0 },
     { label: "Subjects I teach", done: profile.subjects.length > 0 },
     { label: "Hourly rates", done: profile.rates.length > 0 },
@@ -102,6 +103,8 @@ export async function TeacherProfilePage({ userId }: { userId: string }) {
       activeStudentCount={activeStudentCount}
       globalCap={policy.globalClassCap}
       checklist={checklist}
+      regionOptions={regions.map((r) => ({ value: r.code, label: r.name }))}
+      teacherRegionCode={profile.user.region?.code ?? ""}
       allSubjects={subjects.map((s) => ({ id: s.id, name: s.name }))}
       bio={profile.bio}
       initialSubjects={profile.subjects.map((s) => ({

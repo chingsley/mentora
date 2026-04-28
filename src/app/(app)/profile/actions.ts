@@ -11,6 +11,8 @@ import {
   setRateMajorSchema,
   setSubjectsSchema,
   setTeacherRateMajor,
+  setTeacherRegion,
+  setTeacherRegionSchema,
   setTeacherSubjects,
   updateBioSchema,
   updateOffering,
@@ -58,6 +60,28 @@ export async function saveBioAction(formData: FormData): Promise<ActionResult> {
     };
   }
   await updateTeacherBio(session.user.id, parsed.data);
+  revalidateTeacher();
+  return { ok: true };
+}
+
+export async function saveTeacherRegionAction(formData: FormData): Promise<ActionResult> {
+  const session = await requireRole("TEACHER");
+  const parsed = setTeacherRegionSchema.safeParse({
+    regionCode: formData.get("regionCode"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Please fix the highlighted fields.",
+      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+    };
+  }
+  try {
+    await setTeacherRegion(session.user.id, parsed.data);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Could not save region";
+    return { ok: false, error: msg };
+  }
   revalidateTeacher();
   return { ok: true };
 }

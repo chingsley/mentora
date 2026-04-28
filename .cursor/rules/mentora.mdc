@@ -7,6 +7,14 @@ alwaysApply: true
 
 These rules apply to every file in the repo. Follow them unless the user explicitly overrides one in a task. They consolidate the Next.js production checklist, clean-code principles, and component-organization best practices.
 
+## 0. Implementation standards (every change)
+
+These apply to **every** implementation and edit, in addition to the sections below.
+
+- **Best practices**: Follow idiomatic patterns for this stack and repo; prefer the smallest change that fully solves the task without cutting corners on types, validation, accessibility, or security.
+- **Avoid code duplication**: Prefer shared utilities, tokens (`COLORS`, `FONTS`, `SPACING`, `LAYOUT`), types, and components. Duplicate logic or markup **only** when keeping it separate is clearer or avoids harmful coupling between unrelated features.
+- **Make no mistakes**: Ship changes that are internally consistent—TypeScript strict, no avoidable runtime hazards, lint-clean when the edit touches those files, and behavior verified against the user’s intent and existing call sites.
+
 ## 1. Architecture
 
 - Stack is **Next.js 15 (App Router) + TypeScript strict + Prisma + Auth.js v5**. No NestJS, no Pages Router.

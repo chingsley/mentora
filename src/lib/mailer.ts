@@ -1,4 +1,5 @@
 import "server-only";
+import { getAppUrl } from "@/lib/appUrl";
 import { env } from "@/lib/env";
 import { formatInviteCode } from "@/lib/inviteCode";
 
@@ -41,7 +42,7 @@ export interface SendGuardianInviteInput {
 }
 
 export async function sendGuardianInviteEmail(input: SendGuardianInviteInput): Promise<void> {
-  const base = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const base = getAppUrl();
   const signupUrl = `${base}/register/guardian`;
   const display = formatInviteCode(input.inviteCode);
   const text = [

@@ -2,8 +2,7 @@ import { registerSchema } from "./register";
 
 describe("registerSchema", () => {
   const base = {
-    firstName: "Jane",
-    lastName: "Okafor",
+    name: "Jane Okafor",
     email: "jane@example.com",
     password: "password123",
     confirmPassword: "password123",
@@ -26,13 +25,12 @@ describe("registerSchema", () => {
     }
   });
 
-  it("requires first and last names of at least 2 characters", () => {
-    const res = registerSchema.safeParse({ ...base, firstName: "J", lastName: "" });
+  it("requires name of at least 2 characters", () => {
+    const res = registerSchema.safeParse({ ...base, name: "J" });
     expect(res.success).toBe(false);
     if (!res.success) {
       const flat = res.error.flatten().fieldErrors;
-      expect(flat.firstName?.[0]).toBeTruthy();
-      expect(flat.lastName?.[0]).toBeTruthy();
+      expect(flat.name?.[0]).toBeTruthy();
     }
   });
 

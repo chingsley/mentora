@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { guardianRegisterAction, type RegisterActionResult } from "../actions";
 
@@ -21,15 +20,6 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.FOUR};
-`;
-
-const NameGrid = styled.div`
-  display: grid;
-  gap: ${SPACING.FOUR};
-
-  ${LAYOUT.MEDIA.SM} {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 `;
 
 const ErrorText = styled.p`
@@ -81,24 +71,14 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
 
   return (
     <Form onSubmit={onSubmit}>
-      <NameGrid>
-        <Input
-          name="firstName"
-          label="First name"
-          autoComplete="given-name"
-          required
-          minLength={2}
-          error={fieldErrors?.firstName}
-        />
-        <Input
-          name="lastName"
-          label="Last name"
-          autoComplete="family-name"
-          required
-          minLength={2}
-          error={fieldErrors?.lastName}
-        />
-      </NameGrid>
+      <Input
+        name="name"
+        label="Full name"
+        autoComplete="name"
+        required
+        minLength={2}
+        error={fieldErrors?.name}
+      />
       <Input
         name="email"
         type="email"

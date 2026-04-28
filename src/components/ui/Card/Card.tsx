@@ -14,6 +14,7 @@ const StyledCard = styled.div`
   box-shadow: ${LAYOUT.SHADOW.SM};
   outline: 1px solid ${COLORS.RING_BLACK_5};
   outline-offset: -1px;
+  border: 1px solid ${COLORS.RING_BLACK_5};
 
   ${LAYOUT.MEDIA.SM} {
     padding: ${SPACING.SIX};

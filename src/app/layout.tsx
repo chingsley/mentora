@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { appSans } from "@/lib/app-font";
 import { StyledComponentsRegistry } from "@/lib/registry";
 import { GlobalStyles } from "@/styles/GlobalStyles";
 
@@ -21,7 +22,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={appSans.variable}>
       <body>
         <StyledComponentsRegistry>
           <GlobalStyles />

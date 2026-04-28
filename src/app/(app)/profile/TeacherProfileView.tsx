@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/Card";
 import { ProfilePhotoForm } from "@/components/features/teacher/ProfilePhotoForm";
 import { TeacherBioForm } from "@/components/features/teacher/TeacherBioForm";
+import { TeacherRegionForm } from "@/components/features/teacher/TeacherRegionForm";
 import { TeacherSubjectsForm } from "@/components/features/teacher/TeacherSubjectsForm";
 import { TeacherRatesGrid } from "@/components/features/teacher/TeacherRatesGrid";
 import { WeeklyScheduleCalendar } from "@/components/features/teacher/WeeklyScheduleCalendar";
@@ -272,6 +273,8 @@ export interface TeacherProfileViewProps {
   activeStudentCount: number;
   globalCap: number;
   checklist: { label: string; done: boolean }[];
+  regionOptions: { value: string; label: string }[];
+  teacherRegionCode: string;
   allSubjects: { id: string; name: string }[];
   bio: string;
   initialSubjects: { subjectId: string; defaultCap: number | null }[];
@@ -313,6 +316,8 @@ export function TeacherProfileView({
   activeStudentCount,
   globalCap,
   checklist,
+  regionOptions,
+  teacherRegionCode,
   allSubjects,
   bio,
   initialSubjects,
@@ -398,6 +403,19 @@ export function TeacherProfileView({
           </CardContent>
         </Card>
       </TwoCol>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Teaching region</CardTitle>
+          <CardDescription>
+            Your primary region is used for discovery filters and as the default when you set
+            hourly rates. You can still add rates for other regions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TeacherRegionForm options={regionOptions} defaultRegionCode={teacherRegionCode} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

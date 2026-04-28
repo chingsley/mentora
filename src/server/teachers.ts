@@ -189,6 +189,10 @@ export const updateBioSchema = z.object({
   bio: z.string().trim().max(2000).optional().default(""),
 });
 
+export const setTeacherRegionSchema = z.object({
+  regionCode: z.string().trim().min(1, "Select your teaching region").max(8),
+});
+
 export async function updateTeacherBio(
   teacherUserId: string,
   input: z.infer<typeof updateBioSchema>,
@@ -197,6 +201,23 @@ export async function updateTeacherBio(
   await db.teacherProfile.update({
     where: { id: teacher.id },
     data: { headline: input.headline, bio: input.bio ?? "" },
+  });
+  await recomputeProfileCompleted(teacher.id);
+}
+
+export async function setTeacherRegion(
+  teacherUserId: string,
+  input: z.infer<typeof setTeacherRegionSchema>,
+) {
+  const teacher = await requireTeacher(teacherUserId);
+  const region = await db.region.findUnique({
+    where: { code: input.regionCode },
+    select: { id: true },
+  });
+  if (!region) throw new Error("Unknown region");
+  await db.user.update({
+    where: { id: teacherUserId },
+    data: { regionId: region.id },
   });
   await recomputeProfileCompleted(teacher.id);
 }
@@ -467,7 +488,7 @@ export async function recomputeProfileCompleted(teacherProfileId: string) {
   const profile = await db.teacherProfile.findUnique({
     where: { id: teacherProfileId },
     include: {
-      user: { select: { image: true } },
+      user: { select: { image: true, regionId: true } },
       subjects: { select: { subjectId: true } },
       rates: { select: { id: true } },
       offerings: { select: { id: true } },
@@ -476,6 +497,7 @@ export async function recomputeProfileCompleted(teacherProfileId: string) {
   if (!profile) return;
   const complete =
     Boolean(profile.user.image) &&
+    Boolean(profile.user.regionId) &&
     profile.subjects.length > 0 &&
     profile.rates.length > 0 &&
     profile.offerings.length > 0 &&
