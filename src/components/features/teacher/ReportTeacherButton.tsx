@@ -16,7 +16,6 @@ export function ReportTeacherButton({ teacherProfileId, teacherName }: ReportTea
       <Button
         type="button"
         variant="secondary"
-        size="sm"
         onClick={() => setOpen(true)}
       >
         Report teacher

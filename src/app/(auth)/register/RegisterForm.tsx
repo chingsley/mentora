@@ -135,7 +135,7 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
       ) : null} */}
 
       <AuthFormActions>
-        <AuthSubmitButton type="submit" isLoading={isPending} size="lg">
+        <AuthSubmitButton type="submit" isLoading={isPending}>
           {isPending ? "Creating account…" : "Create account"}
         </AuthSubmitButton>
       </AuthFormActions>

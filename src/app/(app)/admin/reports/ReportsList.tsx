@@ -45,7 +45,7 @@ const Pill = styled.span`
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.BACKGROUND};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
@@ -54,7 +54,7 @@ const ReasonPill = styled.span`
   border: 1px solid #fda4af;
   background-color: #fff1f2;
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: #881337;
 `;
 
@@ -63,7 +63,7 @@ const StatusPill = styled.span`
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.BACKGROUND};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   text-transform: uppercase;
   color: ${COLORS.MUTED_FOREGROUND};
 `;
@@ -81,7 +81,7 @@ const Description = styled.p`
 `;
 
 const Reporter = styled.p`
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 

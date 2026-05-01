@@ -68,7 +68,7 @@ const SubjectPill = styled.span`
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.BACKGROUND};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
@@ -82,7 +82,7 @@ const LivePill = styled.span`
   border: 1px solid #6ee7b7;
   background-color: #ecfdf5;
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: #064e3b;
 `;
 
@@ -131,7 +131,7 @@ const StudentName = styled.span`
 const StatusBadge = styled.span<{ $status: AttendanceStatus | "unmarked" }>`
   border-radius: ${LAYOUT.RADIUS.FULL};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   border: 1px solid;
 
   ${(p) => {
@@ -171,7 +171,7 @@ const StatusBadge = styled.span<{ $status: AttendanceStatus | "unmarked" }>`
 `;
 
 const SourceText = styled.span`
-  font-size: 10px;
+  font-size: ${FONTS.SIZE.MICRO};
   text-transform: uppercase;
   color: ${COLORS.MUTED_FOREGROUND};
 `;
@@ -186,7 +186,7 @@ const ActionBtn = styled.button<{ $active: boolean }>`
   height: 1.75rem;
   border-radius: ${LAYOUT.RADIUS.MD};
   padding: 0 ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
   border: 1px solid;
   cursor: pointer;
@@ -216,7 +216,7 @@ const ActionBtn = styled.button<{ $active: boolean }>`
 `;
 
 const ErrorText = styled.span`
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.DESTRUCTIVE};
 `;
 

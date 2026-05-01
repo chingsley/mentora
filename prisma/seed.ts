@@ -240,6 +240,9 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
             displayId,
             headline: `Experienced tutor — ${firstName} ${lastName}`,
             bio: `Hi, I'm ${firstName}. I've been teaching for several years and love helping students grow.`,
+            timeZone: "Africa/Lagos",
+            spokenLanguages: "English",
+            locationLabel: "Nigeria",
             avgRating: 4 + ((i % 10) / 10),
             ratingsCount: 5 + i,
             profileCompleted: true,
@@ -274,8 +277,17 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
             subjectId: subj.id,
           },
         },
-        create: { teacherProfileId: teacherProfile.id, subjectId: subj.id },
-        update: {},
+        create: {
+          teacherProfileId: teacherProfile.id,
+          subjectId: subj.id,
+          defaultCap: CONFIG.TEACHER_CAP,
+          courseDescription: `Structured ${subj.name} lessons with clear goals, practice, and feedback for every student.`,
+          gradeLevel: "Mixed levels",
+        },
+        update: {
+          courseDescription: `Structured ${subj.name} lessons with clear goals, practice, and feedback for every student.`,
+          gradeLevel: "Mixed levels",
+        },
       });
       await db.teacherRate.upsert({
         where: {

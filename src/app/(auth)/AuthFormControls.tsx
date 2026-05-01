@@ -4,6 +4,7 @@ import Link from "next/link";
 import * as React from "react";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
+import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 
 export const AUTH_THEME = {
@@ -12,10 +13,10 @@ export const AUTH_THEME = {
   textSoft: "#475569",
   border: "hsl(214.3 31.8% 91.4%)",
   inputBorder: "rgba(10, 37, 64, 0.9)",
-  surface: "#ffffff",
+  surface: COLORS.WHITE,
   cta: "#3f4654",
   ctaHover: "#323945",
-  linkHover: "#1d4ed8",
+  linkHover: COLORS.ACTION_PRIMARY_HOVER,
   formError: "#c85848",
 };
 
@@ -317,6 +318,7 @@ export const AuthFoot = styled.p`
 `;
 
 export const AuthLink = styled(Link)`
+  font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${AUTH_THEME.cta};
   text-decoration: none;

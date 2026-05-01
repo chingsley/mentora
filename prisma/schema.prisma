@@ -140,10 +140,21 @@ model TeacherProfile {
   displayId        String           @unique
   headline         String           @default("")
   bio              String           @default("") @db.Text
+  /// IANA time zone id (e.g. America/Sao_Paulo); empty until teacher sets it
+  timeZone         String           @default("")
+  /// Comma-separated language labels (e.g. English, Portuguese)
+  spokenLanguages  String           @default("")
+  /// Free-text location for students (e.g. Brazil); distinct from billing Region on User
+  locationLabel    String           @default("")
   avgRating        Float            @default(0)
   ratingsCount     Int              @default(0)
   hoursTaught      Int              @default(0)
   profileCompleted Boolean          @default(false)
+  /// Payout readiness (no bank secrets); optional for profile completion
+  payoutLegalName         String? @db.VarChar(200)
+  payoutCountryCode       String? @db.VarChar(2)
+  payoutPreferredMethod   String? @db.VarChar(64)
+  payoutNotes             String? @db.Text
   subjects         TeacherSubject[]
   rates            TeacherRate[]
   offerings        ClassOffering[]
@@ -205,11 +216,14 @@ model Subject {
 }
 
 model TeacherSubject {
-  teacherProfileId String
-  subjectId        String
-  defaultCap       Int?
-  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
-  subject          Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacherProfileId  String
+  subjectId         String
+  defaultCap        Int?
+  courseDescription String @default("") @db.Text
+  gradeLevel        String @default("")
+  syllabus          String @default("") @db.Text
+  teacherProfile    TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  subject           Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   @@id([teacherProfileId, subjectId])
 }

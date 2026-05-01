@@ -143,7 +143,7 @@ const SecondaryLink = styled(Link)`
   background-color: ${COLORS.FOREGROUND};
   padding: 0 ${SPACING.THREE};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: none;
 

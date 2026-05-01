@@ -6,6 +6,7 @@ import * as React from "react";
 import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
 import { isClassLive } from "@/lib/classSession";
 import { DAY_LABEL, minutesToTime } from "@/lib/time";
 import { joinAsObserverAction } from "./actions";
@@ -26,7 +27,7 @@ const Wrap = styled.div`
 `;
 
 const Message = styled.p<{ $tone: "ok" | "error" }>`
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   ${({ $tone }) =>
     $tone === "ok"
       ? css`

@@ -121,13 +121,13 @@ export function CalendarShell({
     <Wrap>
       <Toolbar>
         <NavGroup>
-          <Button type="button" variant="ghost" size="sm" onClick={() => shift(-1)} aria-label="Previous">
+          <Button type="button" variant="ghost" onClick={() => shift(-1)} aria-label="Previous">
             <Caret aria-hidden />
           </Button>
-          <Button type="button" variant="secondary" size="sm" onClick={goToday}>
+          <Button type="button" variant="secondary" onClick={goToday}>
             Today
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={() => shift(1)} aria-label="Next">
+          <Button type="button" variant="ghost" onClick={() => shift(1)} aria-label="Next">
             <CaretRight aria-hidden />
           </Button>
           <Title>{title}</Title>

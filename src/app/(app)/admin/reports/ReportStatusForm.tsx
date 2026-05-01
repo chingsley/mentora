@@ -47,7 +47,6 @@ export function ReportStatusForm({ reportId, currentStatus }: ReportStatusFormPr
         <Button
           key={s}
           type="button"
-          size="sm"
           variant={status === s ? "primary" : "secondary"}
           onClick={() => submit(s)}
           isLoading={isPending && status === s}

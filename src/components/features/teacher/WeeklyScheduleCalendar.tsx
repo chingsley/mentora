@@ -109,7 +109,7 @@ const TimeLabel = styled.div`
   position: absolute;
   right: ${SPACING.TWO};
   transform: translateY(-50%);
-  font-size: 0.625rem;
+  font-size: ${FONTS.SIZE.MICRO};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
@@ -140,7 +140,7 @@ const Tile = styled.button<{ $bg: string; $border: string; $text: string; $click
   color: ${(p) => p.$text};
   padding: ${SPACING.ONE} ${SPACING.TWO};
   text-align: left;
-  font-size: 0.6875rem;
+  font-size: ${FONTS.SIZE.META};
   line-height: 1.25;
   box-shadow: ${LAYOUT.SHADOW.SM};
   transition: box-shadow 0.15s ease;
@@ -341,7 +341,6 @@ export function WeeklyScheduleCalendar({
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
                     onClick={() => openCreate(d, (9 - START_HOUR) * 60)}
                   >
                     + Add

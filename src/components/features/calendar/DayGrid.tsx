@@ -51,7 +51,7 @@ const TimeLabel = styled.div`
   position: absolute;
   right: ${SPACING.TWO};
   transform: translateY(-50%);
-  font-size: 0.625rem;
+  font-size: ${FONTS.SIZE.MICRO};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 

@@ -4,8 +4,10 @@ import type { Prisma } from "@prisma/client";
 import { DayOfWeek } from "@prisma/client";
 import { db } from "@/lib/db";
 import { clampTeacherCap } from "@/lib/capacity";
-import { assertAtLeastMinRate } from "@/lib/pricing";
 import { majorToSmallest } from "@/lib/money";
+import { assertAtLeastMinRate } from "@/lib/pricing";
+import { intervalsOverlapHalfOpen } from "@/lib/scheduleOverlap";
+import { minutesToTime } from "@/lib/time";
 import { getPolicy } from "./policies";
 
 export interface TeacherSearchFilters {
@@ -131,31 +133,42 @@ export async function getMyStudentEnrollmentsByOffering(
 
 // ---------- My teacher profile (self view) ----------
 
-export async function getMyTeacherProfile(teacherUserId: string) {
+/** Include clause shared with `MyTeacherProfile` so consumers get full scalars on profile + subjects. */
+export const MY_TEACHER_PROFILE_INCLUDE = {
+  user: {
+    select: {
+      id: true,
+      name: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      image: true,
+      region: true,
+    },
+  },
+  subjects: { include: { subject: true } },
+  rates: { include: { subject: true, region: true } },
+  offerings: {
+    include: {
+      subject: true,
+      enrollments: { where: { status: "ACTIVE" as const }, select: { id: true } },
+    },
+    orderBy: [{ dayOfWeek: "asc" as const }, { startMinutes: "asc" as const }],
+  },
+} satisfies Prisma.TeacherProfileInclude;
+
+export type MyTeacherProfile = Prisma.TeacherProfileGetPayload<{
+  include: typeof MY_TEACHER_PROFILE_INCLUDE;
+}>;
+
+export async function getMyTeacherProfile(teacherUserId: string): Promise<{
+  profile: MyTeacherProfile;
+  studentsPerSubject: Record<string, number>;
+  activeStudentCount: number;
+} | null> {
   const profile = await db.teacherProfile.findUnique({
     where: { userId: teacherUserId },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          image: true,
-          region: true,
-        },
-      },
-      subjects: { include: { subject: true } },
-      rates: { include: { subject: true, region: true } },
-      offerings: {
-        include: {
-          subject: true,
-          enrollments: { where: { status: "ACTIVE" }, select: { id: true } },
-        },
-        orderBy: [{ dayOfWeek: "asc" }, { startMinutes: "asc" }],
-      },
-    },
+    include: MY_TEACHER_PROFILE_INCLUDE,
   });
   if (!profile) return null;
 
@@ -192,6 +205,70 @@ export const updateBioSchema = z.object({
 export const setTeacherRegionSchema = z.object({
   regionCode: z.string().trim().min(1, "Select your teaching region").max(8),
 });
+
+export function normalizeSpokenLanguages(raw: string): string {
+  const parts = raw
+    .split(/[,;]+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return parts.join(", ");
+}
+
+export const saveTeacherBioTabSchema = z.object({
+  bio: z.string().trim().max(2000).optional().default(""),
+  spokenLanguages: z.string().trim().min(2, "Add languages you speak (e.g. English, Portuguese)").max(500),
+  locationLabel: z.string().trim().max(120).optional().default(""),
+});
+
+export type SaveTeacherBioTabInput = z.infer<typeof saveTeacherBioTabSchema>;
+
+export async function saveTeacherBioTab(teacherUserId: string, input: SaveTeacherBioTabInput) {
+  const teacher = await requireTeacher(teacherUserId);
+  const languages = normalizeSpokenLanguages(input.spokenLanguages);
+
+  const teacherProfileBioData = {
+    bio: input.bio ?? "",
+    spokenLanguages: languages,
+    locationLabel: input.locationLabel ?? "",
+  } as Prisma.TeacherProfileUncheckedUpdateInput;
+
+  await db.teacherProfile.update({
+    where: { id: teacher.id },
+    data: teacherProfileBioData,
+  });
+
+  await recomputeProfileCompleted(teacher.id);
+}
+
+export const saveTeacherPayoutTabSchema = z.object({
+  payoutLegalName: z.string().trim().max(200).optional().default(""),
+  payoutCountryCode: z
+    .string()
+    .trim()
+    .max(2)
+    .optional()
+    .default("")
+    .transform((s) => (s.length === 2 ? s.toUpperCase() : "")),
+  payoutPreferredMethod: z.string().trim().max(64).optional().default(""),
+  payoutNotes: z.string().trim().max(5000).optional().default(""),
+});
+
+export type SaveTeacherPayoutTabInput = z.infer<typeof saveTeacherPayoutTabSchema>;
+
+export async function saveTeacherPayoutTab(teacherUserId: string, input: SaveTeacherPayoutTabInput) {
+  const teacher = await requireTeacher(teacherUserId);
+  const payoutData = {
+    payoutLegalName: input.payoutLegalName || null,
+    payoutCountryCode: input.payoutCountryCode || null,
+    payoutPreferredMethod: input.payoutPreferredMethod?.trim() || null,
+    payoutNotes: input.payoutNotes || null,
+  } as Prisma.TeacherProfileUncheckedUpdateInput;
+
+  await db.teacherProfile.update({
+    where: { id: teacher.id },
+    data: payoutData,
+  });
+}
 
 export async function updateTeacherBio(
   teacherUserId: string,
@@ -230,6 +307,17 @@ export const setSubjectsSchema = z.object({
       z.object({
         subjectId: z.string().min(1),
         defaultCap: z.coerce.number().int().min(1).max(1000),
+        courseDescription: z
+          .string()
+          .trim()
+          .min(10, "Add a short course description (10+ characters)")
+          .max(2000),
+        gradeLevel: z
+          .string()
+          .trim()
+          .min(1, "Add a grade level or level label (e.g. Grade 6, University)")
+          .max(120),
+        syllabus: z.string().trim().max(10000).optional().default(""),
       }),
     )
     .min(1, "Pick at least one subject"),
@@ -242,9 +330,22 @@ export async function setTeacherSubjects(
   const teacher = await requireTeacher(teacherUserId);
   const policy = await getPolicy();
 
-  const uniq = new Map<string, number>();
+  const rows = new Map<
+    string,
+    {
+      defaultCap: number;
+      courseDescription: string;
+      gradeLevel: string;
+      syllabus: string;
+    }
+  >();
   for (const s of input.subjects) {
-    uniq.set(s.subjectId, clampTeacherCap(s.defaultCap, policy.globalClassCap));
+    rows.set(s.subjectId, {
+      defaultCap: clampTeacherCap(s.defaultCap, policy.globalClassCap),
+      courseDescription: s.courseDescription,
+      gradeLevel: s.gradeLevel,
+      syllabus: s.syllabus ?? "",
+    });
   }
 
   await db.$transaction(async (tx) => {
@@ -253,7 +354,7 @@ export async function setTeacherSubjects(
       select: { subjectId: true },
     });
     const existingIds = new Set(existing.map((e) => e.subjectId));
-    const newIds = new Set(uniq.keys());
+    const newIds = new Set(rows.keys());
 
     const toDelete = [...existingIds].filter((id) => !newIds.has(id));
     if (toDelete.length > 0) {
@@ -262,11 +363,27 @@ export async function setTeacherSubjects(
       });
     }
 
-    for (const [subjectId, defaultCap] of uniq) {
+    for (const [subjectId, meta] of rows) {
+      const subjectRowCreate = {
+        teacherProfileId: teacher.id,
+        subjectId,
+        defaultCap: meta.defaultCap,
+        courseDescription: meta.courseDescription,
+        gradeLevel: meta.gradeLevel,
+        syllabus: meta.syllabus,
+      } as Prisma.TeacherSubjectUncheckedCreateInput;
+
+      const subjectRowUpdate = {
+        defaultCap: meta.defaultCap,
+        courseDescription: meta.courseDescription,
+        gradeLevel: meta.gradeLevel,
+        syllabus: meta.syllabus,
+      } as Prisma.TeacherSubjectUncheckedUpdateInput;
+
       await tx.teacherSubject.upsert({
         where: { teacherProfileId_subjectId: { teacherProfileId: teacher.id, subjectId } },
-        create: { teacherProfileId: teacher.id, subjectId, defaultCap },
-        update: { defaultCap },
+        create: subjectRowCreate,
+        update: subjectRowUpdate,
       });
     }
   });
@@ -293,6 +410,13 @@ export const createOfferingSchema = z
 
 export type CreateOfferingInput = z.infer<typeof createOfferingSchema>;
 
+export class OfferingScheduleConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "OfferingScheduleConflictError";
+  }
+}
+
 async function assertSubjectBelongsToTeacher(teacherProfileId: string, subjectId: string) {
   const link = await db.teacherSubject.findUnique({
     where: { teacherProfileId_subjectId: { teacherProfileId, subjectId } },
@@ -303,12 +427,50 @@ async function assertSubjectBelongsToTeacher(teacherProfileId: string, subjectId
   }
 }
 
+async function assertOfferingHasNoTimeConflict(
+  teacherProfileId: string,
+  dayOfWeek: DayOfWeek,
+  startMinutes: number,
+  endMinutes: number,
+  excludeOfferingId?: string,
+) {
+  const siblings = await db.classOffering.findMany({
+    where: {
+      teacherProfileId,
+      dayOfWeek,
+      active: true,
+      ...(excludeOfferingId ? { id: { not: excludeOfferingId } } : {}),
+    },
+    include: { subject: { select: { name: true } } },
+  });
+  const pieces: string[] = [];
+  for (const o of siblings) {
+    if (intervalsOverlapHalfOpen(startMinutes, endMinutes, o.startMinutes, o.endMinutes)) {
+      pieces.push(
+        `${o.subject.name}: ${minutesToTime(o.startMinutes)}–${minutesToTime(o.endMinutes)}`,
+      );
+    }
+  }
+  if (pieces.length > 0) {
+    throw new OfferingScheduleConflictError(
+      `This time overlaps another class — ${pieces.join("; ")}`,
+    );
+  }
+}
+
 export async function createOffering(teacherUserId: string, input: CreateOfferingInput) {
   const teacher = await requireTeacher(teacherUserId);
   await assertSubjectBelongsToTeacher(teacher.id, input.subjectId);
 
   const policy = await getPolicy();
   const cap = clampTeacherCap(input.teacherCap, policy.globalClassCap);
+
+  await assertOfferingHasNoTimeConflict(
+    teacher.id,
+    input.dayOfWeek,
+    input.startMinutes,
+    input.endMinutes,
+  );
 
   const offering = await db.classOffering.create({
     data: {
@@ -345,7 +507,15 @@ export async function updateOffering(
   const policy = await getPolicy();
   const cap = clampTeacherCap(input.teacherCap, policy.globalClassCap);
 
-  return db.classOffering.update({
+  await assertOfferingHasNoTimeConflict(
+    teacher.id,
+    input.dayOfWeek,
+    input.startMinutes,
+    input.endMinutes,
+    offeringId,
+  );
+
+  const updated = await db.classOffering.update({
     where: { id: offeringId },
     data: {
       subjectId: input.subjectId,
@@ -357,6 +527,8 @@ export async function updateOffering(
       teacherCap: cap,
     },
   });
+  await recomputeProfileCompleted(teacher.id);
+  return updated;
 }
 
 export async function deleteOffering(teacherUserId: string, offeringId: string) {
@@ -488,20 +660,34 @@ export async function recomputeProfileCompleted(teacherProfileId: string) {
   const profile = await db.teacherProfile.findUnique({
     where: { id: teacherProfileId },
     include: {
-      user: { select: { image: true, regionId: true } },
-      subjects: { select: { subjectId: true } },
+      user: { select: { image: true } },
+      // Use relation include (not scalar select) so all TeacherSubject columns load without
+      // naming fields — avoids runtime errors if Prisma Client was generated before new columns.
+      subjects: { include: { subject: true } },
       rates: { select: { id: true } },
       offerings: { select: { id: true } },
     },
   });
   if (!profile) return;
+
+  const subjectMetaOk = profile.subjects.every((s) => {
+    const meta = s as unknown as {
+      courseDescription: string | null | undefined;
+      gradeLevel: string | null | undefined;
+    };
+    const desc = String(meta.courseDescription ?? "").trim();
+    const grade = String(meta.gradeLevel ?? "").trim();
+    return desc.length >= 10 && grade.length > 0;
+  });
   const complete =
     Boolean(profile.user.image) &&
-    Boolean(profile.user.regionId) &&
     profile.subjects.length > 0 &&
     profile.rates.length > 0 &&
     profile.offerings.length > 0 &&
-    profile.headline.trim().length > 0;
+    profile.bio.trim().length > 0 &&
+    String((profile as { spokenLanguages?: string | null }).spokenLanguages ?? "").trim().length >
+      0 &&
+    subjectMetaOk;
   if (profile.profileCompleted !== complete) {
     await db.teacherProfile.update({
       where: { id: teacherProfileId },

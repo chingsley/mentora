@@ -9,10 +9,11 @@ These rules apply to every file in the repo. Follow them unless the user explici
 
 ## 0. Implementation standards (every change)
 
-These apply to **every** implementation and edit, in addition to the sections below.
+These apply to **every** implementation and edit, in addition to the sections below. Treat them as a hard contract for every prompt.
 
+- **Use best practices, avoid repetition and code smells.** This is the umbrella rule: any time you would copy logic, markup, styles, types, props, or constants between two places, extract a shared module instead. If you spot a code smell while editing (long parameter lists, magic literals, duplicated branches, inline strings/numbers that mean something, mixed concerns in one component, dead code, unused exports, deeply nested conditionals, mutable globals), fix it in the same change. Never reintroduce a smell you just removed.
 - **Best practices**: Follow idiomatic patterns for this stack and repo; prefer the smallest change that fully solves the task without cutting corners on types, validation, accessibility, or security.
-- **Avoid code duplication**: Prefer shared utilities, tokens (`COLORS`, `FONTS`, `SPACING`, `LAYOUT`), types, and components. Duplicate logic or markup **only** when keeping it separate is clearer or avoids harmful coupling between unrelated features.
+- **Avoid code duplication**: Prefer shared utilities, tokens (`COLORS`, `FONTS`, `SPACING`, `LAYOUT`, `ICON_SIZE`, `ICON_STROKE`, `ICON_THEME`, `FORM_FIELD`), types, and components. Duplicate logic or markup **only** when keeping it separate is clearer or avoids harmful coupling between unrelated features.
 - **Make no mistakes**: Ship changes that are internally consistent—TypeScript strict, no avoidable runtime hazards, lint-clean when the edit touches those files, and behavior verified against the user’s intent and existing call sites.
 
 ## 1. Architecture
@@ -74,15 +75,65 @@ prisma/               # schema.prisma, migrations, seed.ts
 - **styled-components v6** is the only styling system. No Tailwind, no CSS modules, no inline `style={{ ... }}` outside genuinely dynamic cases.
 - Define styled-components inline at the top of each `.tsx` file, above the React component that uses them. One file = one component + its styles.
 - Theme tokens live in `src/constants/`:
-  - `colors.constants.ts` (`COLORS`)
-  - `fonts.constants.ts` (`FONTS`)
-  - `layout.constants.ts` (`LAYOUT`, includes `RADIUS`, `SHADOW`, `Z`, `MEDIA`, `BREAKPOINTS`)
+  - `colors.constants.ts` (`COLORS`) — every color in the app, including translucent variants and semantic action/destructive/surface roles.
+  - `fonts.constants.ts` (`FONTS`) — `FAMILY`, `SIZE` (incl. `MICRO`/`META`/`UI_LARGE`/`PAGE_HEADER`/`STAT_VALUE`/`HERO`), `WEIGHT`, `LINE_HEIGHT`. Every typographic value must reference these tokens.
+  - `layout.constants.ts` (`LAYOUT`, includes `RADIUS`, `SHADOW`, `Z`, `MEDIA`, `BREAKPOINTS`, `PAGE_INSET`)
   - `spacing.constants.ts` (`SPACING`)
-- Always reference tokens (e.g. `${COLORS.HEADER}`, `${LAYOUT.RADIUS.LG}`, `${SPACING.FOUR}`). Do not hardcode hex values, px sizes, or magic spacing.
+  - `formField.constants.ts` (`FORM_FIELD`, `formFieldControlBorder`) — shared border width/radius/background for text inputs, selects, and matching native controls; change field chrome in one place instead of duplicating per component.
+  - `iconTheme.constants.ts` — exports **`ICON_SIZE`** (`XS`, `SM`, `MD`, `LG`, `XL`) and **`ICON_STROKE`** (`NORMAL`, `MEDIUM`, `BOLD`) for every Lucide icon, plus `ICON_THEME` (colors / chrome) and `ICON_BOX_TYPE` (`PRIMARY` / `SECONDARY`). Pass `size={ICON_SIZE.*}` and `strokeWidth={ICON_STROKE.*}` — never hardcoded numbers.
 - Mobile-first: write the base styles, then layer on `${LAYOUT.MEDIA.SM}`, `MD`, `LG`, etc. for breakpoints.
 - Global resets, focus ring, and reduced-motion handling live in `src/styles/GlobalStyles.tsx`. The styled-components SSR registry lives in `src/lib/registry.tsx` and is wired in `src/app/layout.tsx`.
 - Because styled-components is a runtime CSS-in-JS library, **any file that defines or uses styled-components must be a Client Component** (`"use client"` at the top). Keep server pages as data-fetching shells that pass props into a `*Client.tsx` view, mirroring the existing `StudentClassesClient` / `TeacherScheduleClient` pattern.
 - Use semantic elements (`header`, `main`, `nav`, `section`). Respect focus states — the global `:focus-visible` ring is already set up in `GlobalStyles`.
+
+### 6a. Single source of truth for design values (NON-NEGOTIABLE)
+
+Every design value MUST be referenced from a token in `src/constants/`. **Never** hardcode a hex color, rgb/rgba color, hsl/hsla color, font size, font weight, line-height, font-family, spacing, border radius, shadow, breakpoint, z-index, or motion duration in a component file. If the right token doesn't exist, **add it to the appropriate constants file first**, then use it. This rule exists so the entire app's look can be retuned by editing **one** file per design dimension.
+
+Specifically forbidden in `*.tsx` / `*.ts` outside `src/constants/`:
+
+- Hex literals: `#2563eb`, `#1d4ed8`, `#0a2540`, `#ffffff`, `#000`, etc.
+- Color functions with literal channels: `rgb(...)`, `rgba(...)`, `hsl(...)`, `hsla(...)` (use a token whose value contains them).
+- Magic px / rem / em sizes for spacing, radius, shadow blur, font size, line height (use `SPACING`, `LAYOUT.RADIUS`, `LAYOUT.SHADOW`, `FONTS.SIZE`, `FONTS.LINE_HEIGHT`).
+- **Numeric `font-size`** literals (`font-size: 11px`, `font-size: 0.6875rem`, etc.) — every size must come from `FONTS.SIZE`. If the right size isn't there, **add a semantic key** (e.g. `META`, `UI_LARGE`, `PAGE_HEADER`, `STAT_VALUE`) before using it.
+- **Numeric `font-weight`** literals (`font-weight: 600`) — use `FONTS.WEIGHT.{NORMAL|MEDIUM|SEMIBOLD|BOLD}`.
+- Hardcoded font families (use `FONTS.FAMILY.{PRIMARY|MONO}`).
+- **Lucide icon `size={N}` and `strokeWidth={N}` literals** — use `ICON_SIZE.{XS|SM|MD|LG|XL}` and `ICON_STROKE.{NORMAL|MEDIUM|BOLD}`. Add a semantic key to `ICON_SIZE` / `ICON_STROKE` if needed before using a one-off number.
+- Hardcoded `color={"#…"}` props on icons — use `ICON_THEME.*` or a `COLORS.*` token.
+- Hardcoded breakpoints (`@media (min-width: 640px)`, etc.) — use `${LAYOUT.MEDIA.SM|MD|LG}`.
+- Hardcoded z-indexes — use `${LAYOUT.Z.*}`.
+- Page-edge horizontal/vertical inset — controlled exclusively by `LAYOUT.PAGE_INSET` on `<Main>` in `AppShellClient`. No page wrapper may add its own horizontal padding or use negative margins to fight Main.
+
+Allowed exceptions:
+
+- Genuinely one-off geometric values that are not theme-able (e.g. a 1px hairline, `0.5`/`0.25` opacity for ad-hoc dimming, `currentColor`, `transparent`, `inherit`).
+- The `src/constants/**` files themselves — they are the single source.
+- Pure layout math inside `calc()` against an existing token (e.g. `calc(50% - ${SPACING.FOUR})`).
+
+Naming pattern for new tokens:
+
+- **Colors**: semantic over palette. Prefer `ACTION_PRIMARY`, `ACTION_PRIMARY_HOVER`, `DESTRUCTIVE_BORDER_HOVER`, `SURFACE_NEUTRAL_HOVER` over names like `BLUE_600` or `RED_200`. The token name should describe the **role** in the UI, not the hue.
+- **Translucent variants**: append the alpha as a suffix (e.g. `ACTION_PRIMARY_TINT_10` for `rgba(…, 0.10)`, `ACTION_PRIMARY_RING_28` for the focus ring at `0.28`).
+- **Composite tokens** (shadows, gradients): name by usage (`ACTION_PRIMARY_SHADOW_MD`), not by recipe.
+
+### 6b. Pre-edit checklist (style changes)
+
+Before adding any styled-component declaration **or any JSX prop that controls visual style** (icon size/stroke/color, native input chrome, etc.), confirm:
+
+1. Every color is `${COLORS.*}` (or `ICON_THEME.*` for icon-specific roles) — no `#…`, `rgb(…)`, `rgba(…)`, `hsl(…)`.
+2. Every length is a token (`${SPACING.*}`, `${LAYOUT.RADIUS.*}`, `${FORM_FIELD.*}`) or a `clamp()`/`calc()` built from tokens.
+3. Every typography value is `${FONTS.*}` — `FAMILY`, `SIZE`, `WEIGHT`, `LINE_HEIGHT`. No `font-size: 11px`, no `font-weight: 600`.
+4. Every Lucide `<Icon size={…} strokeWidth={…} color={…} />` uses `ICON_SIZE.*`, `ICON_STROKE.*`, and `ICON_THEME.*` (or `COLORS.*`) respectively.
+5. Every media query is `${LAYOUT.MEDIA.*}`.
+6. Every z-index is `${LAYOUT.Z.*}`.
+7. Every shadow is `${LAYOUT.SHADOW.*}` (or a named token in `COLORS.*` / `ICON_THEME.*` for action-specific shadows).
+8. Page edge inset is delegated to `<Main>` (don't add horizontal padding on a page-level wrapper).
+
+If any check fails, add or extend a token in `src/constants/*` first, then use it. **Never** introduce a literal "just for now." When you find an existing literal in a file you're editing, convert it (boy-scout rule).
+
+### 6c. Reviewing existing code
+
+When editing any file, opportunistically convert existing literals you touch to tokens (or add tokens for them). Do not silently leave a `#xxxxxx` next to a line you just changed. This is part of the boy-scout rule for styling.
 
 ## 7. State management
 

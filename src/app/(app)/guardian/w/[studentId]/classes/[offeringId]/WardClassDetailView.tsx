@@ -30,6 +30,7 @@ const Header = styled.div`
 
 const BackLink = styled(Link)`
   font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.MUTED_FOREGROUND};
   text-decoration: none;
 
@@ -88,7 +89,7 @@ const StatBox = styled.div`
 `;
 
 const StatLabel = styled.dt`
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: ${COLORS.MUTED_FOREGROUND};
@@ -190,8 +191,8 @@ const PrimaryLink = styled(Link)`
   border-radius: ${LAYOUT.RADIUS.MD};
   background-color: ${COLORS.HEADER};
   padding: 0 ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.WHITE};
   text-decoration: none;
 
@@ -237,7 +238,7 @@ const Badge = styled.span<{ $status: Status }>`
   border-radius: ${LAYOUT.RADIUS.FULL};
   border: 1px solid ${COLORS.BORDER};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
   text-transform: lowercase;
 

@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import styled from "styled-components";
+import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import type { AppNavIconKey } from "./appNavConfig";
 
 const ICONS: Record<AppNavIconKey, LucideIcon> = {
@@ -44,7 +45,7 @@ export function AppNavIcon({ name }: AppNavIconProps) {
   const Icon = ICONS[name];
   return (
     <Wrapper>
-      <Icon size={20} strokeWidth={2} aria-hidden />
+      <Icon size={ICON_SIZE.LG} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
     </Wrapper>
   );
 }

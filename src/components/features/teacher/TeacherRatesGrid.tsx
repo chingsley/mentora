@@ -5,6 +5,7 @@ import * as React from "react";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors.constants";
+import { FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -125,8 +126,8 @@ const EditRow = styled.div`
 const NumberInput = styled.input`
   height: 2.25rem;
   width: 7rem;
-  border-radius: ${LAYOUT.RADIUS.MD};
-  border: 1px solid ${COLORS.BORDER};
+  border-radius: ${FORM_FIELD.CONTROL_RADIUS};
+  border: ${formFieldControlBorder(false)};
   background-color: ${COLORS.FOREGROUND};
   padding: 0 ${SPACING.TWO};
   text-align: right;
@@ -290,7 +291,6 @@ export function TeacherRatesGrid({ subjects, regions, rates }: TeacherRatesGridP
                         <ButtonRow>
                           <Button
                             type="button"
-                            size="sm"
                             onClick={() => onSave(s.id, r.code)}
                             isLoading={isPending}
                           >
@@ -299,7 +299,6 @@ export function TeacherRatesGrid({ subjects, regions, rates }: TeacherRatesGridP
                           <Button
                             type="button"
                             variant="ghost"
-                            size="sm"
                             onClick={() => setEditing(null)}
                           >
                             Cancel
@@ -308,7 +307,6 @@ export function TeacherRatesGrid({ subjects, regions, rates }: TeacherRatesGridP
                             <Button
                               type="button"
                               variant="destructive"
-                              size="sm"
                               onClick={() => onClear(s.id, r.code)}
                             >
                               Remove

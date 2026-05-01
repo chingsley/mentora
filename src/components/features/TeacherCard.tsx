@@ -98,7 +98,7 @@ const Name = styled.h3`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: ${FONTS.SIZE.BASE};
+  font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
 `;
@@ -130,7 +130,7 @@ const Headline = styled.p`
 const DisplayId = styled.p`
   margin-top: 0.125rem;
   font-family: ${FONTS.FAMILY.MONO};
-  font-size: 0.6875rem;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
@@ -156,7 +156,7 @@ const DayRow = styled.div`
 `;
 
 const DayLabel = styled.span`
-  font-size: 0.6875rem;
+  font-size: ${FONTS.SIZE.META};
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: ${COLORS.MUTED_FOREGROUND};
@@ -166,7 +166,7 @@ const DayPill = styled.span`
   border-radius: ${LAYOUT.RADIUS.MD};
   background-color: ${COLORS.BACKGROUND};
   padding: 0.125rem 0.375rem;
-  font-size: 0.6875rem;
+  font-size: ${FONTS.SIZE.META};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
   color: ${COLORS.HEADER};
 `;

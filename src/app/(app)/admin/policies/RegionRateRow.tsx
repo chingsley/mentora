@@ -125,7 +125,7 @@ export function RegionRateRow({
           defaultValue={defaultMajor}
         />
         <Suffix>{currency}/hr</Suffix>
-        <SubmitButton size="sm">Save</SubmitButton>
+        <SubmitButton>Save</SubmitButton>
       </Form>
     </Row>
   );

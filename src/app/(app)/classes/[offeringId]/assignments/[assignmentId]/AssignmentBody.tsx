@@ -19,7 +19,7 @@ export const MutedText = styled.p`
 
 export const AttachmentLink = styled.a`
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: none;
 
@@ -59,7 +59,7 @@ export const Top = styled.div`
 
 export const InlineLink = styled.a`
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: underline;
 `;

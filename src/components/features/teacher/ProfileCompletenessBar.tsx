@@ -9,10 +9,12 @@ import { SPACING } from "@/constants/spacing.constants";
 export interface ProfileCompletenessItem {
   label: string;
   done: boolean;
+  editTab?: string;
 }
 
 export interface ProfileCompletenessBarProps {
   items: ProfileCompletenessItem[];
+  onNavigateTab?: (tab: string) => void;
 }
 
 const Wrap = styled.div`
@@ -53,9 +55,42 @@ const PillList = styled.ul`
   flex-wrap: wrap;
   gap: ${SPACING.TWO};
   padding-top: ${SPACING.ONE};
+  margin: 0;
+  list-style: none;
 `;
 
-const Pill = styled.li<{ $done: boolean }>`
+const PillButton = styled.button<{ $done: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  padding: 0.125rem 0.625rem;
+  font-size: ${FONTS.SIZE.XS};
+  border: 1px solid;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+
+  ${(p) =>
+    p.$done
+      ? css`
+          border-color: rgba(22, 163, 74, 0.3);
+          background-color: rgba(22, 163, 74, 0.1);
+          color: ${COLORS.SUCCESS};
+        `
+      : css`
+          border-color: ${COLORS.BORDER};
+          background-color: ${COLORS.BACKGROUND};
+          color: ${COLORS.MUTED_FOREGROUND};
+
+          &:hover {
+            border-color: ${COLORS.PRIMARY};
+            color: ${COLORS.HEADER};
+          }
+        `}
+`;
+
+const Pill = styled.span<{ $done: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
@@ -78,11 +113,16 @@ const Pill = styled.li<{ $done: boolean }>`
         `}
 `;
 
-const PillIcon = styled.span`
-  font-size: 0.625rem;
+const PillRow = styled.li`
+  display: inline-flex;
+  list-style: none;
 `;
 
-export function ProfileCompletenessBar({ items }: ProfileCompletenessBarProps) {
+const PillIcon = styled.span`
+  font-size: ${FONTS.SIZE.MICRO};
+`;
+
+export function ProfileCompletenessBar({ items, onNavigateTab }: ProfileCompletenessBarProps) {
   const done = items.filter((i) => i.done).length;
   const total = items.length;
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
@@ -105,12 +145,28 @@ export function ProfileCompletenessBar({ items }: ProfileCompletenessBarProps) {
         />
       </Track>
       <PillList>
-        {items.map((i) => (
-          <Pill key={i.label} $done={i.done}>
-            <PillIcon aria-hidden>{i.done ? "✓" : "○"}</PillIcon>
-            {i.label}
-          </Pill>
-        ))}
+        {items.map((i) => {
+          const canJump = Boolean(onNavigateTab && i.editTab && !i.done);
+          return (
+            <PillRow key={i.label}>
+              {canJump ? (
+                <PillButton
+                  type="button"
+                  $done={i.done}
+                  onClick={() => onNavigateTab?.(i.editTab!)}
+                >
+                  <PillIcon aria-hidden>{i.done ? "✓" : "○"}</PillIcon>
+                  {i.label}
+                </PillButton>
+              ) : (
+                <Pill $done={i.done}>
+                  <PillIcon aria-hidden>{i.done ? "✓" : "○"}</PillIcon>
+                  {i.label}
+                </Pill>
+              )}
+            </PillRow>
+          );
+        })}
       </PillList>
     </Wrap>
   );

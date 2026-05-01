@@ -35,7 +35,7 @@ const SubjectPill = styled.span`
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.BACKGROUND};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
@@ -44,7 +44,7 @@ const GradePill = styled.span`
   border: 1px solid #6ee7b7;
   background-color: #ecfdf5;
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: #064e3b;
 `;
 
@@ -53,7 +53,7 @@ const AwaitingPill = styled.span`
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.BACKGROUND};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
@@ -62,7 +62,7 @@ const MissingPill = styled.span`
   border: 1px solid #fcd34d;
   background-color: #fffbeb;
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: #78350f;
 `;
 
@@ -80,7 +80,7 @@ const Description = styled.p`
 
 const InlineLink = styled.a`
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: none;
 
@@ -108,7 +108,7 @@ const SubmissionHead = styled.div`
 
 const SubmissionLink = styled.a`
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: underline;
 `;

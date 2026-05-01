@@ -96,10 +96,10 @@ export function NotificationPermissionBanner() {
         </BannerBody>
       </div>
       <BannerActions>
-        <Button type="button" size="sm" onClick={handleEnable}>
+        <Button type="button" onClick={handleEnable}>
           Enable notifications
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={handleDismiss}>
+        <Button type="button" variant="ghost" onClick={handleDismiss}>
           Not now
         </Button>
       </BannerActions>

@@ -83,7 +83,7 @@ export function LoginForm() {
       </AuthAuxiliaryRow>
 
       <AuthFormActions>
-        <AuthSubmitButton type="submit" isLoading={isPending} size="lg">
+        <AuthSubmitButton type="submit" isLoading={isPending}>
           {isPending ? "Signing in…" : "Sign in"}
         </AuthSubmitButton>
       </AuthFormActions>

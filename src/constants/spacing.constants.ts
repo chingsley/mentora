@@ -3,7 +3,6 @@
  * existing visual rhythm is preserved when migrating off utility classes.
  */
 export const SPACING = {
-  NONE: "0",
   HALF: "0.125rem", // 2px
   ONE: "0.25rem", // 4px
   TWO: "0.5rem", // 8px
@@ -14,6 +13,4 @@ export const SPACING = {
   EIGHT: "2rem", // 32px
   TEN: "2.5rem", // 40px
   TWELVE: "3rem", // 48px
-  SIXTEEN: "4rem", // 64px
-  TWENTY: "5rem", // 80px
 } as const;

@@ -1,0 +1,19 @@
+---
+description: Map “primary icon” / “secondary icon” requests to shared tokens in iconTheme.constants
+alwaysApply: true
+---
+
+# Icon box types (primary vs secondary)
+
+When the user (or design) asks for a **primary icon** or **secondary icon** styling for a boxed icon (metric tile, card header chrome, avatar-style icon wrapper, etc.), use the canonical tokens from `@/constants/iconTheme.constants`:
+
+- **Primary icon** → `ICON_BOX_TYPE.PRIMARY`
+  - `background`: brand fill (`#5f6f95`, same as `COLORS.SIDEBAR_BRAND` / `ICON_THEME.MAJE_BRAND`)
+  - `color`: white glyph (`COLORS.WHITE`)
+
+- **Secondary icon** → `ICON_BOX_TYPE.SECONDARY`
+  - `background`: light brand wash `rgba(95, 111, 149, 0.08)` (aligned with `ICON_THEME.ACTION_LINK_BACKGROUND`)
+  - `color`: brand glyph (`ICON_THEME.MAJE_BRAND`)
+  - `border`: `1px solid` brand (`ICON_THEME.ACTION_LINK_BORDER` / `ICON_BOX_TYPE.SECONDARY.border`) — use for every secondary-style icon control, including `ACTION_LINK_*` tiles
+
+Do not invent alternate washes or fills for these roles unless the user explicitly overrides. Prefer `ICON_BOX_TYPE` for new UI; existing `ICON_THEME` keys remain valid for sizing, shadows, and hover variants.

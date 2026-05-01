@@ -75,7 +75,7 @@ const DayCell = styled.button<{ $inMonth: boolean; $clickable: boolean }>`
 `;
 
 const DateNumber = styled.span<{ $inMonth: boolean; $isToday: boolean }>`
-  font-size: 0.6875rem;
+  font-size: ${FONTS.SIZE.META};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${(p) => (p.$inMonth ? COLORS.HEADER : COLORS.MUTED_FOREGROUND)};
 
@@ -103,7 +103,7 @@ const More = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.625rem;
+  font-size: ${FONTS.SIZE.MICRO};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 

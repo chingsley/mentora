@@ -23,8 +23,8 @@ const NavLink = styled(Link)<{ $active: boolean }>`
   align-items: center;
   border-radius: ${LAYOUT.RADIUS.SM};
   padding: 0 ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   text-decoration: none;
   transition: background-color 0.15s ease, color 0.15s ease;
 

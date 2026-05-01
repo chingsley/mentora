@@ -258,7 +258,7 @@ const TestimonialBody = styled.p`
 
 const TestimonialFoot = styled.p`
   margin-top: ${SPACING.ONE};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 

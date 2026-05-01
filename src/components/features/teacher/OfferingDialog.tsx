@@ -250,7 +250,6 @@ export function OfferingDialog({
                 <Button
                   type="button"
                   variant="destructive"
-                  size="sm"
                   onClick={onDelete}
                   disabled={isPending}
                 >

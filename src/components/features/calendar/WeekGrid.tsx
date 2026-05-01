@@ -61,7 +61,7 @@ const HeaderCell = styled.div`
 
 const HeaderDate = styled.span`
   display: block;
-  font-size: 0.625rem;
+  font-size: ${FONTS.SIZE.MICRO};
   font-weight: ${FONTS.WEIGHT.NORMAL};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
@@ -77,7 +77,7 @@ const TimeLabel = styled.div`
   position: absolute;
   right: ${SPACING.TWO};
   transform: translateY(-50%);
-  font-size: 0.625rem;
+  font-size: ${FONTS.SIZE.MICRO};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 

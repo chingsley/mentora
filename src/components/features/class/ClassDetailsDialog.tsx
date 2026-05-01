@@ -75,7 +75,7 @@ const StatusPill = styled.span<{ $status: keyof typeof FILL_THEME }>`
   background-color: ${(p) => FILL_THEME[p.$status].bg};
   color: ${(p) => FILL_THEME[p.$status].text};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 0.6875rem;
+  font-size: ${FONTS.SIZE.META};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
 `;
 
@@ -103,7 +103,7 @@ const StatBox = styled.div`
 `;
 
 const StatLabel = styled.dt`
-  font-size: 0.6875rem;
+  font-size: ${FONTS.SIZE.META};
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: ${COLORS.MUTED_FOREGROUND};

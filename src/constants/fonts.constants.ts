@@ -24,17 +24,28 @@ export const FONTS = {
       'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
   },
   SIZE: {
+    /** 10px — micro chrome (calendar week numbers, tiny status pips). */
+    MICRO: "0.625rem",
+    /** 11px — meta text on chips, badges, table footnotes. */
+    META: "0.6875rem", // 11px
     XS: "0.75rem", // 12px
     "2XS": "0.8125rem", // 13px
     SM: "0.875rem", // 14px
     MD: "0.9375rem", // 15px
     BASE: "1rem", // 16px
+    /** 17px — dashboard card titles, KPI emphasis text. */
+    UI_LARGE: "1.0625rem",
     LG: "1.125rem", // 18px
-    XL: "1.25rem", // 20px
+    /** 22px — dashboard / page-header titles inside the app shell. */
+    PAGE_HEADER: "1.375rem",
     "2XL": "1.5rem", // 24px
-    AUTH_TITLE: "2rem", // 32px
+    /** 28px — KPI / stat value displays. */
+    STAT_VALUE: "1.75rem",
     "3XL": "1.875rem", // 30px
+    AUTH_TITLE: "2rem", // 32px
     "4XL": "2.25rem", // 36px
+    /** 48px — marketing hero headline. */
+    HERO: "3rem",
   },
   WEIGHT: {
     NORMAL: 400,
@@ -46,6 +57,5 @@ export const FONTS = {
     TIGHT: 1.2,
     SNUG: 1.35,
     NORMAL: 1.5,
-    RELAXED: 1.65,
   },
 } as const;

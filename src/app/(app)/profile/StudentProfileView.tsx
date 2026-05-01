@@ -96,7 +96,7 @@ const Name = styled.h1`
   }
 `;
 
-const StatusPill = styled.span<{ $tone: "success" | "warning" }>`
+const StatusPill = styled.span<{ $tone: "success" | "warning"; }>`
   border-radius: ${LAYOUT.RADIUS.FULL};
   padding: 0.125rem 0.625rem;
   font-size: ${FONTS.SIZE.XS};
@@ -178,7 +178,7 @@ const CtaLink = styled(Link)`
   background-color: ${COLORS.HEADER};
   padding: 0 ${SPACING.THREE};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.WHITE};
   text-decoration: none;
 
@@ -187,16 +187,7 @@ const CtaLink = styled(Link)`
   }
 `;
 
-const TwoCol = styled.div`
-  display: grid;
-  gap: ${SPACING.SIX};
-
-  ${LAYOUT.MEDIA.LG} {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-`;
-
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({ label, value }: { label: string; value: string; }) {
   return (
     <KpiBox>
       <KpiValue>{value}</KpiValue>
@@ -217,7 +208,7 @@ export interface StudentProfileViewProps {
   interestSubjectIds: string[];
   interestNames: string[];
   regionName: string | null;
-  allSubjects: { id: string; name: string }[];
+  allSubjects: { id: string; name: string; }[];
 }
 
 export function StudentProfileView({
@@ -285,33 +276,31 @@ export function StudentProfileView({
         </CtaBar>
       </HeroCard>
 
-      <TwoCol>
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile photo</CardTitle>
-            <CardDescription>
-              A clear photo helps your teachers recognise you in class.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ProfilePhotoForm
-              currentImage={imageUrl}
-              fallbackInitials={initials}
-              hint="PNG, JPEG, or WebP · up to 2 MB. Optional but recommended."
-            />
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile photo</CardTitle>
+          <CardDescription>
+            A clear photo helps your teachers recognise you in class.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProfilePhotoForm
+            currentImage={imageUrl}
+            fallbackInitials={initials}
+            hint="PNG, JPEG, or WebP · up to 2 MB. Optional but recommended."
+          />
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>About you</CardTitle>
-            <CardDescription>Share a bit so teachers know your goals.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <StudentBioForm initial={{ bio: bio ?? "" }} />
-          </CardContent>
-        </Card>
-      </TwoCol>
+      <Card>
+        <CardHeader>
+          <CardTitle>About you</CardTitle>
+          <CardDescription>Share a bit so teachers know your goals.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StudentBioForm initial={{ bio: bio ?? "" }} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

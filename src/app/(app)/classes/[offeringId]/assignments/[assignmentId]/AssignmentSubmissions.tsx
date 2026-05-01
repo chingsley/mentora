@@ -40,8 +40,8 @@ const Name = styled.span`
 `;
 
 const DownloadLink = styled.a`
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: underline;
 `;
@@ -56,7 +56,7 @@ const GradedPill = styled.span`
   border: 1px solid #6ee7b7;
   background-color: #ecfdf5;
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: #064e3b;
 `;
 
@@ -65,7 +65,7 @@ const UngradedPill = styled.span`
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.BACKGROUND};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 

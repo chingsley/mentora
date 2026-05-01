@@ -6,8 +6,13 @@ import {
   createOffering,
   createOfferingSchema,
   deleteOffering as deleteOfferingServer,
+  OfferingScheduleConflictError,
   recomputeProfileCompleted,
   removeTeacherRate,
+  saveTeacherBioTab,
+  saveTeacherBioTabSchema,
+  saveTeacherPayoutTab,
+  saveTeacherPayoutTabSchema,
   setRateMajorSchema,
   setSubjectsSchema,
   setTeacherRateMajor,
@@ -44,6 +49,22 @@ function revalidateTeacher() {
   revalidatePath("/schedule");
   revalidatePath("/teachers");
   revalidatePath("/dashboard");
+}
+
+export async function clearTeacherAvatarAction(): Promise<ActionResult> {
+  const session = await requireRole("TEACHER");
+  const teacher = await db.teacherProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+  if (!teacher) return { ok: false, error: "Teacher profile not found" };
+  await db.user.update({
+    where: { id: session.user.id },
+    data: { image: null },
+  });
+  await recomputeProfileCompleted(teacher.id);
+  revalidateTeacher();
+  return { ok: true };
 }
 
 export async function saveBioAction(formData: FormData): Promise<ActionResult> {
@@ -193,6 +214,9 @@ export async function createOfferingAction(formData: FormData): Promise<ActionRe
   try {
     await createOffering(session.user.id, parsed.data);
   } catch (err) {
+    if (err instanceof OfferingScheduleConflictError) {
+      return { ok: false, error: err.message };
+    }
     const msg = err instanceof Error ? err.message : "Failed to create period";
     return { ok: false, error: msg };
   }
@@ -219,6 +243,9 @@ export async function updateOfferingAction(formData: FormData): Promise<ActionRe
   try {
     await updateOffering(session.user.id, offeringId, parsed.data);
   } catch (err) {
+    if (err instanceof OfferingScheduleConflictError) {
+      return { ok: false, error: err.message };
+    }
     const msg = err instanceof Error ? err.message : "Failed to update period";
     return { ok: false, error: msg };
   }
@@ -275,6 +302,56 @@ export async function saveStudentBioAction(
   }
   await updateStudentBio(session.user.id, parsed.data);
   revalidateStudent();
+  return { ok: true };
+}
+
+export async function saveTeacherBioTabAction(formData: FormData): Promise<ActionResult> {
+  const session = await requireRole("TEACHER");
+  const parsed = saveTeacherBioTabSchema.safeParse({
+    bio: formData.get("bio") || "",
+    spokenLanguages: formData.get("spokenLanguages"),
+    locationLabel: formData.get("locationLabel") || "",
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Please fix the highlighted fields.",
+      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+    };
+  }
+  try {
+    await saveTeacherBioTab(session.user.id, parsed.data);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Could not save profile";
+    return { ok: false, error: msg };
+  }
+  revalidateTeacher();
+  return { ok: true };
+}
+
+export async function saveTeacherPayoutTabAction(formData: FormData): Promise<ActionResult> {
+  const session = await requireRole("TEACHER");
+  const parsed = saveTeacherPayoutTabSchema.safeParse({
+    payoutLegalName: formData.get("payoutLegalName") || "",
+    payoutCountryCode: formData.get("payoutCountryCode") || "",
+    payoutPreferredMethod: formData.get("payoutPreferredMethod") || "",
+    payoutNotes: formData.get("payoutNotes") || "",
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Please fix the highlighted fields.",
+      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+    };
+  }
+  await saveTeacherPayoutTab(session.user.id, parsed.data);
+  revalidateTeacher();
+  return { ok: true };
+}
+
+export async function saveTeacherScheduleTabAction(): Promise<ActionResult> {
+  await requireRole("TEACHER");
+  revalidateTeacher();
   return { ok: true };
 }
 

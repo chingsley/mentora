@@ -3,6 +3,7 @@
 import * as React from "react";
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
+import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 
@@ -18,7 +19,7 @@ const SubjectPill = styled.span`
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.BACKGROUND};
   padding: 0.125rem ${SPACING.TWO};
-  font-size: 11px;
+  font-size: ${FONTS.SIZE.META};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
