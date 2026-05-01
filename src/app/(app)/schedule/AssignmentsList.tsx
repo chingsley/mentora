@@ -54,8 +54,8 @@ const ManageLink = styled(Link)`
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.FOREGROUND};
   padding: 0 ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: none;
 

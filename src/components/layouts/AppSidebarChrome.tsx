@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
 import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -19,34 +20,34 @@ const Shell = styled.div`
   min-height: 0;
 `;
 
-const Brand = styled.div<{ $collapsed: boolean }>`
+const Brand = styled.div<{ $collapsed: boolean; }>`
   display: flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: ${(p) => (p.$collapsed ? "center" : "flex-start")};
   padding: ${(p) => (p.$collapsed ? `${SPACING.FOUR} ${SPACING.TWO}` : `${SPACING.FOUR}`)};
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid ${COLORS.BORDER};
 `;
 
-const BrandLink = styled(Link)<{ $collapsed: boolean }>`
+const BrandLink = styled(Link) <{ $collapsed: boolean; }>`
   display: ${(p) => (p.$collapsed ? "flex" : "inline")};
   align-items: center;
   justify-content: center;
   ${(p) =>
     p.$collapsed
-      ? `width: 2.25rem; height: 2.25rem; border-radius: ${LAYOUT.RADIUS.MD}; font-size: ${FONTS.SIZE.LG};`
-      : `font-size: ${FONTS.SIZE.LG};`}
+      ? `width: 2.25rem; height: 2.25rem; border-radius: ${LAYOUT.RADIUS.MD}; font-size: ${FONTS.SIZE.SM};`
+      : `font-size: ${FONTS.SIZE.SM};`}
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   letter-spacing: -0.01em;
-  color: white;
+  color: ${COLORS.HEADER};
   outline: none;
 
   &:hover {
-    opacity: 0.9;
+    color: ${COLORS.SIDEBAR_BRAND};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
   }
 `;
 
@@ -60,29 +61,42 @@ const Nav = styled.nav`
 const NavList = styled.ul`
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: ${SPACING.ONE};
 `;
 
-const NavItemLink = styled(Link)<{ $collapsed: boolean; $active: boolean }>`
+const NavItemLink = styled(Link) <{ $collapsed: boolean; $active: boolean; }>`
   display: flex;
   align-items: center;
   gap: ${SPACING.THREE};
-  padding: ${SPACING.TWO} ${(p) => (p.$collapsed ? SPACING.TWO : SPACING.THREE)};
+  min-height: ${SPACING.TWELVE};
+  padding: ${(p) => (p.$collapsed ? SPACING.TWO : `${SPACING.TWO} 0.625rem`)};
   justify-content: ${(p) => (p.$collapsed ? "center" : "flex-start")};
-  border-radius: ${LAYOUT.RADIUS.MD};
+  box-sizing: border-box;
+  border-radius: 2px;
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${(p) => (p.$active ? FONTS.WEIGHT.MEDIUM : FONTS.WEIGHT.NORMAL)};
-  color: white;
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  text-decoration: none;
+  color: ${(p) => (p.$active ? COLORS.HEADER : COLORS.SIDEBAR_MUTED)};
+  background-color: ${(p) => (p.$active ? COLORS.FOREGROUND : "transparent")};
+  border-bottom: ${(p) =>
+    p.$active ? `2px solid ${COLORS.SIDEBAR_ACCENT}` : "2px solid transparent"};
   outline: none;
-  background-color: ${(p) => (p.$active ? "rgba(255, 255, 255, 0.15)" : "transparent")};
-  transition: background-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-bottom 0.15s ease;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    color: ${COLORS.HEADER};
+    background-color: ${COLORS.FOREGROUND};
+    border-bottom: ${(p) =>
+    p.$active
+      ? `2px solid ${COLORS.SIDEBAR_ACCENT}`
+      : `1px solid ${COLORS.SIDEBAR_NAV_BORDER_HOVER}`};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
   }
 `;
 
@@ -107,7 +121,7 @@ const SrOnly = styled.span`
 
 const Footer = styled.div`
   flex-shrink: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid ${COLORS.BORDER};
   padding: ${SPACING.TWO};
 `;
 
@@ -121,17 +135,18 @@ const CollapseToggle = styled.button`
   margin-bottom: ${SPACING.TWO};
   border-radius: ${LAYOUT.RADIUS.MD};
   background: transparent;
-  color: rgba(255, 255, 255, 0.9);
+  color: ${COLORS.SIDEBAR_MUTED};
   font-size: ${FONTS.SIZE.SM};
   outline: none;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: ${COLORS.SIDEBAR_HOVER};
+    color: ${COLORS.HEADER};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
   }
 `;
 
@@ -141,16 +156,16 @@ const ToggleSvg = styled.svg`
   flex-shrink: 0;
 `;
 
-const UserPanel = styled.div<{ $collapsed: boolean }>`
+const UserPanel = styled.div<{ $collapsed: boolean; }>`
   display: ${(p) => (p.$collapsed ? "flex" : "block")};
   flex-direction: column;
   align-items: center;
   gap: ${SPACING.TWO};
   padding: ${SPACING.TWO};
   border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: ${COLORS.SIDEBAR_HOVER};
   font-size: ${FONTS.SIZE.XS};
-  color: rgba(255, 255, 255, 0.8);
+  color: ${COLORS.SIDEBAR_ROLE};
 `;
 
 const UserMeta = styled.p`
@@ -160,7 +175,7 @@ const UserMeta = styled.p`
 
 const UserName = styled.span`
   display: block;
-  color: white;
+  color: ${COLORS.HEADER};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
 `;
 
@@ -168,7 +183,7 @@ const UserRole = styled.span`
   display: block;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.7);
+  color: ${COLORS.SIDEBAR_ROLE};
 `;
 
 function isNavActive(pathname: string, href: string): boolean {
@@ -217,7 +232,7 @@ export interface AppSidebarChromeProps {
   showCollapseToggle: boolean;
   onToggleCollapse: () => void;
   onNavigate?: () => void;
-  user: { name?: string | null; email?: string | null; role: Role };
+  user: { name?: string | null; email?: string | null; role: Role; };
   wards?: WardOption[];
 }
 

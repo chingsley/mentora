@@ -1,1 +1,8 @@
-export { PrimaryLink, SecondaryLink, SmallPrimaryLink, TextLink } from "./Link";
+export {
+  AppHyperLink,
+  appHyperLinkStyles,
+  PrimaryLink,
+  SecondaryLink,
+  SmallPrimaryLink,
+  TextLink,
+} from "./Link";

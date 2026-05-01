@@ -4,8 +4,25 @@ import NextLink from "next/link";
 import styled, { css } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
+import { ICON_THEME } from "@/constants/iconTheme.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+
+/** Shared body/inline navigation link: brand-strong, underline on hover. */
+export const appHyperLinkStyles = css`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${ICON_THEME.MAJE_BRAND_STRONG};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+export const AppHyperLink = styled(NextLink)`
+  ${appHyperLinkStyles}
+`;
 
 export const PrimaryLink = styled(NextLink)`
   display: inline-flex;
@@ -16,7 +33,7 @@ export const PrimaryLink = styled(NextLink)`
   background-color: ${COLORS.HEADER};
   padding: 0 ${SPACING.FOUR};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.WHITE};
   text-decoration: none;
 
@@ -35,7 +52,7 @@ export const SecondaryLink = styled(NextLink)`
   background-color: ${COLORS.FOREGROUND};
   padding: 0 ${SPACING.FOUR};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: none;
 
@@ -52,8 +69,8 @@ export const SmallPrimaryLink = styled(NextLink)`
   border-radius: ${LAYOUT.RADIUS.MD};
   background-color: ${COLORS.HEADER};
   padding: 0 ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.WHITE};
   text-decoration: none;
 
@@ -62,20 +79,12 @@ export const SmallPrimaryLink = styled(NextLink)`
   }
 `;
 
-export const TextLink = styled(NextLink)<{ $variant?: "default" | "muted" }>`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
+export const TextLink = styled(NextLink) <{ $variant?: "default" | "muted"; }>`
+  ${appHyperLinkStyles}
 
   ${(p) =>
     p.$variant === "muted" &&
     css`
-      font-weight: ${FONTS.WEIGHT.NORMAL};
       color: ${COLORS.MUTED_FOREGROUND};
     `}
 `;

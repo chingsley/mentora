@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import styled from "styled-components";
+import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -23,18 +24,21 @@ const Base = styled.button<{ $compact: boolean }>`
   padding: ${(p) => (p.$compact ? "0" : `${SPACING.HALF} ${SPACING.THREE}`)};
   border-radius: ${LAYOUT.RADIUS.MD};
   background: transparent;
-  color: rgba(255, 255, 255, 0.9);
+  color: ${COLORS.SIDEBAR_MUTED};
   font-size: ${FONTS.SIZE.SM};
   text-align: left;
   outline: none;
-  transition: background-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 
   &:hover:not(:disabled) {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: ${COLORS.SIDEBAR_HOVER};
+    color: ${COLORS.HEADER};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
   }
 
   &:disabled {

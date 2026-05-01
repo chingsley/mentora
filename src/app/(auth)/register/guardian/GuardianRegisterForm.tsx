@@ -34,7 +34,8 @@ const Footer = styled.p`
 `;
 
 const FooterLink = styled(Link)`
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: none;
 

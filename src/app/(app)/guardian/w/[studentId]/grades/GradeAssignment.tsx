@@ -80,7 +80,7 @@ const Description = styled.p`
 
 const InlineLink = styled.a`
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: none;
 
@@ -108,7 +108,7 @@ const SubmissionHead = styled.div`
 
 const SubmissionLink = styled.a`
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: underline;
 `;

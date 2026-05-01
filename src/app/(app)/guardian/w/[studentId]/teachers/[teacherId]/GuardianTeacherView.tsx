@@ -27,6 +27,7 @@ const Wrap = styled.div`
 
 const BackLink = styled(Link)`
   font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.MUTED_FOREGROUND};
   text-decoration: none;
 

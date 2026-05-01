@@ -40,8 +40,8 @@ const Name = styled.span`
 `;
 
 const DownloadLink = styled.a`
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: underline;
 `;

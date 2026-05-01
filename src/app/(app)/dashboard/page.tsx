@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+import { TeacherDashboardView } from "@/components/features/teacher/dashboard/TeacherDashboardView";
 import { PrimaryLink, TextLink } from "@/components/ui/Link";
 import {
   Grid,
@@ -18,7 +19,7 @@ import {
   Strong,
 } from "@/components/ui/primitives";
 import { listStudentEnrollments } from "@/server/enrollments";
-import { getMyTeacherProfile, listTeacherOfferings } from "@/server/teachers";
+import { getTeacherDashboardPayload } from "@/server/dashboardTeacher";
 import { listLinkedStudents } from "@/server/guardians";
 import { getPolicy } from "@/server/policies";
 import { NotificationPermissionBanner } from "@/components/features/student/NotificationPermissionBanner";
@@ -32,12 +33,14 @@ export default async function DashboardPage() {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>Welcome{name ? `, ${name.split(" ")[0]}` : ""}</PageTitle>
-        <Muted>
-          You&apos;re signed in as <Strong>{role.toLowerCase()}</Strong>.
-        </Muted>
-      </PageHeader>
+      {role !== "TEACHER" ? (
+        <PageHeader>
+          <PageTitle>Welcome{name ? `, ${name.split(" ")[0]}` : ""}</PageTitle>
+          <Muted>
+            You&apos;re signed in as <Strong>{role.toLowerCase()}</Strong>.
+          </Muted>
+        </PageHeader>
+      ) : null}
 
       {role === "STUDENT" ? <StudentDash userId={userId} /> : null}
       {role === "TEACHER" ? <TeacherDash userId={userId} /> : null}
@@ -83,43 +86,25 @@ async function StudentDash({ userId }: { userId: string }) {
 }
 
 async function TeacherDash({ userId }: { userId: string }) {
-  const [offerings, data] = await Promise.all([
-    listTeacherOfferings(userId),
-    getMyTeacherProfile(userId),
-  ]);
-  const profile = data?.profile ?? null;
-  const activeStudents = data?.activeStudentCount ?? 0;
-  return (
-    <Grid $gap="FOUR" $mdCols={2}>
-      <Card>
-        <CardHeader>
-          <CardTitle>My teacher profile</CardTitle>
-          <CardDescription>
-            {profile?.profileCompleted
-              ? `You're all set. ID ${profile.displayId}.`
-              : "Finish setting up to appear in student searches."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PrimaryLink href="/profile">
-            {profile?.profileCompleted ? "View my profile" : "Complete profile"}
-          </PrimaryLink>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Your weekly schedule</CardTitle>
-          <CardDescription>
-            {offerings.length} active period{offerings.length === 1 ? "" : "s"} &middot;{" "}
-            {activeStudents} active student{activeStudents === 1 ? "" : "s"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PrimaryLink href="/schedule">Manage schedule</PrimaryLink>
-        </CardContent>
-      </Card>
-    </Grid>
-  );
+  const data = await getTeacherDashboardPayload(userId);
+  if (!data) {
+    return (
+      <Grid $gap="FOUR" $mdCols={2}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Teacher dashboard</CardTitle>
+            <CardDescription>
+              We couldn&apos;t load your teacher profile. Try completing onboarding again.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PrimaryLink href="/profile">Go to profile</PrimaryLink>
+          </CardContent>
+        </Card>
+      </Grid>
+    );
+  }
+  return <TeacherDashboardView data={data} />;
 }
 
 async function GuardianDash({ userId }: { userId: string }) {

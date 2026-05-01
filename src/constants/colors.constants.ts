@@ -56,6 +56,18 @@ export const COLORS = {
   STATUS_PENDING_BG: "#f1f5f9",
   STATUS_PENDING_TEXT: "#475569",
 
+  // App shell sidebar — aligned with Maje portal (`.maje-teacher-db .sidebar`: `--surface`, `--ink`, `--muted`)
+  SIDEBAR_MUTED: "#4d566b",
+  SIDEBAR_ACCENT: "#5a6888",
+  SIDEBAR_BRAND: "#5f6f95",
+  SIDEBAR_HOVER: "rgba(95, 111, 149, 0.06)",
+  SIDEBAR_ACTIVE_BG: "rgba(95, 111, 149, 0.1)",
+  SIDEBAR_ROLE: "#7c879d",
+  SIDEBAR_AVATAR_BG: "rgba(95, 111, 149, 0.12)",
+  /** Maje `.nav-link:hover` bottom border */
+  SIDEBAR_NAV_BORDER_HOVER: "#8b9bb4",
+  SIDEBAR_FOCUS_RING: "rgba(95, 111, 149, 0.45)",
+
   // Misc
   WHITE: "#ffffff",
   BLACK: "#000000",

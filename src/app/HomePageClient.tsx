@@ -77,7 +77,7 @@ const PrimaryCta = styled(Link)`
   background-color: ${COLORS.HEADER};
   padding: ${SPACING.THREE} ${SPACING.FIVE};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.WHITE};
   text-decoration: none;
 
@@ -95,7 +95,7 @@ const SecondaryCta = styled(Link)`
   background-color: ${COLORS.FOREGROUND};
   padding: ${SPACING.THREE} ${SPACING.FIVE};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: none;
 

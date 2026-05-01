@@ -38,9 +38,10 @@ const Sidebar = styled.aside<{ $open: boolean; $collapsed: boolean; }>`
   flex-direction: column;
   height: 100dvh;
   width: min(100%, 18rem);
-  background-color: ${COLORS.HEADER};
-  color: white;
-  box-shadow: ${LAYOUT.SHADOW.XL};
+  background-color: ${COLORS.FOREGROUND};
+  color: ${COLORS.HEADER};
+  border-right: 1px solid ${COLORS.BORDER};
+  box-shadow: ${LAYOUT.SHADOW.MD};
   transform: translateX(${(p) => (p.$open ? "0" : "-100%")});
   transition: transform 0.2s ease-out;
 
@@ -91,9 +92,10 @@ const MobileHeader = styled.header`
   height: 3.5rem;
   flex-shrink: 0;
   padding: 0 ${SPACING.THREE};
-  background-color: ${COLORS.HEADER};
-  color: white;
+  background-color: ${COLORS.FOREGROUND};
+  color: ${COLORS.HEADER};
   border-bottom: 1px solid ${COLORS.BORDER};
+  box-shadow: ${LAYOUT.SHADOW.SM};
 
   ${LAYOUT.MEDIA.SM} {
     padding: 0 ${SPACING.FOUR};
@@ -117,11 +119,11 @@ const MobileMenuButton = styled.button`
   outline: none;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: ${COLORS.SIDEBAR_HOVER};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
   }
 `;
 
@@ -129,16 +131,16 @@ const MobileLogo = styled(Link)`
   flex: 1;
   min-width: 0;
   text-align: center;
-  font-size: ${FONTS.SIZE.BASE};
+  font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: inherit;
+  color: ${COLORS.HEADER};
   outline: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
   }
 `;
 

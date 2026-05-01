@@ -60,7 +60,7 @@ const HeaderInner = styled.div<{ $padForMenuToggle: boolean }>`
 
 const Brand = styled(Link)`
   flex-shrink: 0;
-  font-size: ${FONTS.SIZE.XL};
+  font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   letter-spacing: -0.025em;
   color: ${COLORS.HEADER};
@@ -91,6 +91,8 @@ const Nav = styled.nav`
 const NavLink = styled(Link)`
   border-radius: ${LAYOUT.RADIUS.MD};
   padding: ${SPACING.TWO} ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: inherit;
   text-decoration: none;
   background-color: ${COLORS.HEADER};
@@ -100,7 +102,8 @@ const NavCta = styled(Link)`
   border-radius: ${LAYOUT.RADIUS.MD};
   background-color: ${COLORS.HEADER};
   padding: ${SPACING.TWO} ${SPACING.THREE};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: inherit;
   text-decoration: none;
 `;

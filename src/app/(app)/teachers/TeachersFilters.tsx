@@ -154,6 +154,7 @@ const Submit = styled.button`
 
 const ClearLink = styled(Link)`
   font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.MUTED_FOREGROUND};
   text-decoration: none;
 

@@ -317,6 +317,7 @@ export const AuthFoot = styled.p`
 `;
 
 export const AuthLink = styled(Link)`
+  font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${AUTH_THEME.cta};
   text-decoration: none;

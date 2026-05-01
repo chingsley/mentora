@@ -4,6 +4,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import styled from "styled-components";
 import { ChevronDown } from "lucide-react";
+import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -20,7 +21,7 @@ export interface WardSelectorProps {
 }
 
 const CollapsedWrap = styled.div`
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid ${COLORS.BORDER};
   padding: ${SPACING.TWO} 0;
 `;
 
@@ -37,15 +38,15 @@ const Avatar = styled.div<{ $size: "sm" | "md" }>`
   height: ${(p) => (p.$size === "sm" ? "1.5rem" : "2.25rem")};
   flex-shrink: 0;
   border-radius: 9999px;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  background-color: ${COLORS.SIDEBAR_AVATAR_BG};
+  color: ${COLORS.HEADER};
   text-transform: uppercase;
   font-size: ${(p) => (p.$size === "sm" ? "0.6875rem" : FONTS.SIZE.XS)};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
 `;
 
 const ExpandedWrap = styled.div`
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid ${COLORS.BORDER};
   padding: ${SPACING.THREE};
 `;
 
@@ -54,7 +55,7 @@ const Eyebrow = styled.p`
   font-size: 0.625rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.5);
+  color: ${COLORS.SIDEBAR_ROLE};
 `;
 
 const Trigger = styled.button`
@@ -64,19 +65,21 @@ const Trigger = styled.button`
   width: 100%;
   padding: ${SPACING.TWO};
   border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: rgba(255, 255, 255, 0.05);
-  color: white;
+  background-color: ${COLORS.SIDEBAR_HOVER};
+  color: ${COLORS.HEADER};
   font-size: ${FONTS.SIZE.SM};
   text-align: left;
   outline: none;
-  transition: background-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: ${COLORS.SIDEBAR_ACTIVE_BG};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
   }
 `;
 
@@ -92,7 +95,7 @@ const TriggerCaret = styled(ChevronDown)`
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  opacity: 0.7;
+  color: ${COLORS.SIDEBAR_MUTED};
 `;
 
 const List = styled.ul`
@@ -104,7 +107,9 @@ const List = styled.ul`
   max-height: 16rem;
   overflow-y: auto;
   border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  box-shadow: ${LAYOUT.SHADOW.SM};
 `;
 
 const Option = styled.button<{ $selected: boolean }>`
@@ -117,16 +122,17 @@ const Option = styled.button<{ $selected: boolean }>`
   text-align: left;
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${(p) => (p.$selected ? FONTS.WEIGHT.MEDIUM : FONTS.WEIGHT.NORMAL)};
-  color: ${(p) => (p.$selected ? "white" : "rgba(255, 255, 255, 0.9)")};
-  background-color: ${(p) => (p.$selected ? "rgba(255, 255, 255, 0.15)" : "transparent")};
+  color: ${(p) => (p.$selected ? COLORS.HEADER : COLORS.SIDEBAR_MUTED)};
+  background-color: ${(p) => (p.$selected ? COLORS.SIDEBAR_ACTIVE_BG : "transparent")};
   outline: none;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: ${COLORS.SIDEBAR_HOVER};
+    color: ${COLORS.HEADER};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
   }
 `;
 

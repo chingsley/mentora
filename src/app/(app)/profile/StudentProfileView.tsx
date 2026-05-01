@@ -178,7 +178,7 @@ const CtaLink = styled(Link)`
   background-color: ${COLORS.HEADER};
   padding: 0 ${SPACING.THREE};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.WHITE};
   text-decoration: none;
 

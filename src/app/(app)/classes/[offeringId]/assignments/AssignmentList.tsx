@@ -37,7 +37,8 @@ const Body = styled.div`
 `;
 
 const TitleLink = styled(Link)`
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
   text-decoration: none;
 

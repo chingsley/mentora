@@ -30,6 +30,7 @@ const Header = styled.div`
 
 const BackLink = styled(Link)`
   font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.MUTED_FOREGROUND};
   text-decoration: none;
 
@@ -190,8 +191,8 @@ const PrimaryLink = styled(Link)`
   border-radius: ${LAYOUT.RADIUS.MD};
   background-color: ${COLORS.HEADER};
   padding: 0 ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.WHITE};
   text-decoration: none;
 
