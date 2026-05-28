@@ -140,6 +140,7 @@ function TeacherProfileTabsInner({
           globalCap={props.globalCap}
           rateRegions={props.rateRegions}
           rateCells={props.rateCells}
+          teacherRegionCode={props.teacherRegionCode}
           onAdvance={() => setTab(nextTabAfterSave("courses"))}
         />
       </TabsContent>

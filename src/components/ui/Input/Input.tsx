@@ -10,6 +10,8 @@ import { SPACING } from "@/constants/spacing.constants";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
+  /** Muted note beside the label (same color as `hint`). */
+  labelNote?: string;
   error?: string;
   hint?: string;
 }
@@ -22,9 +24,19 @@ const Field = styled.div`
 `;
 
 const Label = styled.label`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: ${SPACING.ONE};
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
+`;
+
+const LabelNote = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.NORMAL};
+  color: ${COLORS.MUTED_FOREGROUND};
 `;
 
 const StyledInput = styled.input<{ $hasError: boolean; }>`
@@ -82,14 +94,19 @@ const ErrorText = styled.p`
 `;
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, error, hint, id, ...rest },
+  { label, labelNote, error, hint, id, ...rest },
   ref,
 ) {
   const autoId = React.useId();
   const inputId = id ?? autoId;
   return (
     <Field>
-      {label ? <Label htmlFor={inputId}>{label}</Label> : null}
+      {label ? (
+        <Label htmlFor={inputId}>
+          {label}
+          {labelNote ? <LabelNote>{labelNote}</LabelNote> : null}
+        </Label>
+      ) : null}
       <StyledInput
         id={inputId}
         ref={ref}

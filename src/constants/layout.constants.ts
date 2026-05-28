@@ -55,6 +55,8 @@ export const LAYOUT = {
     /** Vertical padding: 24px → ~4vw → 40px. */
     BLOCK: "clamp(1.5rem, 4vw, 0.5rem)",
   },
+  /** Minimum inline size before horizontal scroll on dense data tables (248px). */
+  TABLE_MIN_WIDTH: "15.5rem",
   /** Readable max widths for in-page columns (not page chrome). */
   MAX_WIDTH: {
     /** Teacher profile Photo & bio form (~800px at 16px root); full width below `MEDIA.SM`. */

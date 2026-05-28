@@ -185,6 +185,7 @@ export async function TeacherProfilePage({
       globalCap={policy.globalClassCap}
       checklist={checklist}
       teacherRegionName={profile.user.region?.name ?? ""}
+      teacherRegionCode={profile.user.region?.code ?? null}
       timeZone={profile.timeZone ?? ""}
       spokenLanguages={profile.spokenLanguages ?? ""}
       locationLabel={profile.locationLabel ?? ""}

@@ -19,6 +19,10 @@ import {
   setTeacherRegion,
   setTeacherRegionSchema,
   setTeacherSubjects,
+  addTeacherCourse,
+  addTeacherCourseSchema,
+  removeTeacherCourse,
+  removeTeacherCourseSchema,
   updateBioSchema,
   updateOffering,
   updateOfferingSchema,
@@ -126,6 +130,60 @@ export async function saveSubjectsAction(formData: FormData): Promise<ActionResu
     };
   }
   await setTeacherSubjects(session.user.id, parsed.data);
+  revalidateTeacher();
+  return { ok: true };
+}
+
+export async function addTeacherCourseAction(formData: FormData): Promise<ActionResult> {
+  const session = await requireRole("TEACHER");
+  const parsed = addTeacherCourseSchema.safeParse({
+    subjectId: formData.get("subjectId"),
+    regionCode: formData.get("regionCode"),
+    hourlyRateMajor: formData.get("hourlyRateMajor"),
+    defaultCap: formData.get("defaultCap"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Please fix the highlighted fields.",
+      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+    };
+  }
+  try {
+    await addTeacherCourse(session.user.id, parsed.data);
+  } catch (err) {
+    if (err instanceof BelowMinimumRateError) {
+      return {
+        ok: false,
+        error: err.message,
+        fieldErrors: { hourlyRateMajor: err.message },
+      };
+    }
+    const msg = err instanceof Error ? err.message : "Could not add course";
+    return { ok: false, error: msg };
+  }
+  revalidateTeacher();
+  return { ok: true };
+}
+
+export async function removeTeacherCourseAction(formData: FormData): Promise<ActionResult> {
+  const session = await requireRole("TEACHER");
+  const parsed = removeTeacherCourseSchema.safeParse({
+    subjectId: formData.get("subjectId"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Please fix the highlighted fields.",
+      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+    };
+  }
+  try {
+    await removeTeacherCourse(session.user.id, parsed.data);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Could not remove course";
+    return { ok: false, error: msg };
+  }
   revalidateTeacher();
   return { ok: true };
 }

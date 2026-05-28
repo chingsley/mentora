@@ -45,6 +45,7 @@ export interface TeacherProfileTabsProps {
   globalCap: number;
   checklist: TeacherProfileChecklistItem[];
   teacherRegionName: string;
+  teacherRegionCode: string | null;
   timeZone: string;
   spokenLanguages: string;
   locationLabel: string;

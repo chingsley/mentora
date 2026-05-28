@@ -8,6 +8,7 @@ import { majorToSmallest } from "@/lib/money";
 import { assertAtLeastMinRate } from "@/lib/pricing";
 import { intervalsOverlapHalfOpen } from "@/lib/scheduleOverlap";
 import { minutesToTime } from "@/lib/time";
+import { TEACHER_PROFILE_ADD_COURSE } from "@/constants/teacherProfileCourse.constants";
 import { getPolicy } from "./policies";
 
 export interface TeacherSearchFilters {
@@ -623,6 +624,124 @@ export async function setTeacherRateMajor(
     regionCode: input.regionCode,
     hourlyRate: smallest,
   });
+}
+
+export const addTeacherCourseSchema = z.object({
+  subjectId: z.string().min(1, "Choose a subject"),
+  regionCode: z.string().min(2).max(8),
+  hourlyRateMajor: z.coerce
+    .number()
+    .finite()
+    .min(
+      TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN,
+      `Rate must be at least ${TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN}`,
+    )
+    .max(
+      TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MAX,
+      `Rate must be at most ${TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MAX.toLocaleString()}`,
+    ),
+  defaultCap: z.coerce
+    .number()
+    .int()
+    .min(
+      TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MIN,
+      `Class limit must be at least ${TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MIN}`,
+    )
+    .max(
+      TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MAX,
+      `Class limit must be at most ${TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MAX}`,
+    ),
+});
+
+export async function addTeacherCourse(
+  teacherUserId: string,
+  input: z.infer<typeof addTeacherCourseSchema>,
+) {
+  const teacher = await requireTeacher(teacherUserId);
+  const policy = await getPolicy();
+
+  const subject = await db.subject.findUnique({
+    where: { id: input.subjectId },
+    select: { id: true },
+  });
+  if (!subject) throw new Error("Unknown subject");
+
+  const defaultCap = clampTeacherCap(
+    Math.min(input.defaultCap, TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MAX),
+    policy.globalClassCap,
+  );
+
+  await db.teacherSubject.upsert({
+    where: {
+      teacherProfileId_subjectId: { teacherProfileId: teacher.id, subjectId: input.subjectId },
+    },
+    create: {
+      teacherProfileId: teacher.id,
+      subjectId: input.subjectId,
+      defaultCap,
+      courseDescription: "",
+      gradeLevel: "",
+      syllabus: "",
+    },
+    update: { defaultCap },
+  });
+
+  await setTeacherRateMajor(teacherUserId, {
+    subjectId: input.subjectId,
+    regionCode: input.regionCode,
+    hourlyRateMajor: input.hourlyRateMajor,
+  });
+
+  await recomputeProfileCompleted(teacher.id);
+}
+
+export const removeTeacherCourseSchema = z.object({
+  subjectId: z.string().min(1),
+});
+
+export async function removeTeacherCourse(
+  teacherUserId: string,
+  input: z.infer<typeof removeTeacherCourseSchema>,
+) {
+  const teacher = await requireTeacher(teacherUserId);
+
+  const link = await db.teacherSubject.findUnique({
+    where: {
+      teacherProfileId_subjectId: { teacherProfileId: teacher.id, subjectId: input.subjectId },
+    },
+    select: { subjectId: true },
+  });
+  if (!link) throw new Error("Course not found");
+
+  const offerings = await db.classOffering.findMany({
+    where: { teacherProfileId: teacher.id, subjectId: input.subjectId },
+    include: { enrollments: { where: { status: "ACTIVE" }, select: { id: true } } },
+  });
+
+  const activeEnrollmentCount = offerings.reduce((n, o) => n + o.enrollments.length, 0);
+  if (activeEnrollmentCount > 0) {
+    throw new Error(
+      "Cannot remove this course while students are enrolled. Cancel enrollments or remove scheduled classes first.",
+    );
+  }
+
+  await db.$transaction(async (tx) => {
+    if (offerings.length > 0) {
+      await tx.classOffering.deleteMany({
+        where: { teacherProfileId: teacher.id, subjectId: input.subjectId },
+      });
+    }
+    await tx.teacherRate.deleteMany({
+      where: { teacherProfileId: teacher.id, subjectId: input.subjectId },
+    });
+    await tx.teacherSubject.delete({
+      where: {
+        teacherProfileId_subjectId: { teacherProfileId: teacher.id, subjectId: input.subjectId },
+      },
+    });
+  });
+
+  await recomputeProfileCompleted(teacher.id);
 }
 
 export async function removeTeacherRate(

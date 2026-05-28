@@ -27,6 +27,7 @@ export const TeacherProfileFormSurface = styled.div`
   border: 1px solid ${COLORS.BORDER};
   box-shadow: ${BOX_SHADOW_CARD};
   background-color: ${COLORS.FOREGROUND};
+  // border: 1px solid red;
 
   ${LAYOUT.MEDIA.SM} {
     max-width: ${LAYOUT.MAX_WIDTH.TEACHER_PROFILE_BIO_FORM};
