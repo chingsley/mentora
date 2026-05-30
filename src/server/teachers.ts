@@ -5,6 +5,7 @@ import { DayOfWeek } from "@prisma/client";
 import { db } from "@/lib/db";
 import { clampTeacherCap } from "@/lib/capacity";
 import { majorToSmallest } from "@/lib/money";
+import { isTeacherCoursesPhaseComplete } from "@/lib/teacherCoursesCompleteness";
 import { assertAtLeastMinRate } from "@/lib/pricing";
 import { intervalsOverlapHalfOpen } from "@/lib/scheduleOverlap";
 import { minutesToTime } from "@/lib/time";
@@ -102,11 +103,23 @@ export async function getTeacherById(teacherProfileId: string) {
         include: {
           subject: true,
           enrollments: { where: { status: "ACTIVE" }, select: { id: true } },
+          invites: { select: { studentProfileId: true } },
         },
         orderBy: [{ dayOfWeek: "asc" }, { startMinutes: "asc" }],
       },
     },
   });
+}
+
+export async function getStudentProfileIdForUser(
+  userId: string | undefined,
+): Promise<string | null> {
+  if (!userId) return null;
+  const row = await db.studentProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  return row?.id ?? null;
 }
 
 export async function getMyStudentEnrollmentsByOffering(
@@ -147,12 +160,20 @@ export const MY_TEACHER_PROFILE_INCLUDE = {
       region: true,
     },
   },
-  subjects: { include: { subject: true } },
+  subjects: {
+    include: { subject: true },
+    orderBy: [
+      { sortOrder: "desc" as const },
+      { createdAt: "desc" as const },
+      { subjectId: "desc" as const },
+    ],
+  },
   rates: { include: { subject: true, region: true } },
   offerings: {
     include: {
       subject: true,
       enrollments: { where: { status: "ACTIVE" as const }, select: { id: true } },
+      invites: { select: { studentProfileId: true } },
     },
     orderBy: [{ dayOfWeek: "asc" as const }, { startMinutes: "asc" as const }],
   },
@@ -402,11 +423,32 @@ export const createOfferingSchema = z
     dayOfWeek: z.nativeEnum(DayOfWeek),
     startMinutes: z.coerce.number().int().min(0).max(24 * 60 - 1),
     endMinutes: z.coerce.number().int().min(1).max(24 * 60),
-    teacherCap: z.coerce.number().int().min(1).max(1000),
+    periodType: z.enum(["OPEN", "RESERVED"]).default("OPEN"),
+    teacherCap: z.coerce.number().int().min(1).max(1000).optional(),
+    invitedStudentProfileIds: z.array(z.string().min(1)).default([]),
   })
   .refine((v) => v.endMinutes > v.startMinutes, {
     message: "End time must be after start time",
     path: ["endMinutes"],
+  })
+  .superRefine((v, ctx) => {
+    if (v.periodType === "OPEN") {
+      if (v.teacherCap == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Class cap is required for open periods",
+          path: ["teacherCap"],
+        });
+      }
+      return;
+    }
+    if (v.invitedStudentProfileIds.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select at least one invited student",
+        path: ["invitedStudentProfileIds"],
+      });
+    }
   });
 
 export type CreateOfferingInput = z.infer<typeof createOfferingSchema>;
@@ -459,12 +501,57 @@ async function assertOfferingHasNoTimeConflict(
   }
 }
 
+export async function listInviteableStudentsForTeacher(_teacherUserId: string) {
+  return db.studentProfile.findMany({
+    select: {
+      id: true,
+      user: { select: { id: true, name: true, email: true } },
+    },
+    orderBy: { user: { name: "asc" } },
+    take: 500,
+  });
+}
+
+async function assertInviteesAreStudents(studentProfileIds: string[]) {
+  if (studentProfileIds.length === 0) return;
+  const rows = await db.studentProfile.findMany({
+    where: { id: { in: studentProfileIds } },
+    select: { id: true },
+  });
+  if (rows.length !== studentProfileIds.length) {
+    throw new Error("One or more selected students were not found");
+  }
+}
+
+async function syncOfferingInvites(
+  tx: Prisma.TransactionClient,
+  offeringId: string,
+  studentProfileIds: string[],
+) {
+  await tx.offeringInvite.deleteMany({ where: { offeringId } });
+  if (studentProfileIds.length === 0) return;
+  await tx.offeringInvite.createMany({
+    data: studentProfileIds.map((studentProfileId) => ({
+      offeringId,
+      studentProfileId,
+    })),
+    skipDuplicates: true,
+  });
+}
+
 export async function createOffering(teacherUserId: string, input: CreateOfferingInput) {
   const teacher = await requireTeacher(teacherUserId);
   await assertSubjectBelongsToTeacher(teacher.id, input.subjectId);
 
   const policy = await getPolicy();
-  const cap = clampTeacherCap(input.teacherCap, policy.globalClassCap);
+  const isOpen = input.periodType === "OPEN";
+  const cap = isOpen
+    ? clampTeacherCap(input.teacherCap!, policy.globalClassCap)
+    : null;
+
+  if (!isOpen) {
+    await assertInviteesAreStudents(input.invitedStudentProfileIds);
+  }
 
   await assertOfferingHasNoTimeConflict(
     teacher.id,
@@ -473,17 +560,30 @@ export async function createOffering(teacherUserId: string, input: CreateOfferin
     input.endMinutes,
   );
 
-  const offering = await db.classOffering.create({
-    data: {
-      teacherProfileId: teacher.id,
-      subjectId: input.subjectId,
-      title: input.title,
-      description: input.description,
-      dayOfWeek: input.dayOfWeek,
-      startMinutes: input.startMinutes,
-      endMinutes: input.endMinutes,
-      teacherCap: cap,
-    },
+  const offering = await db.$transaction(async (tx) => {
+    const created = await tx.classOffering.create({
+      data: {
+        teacherProfileId: teacher.id,
+        subjectId: input.subjectId,
+        title: input.title,
+        description: input.description,
+        dayOfWeek: input.dayOfWeek,
+        startMinutes: input.startMinutes,
+        endMinutes: input.endMinutes,
+        periodType: input.periodType,
+        teacherCap: cap,
+      },
+    });
+    if (!isOpen) {
+      await tx.offeringInvite.createMany({
+        data: input.invitedStudentProfileIds.map((studentProfileId) => ({
+          offeringId: created.id,
+          studentProfileId,
+        })),
+        skipDuplicates: true,
+      });
+    }
+    return created;
   });
   await recomputeProfileCompleted(teacher.id);
   return offering;
@@ -506,7 +606,14 @@ export async function updateOffering(
   }
   await assertSubjectBelongsToTeacher(teacher.id, input.subjectId);
   const policy = await getPolicy();
-  const cap = clampTeacherCap(input.teacherCap, policy.globalClassCap);
+  const isOpen = input.periodType === "OPEN";
+  const cap = isOpen
+    ? clampTeacherCap(input.teacherCap!, policy.globalClassCap)
+    : null;
+
+  if (!isOpen) {
+    await assertInviteesAreStudents(input.invitedStudentProfileIds);
+  }
 
   await assertOfferingHasNoTimeConflict(
     teacher.id,
@@ -516,17 +623,26 @@ export async function updateOffering(
     offeringId,
   );
 
-  const updated = await db.classOffering.update({
-    where: { id: offeringId },
-    data: {
-      subjectId: input.subjectId,
-      title: input.title,
-      description: input.description,
-      dayOfWeek: input.dayOfWeek,
-      startMinutes: input.startMinutes,
-      endMinutes: input.endMinutes,
-      teacherCap: cap,
-    },
+  const updated = await db.$transaction(async (tx) => {
+    const row = await tx.classOffering.update({
+      where: { id: offeringId },
+      data: {
+        subjectId: input.subjectId,
+        title: input.title,
+        description: input.description,
+        dayOfWeek: input.dayOfWeek,
+        startMinutes: input.startMinutes,
+        endMinutes: input.endMinutes,
+        periodType: input.periodType,
+        teacherCap: cap,
+      },
+    });
+    if (isOpen) {
+      await tx.offeringInvite.deleteMany({ where: { offeringId } });
+    } else {
+      await syncOfferingInvites(tx, offeringId, input.invitedStudentProfileIds);
+    }
+    return row;
   });
   await recomputeProfileCompleted(teacher.id);
   return updated;
@@ -651,6 +767,12 @@ export const addTeacherCourseSchema = z.object({
       TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MAX,
       `Class limit must be at most ${TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MAX}`,
     ),
+  /** When true, save existing course metadata without changing list order. */
+  isEdit: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((v) => v === true || v === "true")
+    .default(false),
 });
 
 export async function addTeacherCourse(
@@ -671,19 +793,32 @@ export async function addTeacherCourse(
     policy.globalClassCap,
   );
 
+  const nextSortOrder = input.isEdit
+    ? null
+    : ((await db.teacherSubject.aggregate({
+        where: { teacherProfileId: teacher.id },
+        _max: { sortOrder: true },
+      }))._max.sortOrder ?? 0) + 1;
+
+  const createData: Prisma.TeacherSubjectUncheckedCreateInput = {
+    teacherProfileId: teacher.id,
+    subjectId: input.subjectId,
+    defaultCap,
+    courseDescription: "",
+    gradeLevel: "",
+    syllabus: "",
+    sortOrder: nextSortOrder ?? 0,
+  };
+  const updateData: Prisma.TeacherSubjectUncheckedUpdateInput = input.isEdit
+    ? { defaultCap }
+    : { defaultCap, sortOrder: nextSortOrder ?? 0 };
+
   await db.teacherSubject.upsert({
     where: {
       teacherProfileId_subjectId: { teacherProfileId: teacher.id, subjectId: input.subjectId },
     },
-    create: {
-      teacherProfileId: teacher.id,
-      subjectId: input.subjectId,
-      defaultCap,
-      courseDescription: "",
-      gradeLevel: "",
-      syllabus: "",
-    },
-    update: { defaultCap },
+    create: createData,
+    update: updateData,
   });
 
   await setTeacherRateMajor(teacherUserId, {
@@ -779,34 +914,29 @@ export async function recomputeProfileCompleted(teacherProfileId: string) {
   const profile = await db.teacherProfile.findUnique({
     where: { id: teacherProfileId },
     include: {
-      user: { select: { image: true } },
-      // Use relation include (not scalar select) so all TeacherSubject columns load without
-      // naming fields — avoids runtime errors if Prisma Client was generated before new columns.
-      subjects: { include: { subject: true } },
-      rates: { select: { id: true } },
+      user: { select: { image: true, region: { select: { code: true } } } },
+      subjects: { select: { subjectId: true } },
+      rates: { select: { subjectId: true, region: { select: { code: true } } } },
       offerings: { select: { id: true } },
     },
   });
   if (!profile) return;
 
-  const subjectMetaOk = profile.subjects.every((s) => {
-    const meta = s as unknown as {
-      courseDescription: string | null | undefined;
-      gradeLevel: string | null | undefined;
-    };
-    const desc = String(meta.courseDescription ?? "").trim();
-    const grade = String(meta.gradeLevel ?? "").trim();
-    return desc.length >= 10 && grade.length > 0;
+  const coursesComplete = isTeacherCoursesPhaseComplete({
+    subjectIds: profile.subjects.map((s) => s.subjectId),
+    rates: profile.rates.map((r) => ({
+      subjectId: r.subjectId,
+      regionCode: r.region.code,
+    })),
+    teacherRegionCode: profile.user.region?.code ?? null,
   });
   const complete =
     Boolean(profile.user.image) &&
-    profile.subjects.length > 0 &&
-    profile.rates.length > 0 &&
+    coursesComplete &&
     profile.offerings.length > 0 &&
     profile.bio.trim().length > 0 &&
-    String((profile as { spokenLanguages?: string | null }).spokenLanguages ?? "").trim().length >
-      0 &&
-    subjectMetaOk;
+    String((profile as { spokenLanguages?: string | null; }).spokenLanguages ?? "").trim().length >
+    0;
   if (profile.profileCompleted !== complete) {
     await db.teacherProfile.update({
       where: { id: teacherProfileId },

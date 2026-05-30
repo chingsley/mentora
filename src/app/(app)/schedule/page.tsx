@@ -12,7 +12,7 @@ import { Muted, PageHeader, PageTitle, PageWrap, Strong } from "@/components/ui/
 import { TeacherScheduleClient } from "./TeacherScheduleClient";
 import { TodayAttendance, type TodayAttendanceSession } from "./TodayAttendance";
 import { AssignmentsList } from "./AssignmentsList";
-import { getMyTeacherProfile } from "@/server/teachers";
+import { getMyTeacherProfile, listInviteableStudentsForTeacher } from "@/server/teachers";
 import { getTeacherTodaySessions } from "@/server/attendance";
 import { getPolicy } from "@/server/policies";
 
@@ -20,10 +20,11 @@ export const metadata: Metadata = { title: "My schedule" };
 
 export default async function TeacherSchedulePage() {
   const session = await requireRole("TEACHER");
-  const [data, policy, todayRaw] = await Promise.all([
+  const [data, policy, todayRaw, inviteableStudentRows] = await Promise.all([
     getMyTeacherProfile(session.user.id),
     getPolicy(),
     getTeacherTodaySessions(session.user.id),
+    listInviteableStudentsForTeacher(session.user.id),
   ]);
   const todaySessions: TodayAttendanceSession[] = todayRaw.map((s) => ({
     offeringId: s.offeringId,
@@ -54,14 +55,22 @@ export default async function TeacherSchedulePage() {
     dayOfWeek: o.dayOfWeek,
     startMinutes: o.startMinutes,
     endMinutes: o.endMinutes,
-    teacherCap: o.teacherCap,
+    periodType: o.periodType,
+    teacherCap: o.teacherCap ?? policy.globalClassCap,
     enrolled: o.enrollments.length,
+    invitedStudentProfileIds: o.invites.map((i) => i.studentProfileId),
+  }));
+
+  const inviteableStudents = inviteableStudentRows.map((s) => ({
+    id: s.id,
+    name: s.user.name,
+    email: s.user.email,
   }));
 
   const subjects = profile.subjects.map((s) => ({
     id: s.subjectId,
     name: s.subject.name,
-    defaultCap: s.defaultCap ?? Math.min(10, policy.globalClassCap),
+    defaultCap: s.defaultCap ?? policy.globalClassCap,
   }));
 
   return (
@@ -94,6 +103,7 @@ export default async function TeacherSchedulePage() {
               <TeacherScheduleClient
                 offerings={offerings}
                 subjects={subjects}
+                inviteableStudents={inviteableStudents}
                 globalCap={policy.globalClassCap}
               />
             </CardContent>

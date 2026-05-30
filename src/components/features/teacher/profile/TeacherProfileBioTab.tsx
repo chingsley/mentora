@@ -5,8 +5,8 @@ import * as React from "react";
 import { TriangleAlert } from "lucide-react";
 import styled from "styled-components";
 import { saveTeacherBioTabAction, type ActionResult } from "@/app/(app)/profile/actions";
-import { ProfilePhotoForm } from "@/components/features/teacher/ProfilePhotoForm";
-import { Button } from "@/components/ui/Button";
+import { ProfilePhotoForm, type ProfilePhotoFormHandle } from "@/components/features/teacher/ProfilePhotoForm";
+import { TeacherProfileTabFooter } from "./TeacherProfileTabFooter";
 import { Input } from "@/components/ui/Input";
 import { COLORS } from "@/constants/colors.constants";
 import { APP_INPUT_HEIGHT, FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
@@ -14,7 +14,7 @@ import { FONTS } from "@/constants/fonts.constants";
 import { BOX_SHADOW_INPUTS, LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import {
-  TeacherProfileFormSurface,
+  TeacherProfileForm,
   TEACHER_PROFILE_FORM_SURFACE_PADDING,
   TEACHER_PROFILE_FORM_SURFACE_PADDING_BOTTOM,
 } from "./TeacherProfileFormSurface";
@@ -242,21 +242,6 @@ const ErrorText = styled.p`
   color: ${COLORS.DESTRUCTIVE};
 `;
 
-/** Footer with Back (left) + Save & Continue (right). Stacks below `SM`. */
-const FormFooter = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.THREE};
-  width: 100%;
-  margin-top: ${SPACING.SIX};
-
-  ${LAYOUT.MEDIA.SM} {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-`;
-
 const BIO_MAX = 2000;
 
 function parseLanguageTags(raw: string): string[] {
@@ -286,6 +271,7 @@ export function TeacherProfileBioTab({
   onBack,
 }: TeacherProfileBioTabProps) {
   const router = useRouter();
+  const photoRef = React.useRef<ProfilePhotoFormHandle>(null);
   const [isSaving, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<ActionResult | null>(null);
 
@@ -313,6 +299,14 @@ export function TeacherProfileBioTab({
     fd.set("bio", bioLocal);
     fd.set("spokenLanguages", tags.join(", "));
     startTransition(async () => {
+      if (photoRef.current?.hasPendingUpload()) {
+        const uploadRes = await photoRef.current.uploadIfPending();
+        if (!uploadRes.ok) {
+          setResult({ ok: false, error: uploadRes.error });
+          return;
+        }
+      }
+
       const res = await saveTeacherBioTabAction(fd);
       setResult(res);
       if (res.ok) {
@@ -325,11 +319,12 @@ export function TeacherProfileBioTab({
   const errs = result && !result.ok ? result.fieldErrors : undefined;
 
   return (
-    <TeacherProfileFormSurface id={TEACHER_BIO_FORM_ID} onSubmit={onSubmit}>
+    <TeacherProfileForm id={TEACHER_BIO_FORM_ID} onSubmit={onSubmit}>
       <PhotoSection aria-labelledby="teacher-bio-photo-heading">
         <SectionAsideTitle id="teacher-bio-photo-heading">Profile Photo &amp; Bio</SectionAsideTitle>
         <BioComposerRow>
           <ProfilePhotoForm
+            ref={photoRef}
             layout="studio"
             currentImage={imageUrl}
             fallbackInitials={initials}
@@ -403,14 +398,7 @@ export function TeacherProfileBioTab({
       </AboutBioSection>
       {result && !result.ok && !result.fieldErrors ? <ErrorText>{result.error}</ErrorText> : null}
 
-      <FormFooter>
-        <Button type="button" variant="secondary" onClick={onBack} disabled={isSaving}>
-          Back
-        </Button>
-        <Button type="submit" variant="primary" isLoading={isSaving}>
-          Save &amp; Continue
-        </Button>
-      </FormFooter>
-    </TeacherProfileFormSurface>
+      <TeacherProfileTabFooter onBack={onBack} continueAsSubmit isLoading={isSaving} />
+    </TeacherProfileForm>
   );
 }

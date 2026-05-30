@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { assertGuardianHasStudent } from "@/server/guardians";
 import { db } from "@/lib/db";
 import { getPolicy } from "@/server/policies";
-import { computeCapacity } from "@/lib/capacity";
+import { offeringCapacity } from "@/lib/offeringCapacity";
 import { formatPrice, minutesToTime, DAY_LABEL } from "@/lib/time";
 import {
   attendanceSummary,
@@ -55,6 +55,7 @@ export default async function WardClassDetailPage({ params }: Props) {
               },
             },
             enrollments: { where: { status: "ACTIVE" }, select: { id: true } },
+            invites: { select: { studentProfileId: true } },
           },
         },
       },
@@ -65,9 +66,11 @@ export default async function WardClassDetailPage({ params }: Props) {
 
   const o = enrollment.offering;
   const teacher = o.teacherProfile;
-  const cap = computeCapacity({
+  const cap = offeringCapacity({
+    periodType: o.periodType,
     globalClassCap: policy.globalClassCap,
     teacherCap: o.teacherCap,
+    inviteCount: o.invites.length,
     currentEnrolled: o.enrollments.length,
   });
   const rate =

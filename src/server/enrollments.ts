@@ -1,7 +1,8 @@
 import "server-only";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { EnrollmentFullError, computeCapacity } from "@/lib/capacity";
+import { EnrollmentFullError } from "@/lib/capacity";
+import { isStudentInvitedToOffering, offeringCapacity } from "@/lib/offeringCapacity";
 import { getPolicy } from "./policies";
 
 export const enrollSchema = z.object({
@@ -24,15 +25,28 @@ export async function enrollStudent(studentUserId: string, input: EnrollInput) {
         where: { id: offeringId },
         include: {
           enrollments: { where: { status: "ACTIVE" }, select: { id: true } },
+          invites: { select: { studentProfileId: true } },
         },
       });
       if (!offering || !offering.active) {
         results.push({ offeringId, enrolled: false, reason: "Offering unavailable" });
         continue;
       }
-      const capacity = computeCapacity({
+      if (offering.periodType === "RESERVED") {
+        if (!isStudentInvitedToOffering(offering.invites, student.id)) {
+          results.push({
+            offeringId,
+            enrolled: false,
+            reason: "This class is invite-only",
+          });
+          continue;
+        }
+      }
+      const capacity = offeringCapacity({
+        periodType: offering.periodType,
         globalClassCap: policy.globalClassCap,
         teacherCap: offering.teacherCap,
+        inviteCount: offering.invites.length,
         currentEnrolled: offering.enrollments.length,
       });
       if (capacity.isFull) {
@@ -110,6 +124,7 @@ export async function listEnrollmentsByStudentProfileId(studentProfileId: string
             },
           },
           enrollments: { where: { status: "ACTIVE" }, select: { id: true } },
+          invites: { select: { studentProfileId: true } },
           testimonials: {
             orderBy: { createdAt: "desc" },
             take: 10,

@@ -12,6 +12,7 @@ import {
   type TeacherProfileDeleteCourseTarget,
 } from "./TeacherProfileDeleteCourseDialog";
 import { TeacherProfileFormSurface } from "@/components/features/teacher/profile/TeacherProfileFormSurface";
+import { TeacherProfileTabFooter } from "@/components/features/teacher/profile/TeacherProfileTabFooter";
 import { SPACING } from "@/constants/spacing.constants";
 import type { TeacherProfileTabsProps } from "./TeacherProfileTabs.types";
 import { TEACHER_COURSES_FORM_ID } from "./teacherProfileFormIds";
@@ -28,6 +29,7 @@ export type TeacherProfileCoursesTabProps = Pick<
   | "teacherRegionCode"
 > & {
   onAdvance: () => void;
+  onBack: () => void;
 };
 
 const Stack = styled.div`
@@ -58,6 +60,8 @@ export function TeacherProfileCoursesTab({
   rateCells,
   globalCap,
   teacherRegionCode,
+  onAdvance,
+  onBack,
 }: TeacherProfileCoursesTabProps) {
   const regionMinHourlyMajor =
     teacherRegionCode != null
@@ -113,6 +117,7 @@ export function TeacherProfileCoursesTab({
           onDeleteSubject={handleDeleteSubject}
         />
       </Stack>
+      <TeacherProfileTabFooter onBack={onBack} onContinue={onAdvance} />
       <TeacherProfileDeleteCourseDialog
         target={deleteTarget}
         onClose={() => {

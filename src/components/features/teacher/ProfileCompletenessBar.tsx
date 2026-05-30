@@ -1,6 +1,6 @@
 "use client";
 
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
@@ -20,7 +20,7 @@ export interface ProfileCompletenessBarProps {
 const Wrap = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${SPACING.TWO};
+  gap: ${SPACING.THREE};
 `;
 
 const Top = styled.div`
@@ -33,93 +33,82 @@ const Top = styled.div`
 
 const Strong = styled.strong`
   color: ${COLORS.HEADER};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
 `;
 
-const Track = styled.div`
-  height: 0.5rem;
+const Pct = styled.span`
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+`;
+
+const StageGrid = styled.ul<{ $count: number }>`
+  display: grid;
+  grid-template-columns: repeat(${({ $count }) => $count}, minmax(0, 1fr));
+  gap: ${SPACING.THREE};
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+
+const StageColumn = styled.li`
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+`;
+
+const StageTrack = styled.div`
+  height: ${SPACING.ONE};
   width: 100%;
   overflow: hidden;
   border-radius: ${LAYOUT.RADIUS.FULL};
   background-color: ${COLORS.MUTED};
 `;
 
-const Fill = styled.div`
+const StageFill = styled.div<{ $done: boolean }>`
   height: 100%;
+  width: ${({ $done }) => ($done ? "100%" : "0%")};
   border-radius: ${LAYOUT.RADIUS.FULL};
   background-color: ${COLORS.HEADER};
   transition: width 0.3s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
-const PillList = styled.ul`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${SPACING.TWO};
-  padding-top: ${SPACING.ONE};
+const stageLabelStyles = `
+  display: block;
+  width: 100%;
   margin: 0;
-  list-style: none;
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-size: ${FONTS.SIZE.XS};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
-const PillButton = styled.button<{ $done: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  padding: 0.125rem 0.625rem;
-  font-size: ${FONTS.SIZE.XS};
-  border: 1px solid;
+const StageLabel = styled.span<{ $done: boolean }>`
+  ${stageLabelStyles}
+  font-weight: ${({ $done }) => ($done ? FONTS.WEIGHT.MEDIUM : FONTS.WEIGHT.NORMAL)};
+  color: ${({ $done }) => ($done ? COLORS.HEADER : COLORS.MUTED_FOREGROUND)};
+`;
+
+const StageLabelButton = styled.button`
+  ${stageLabelStyles}
+  padding: 0;
+  border: none;
+  background: none;
+  font-weight: ${FONTS.WEIGHT.NORMAL};
+  color: ${COLORS.MUTED_FOREGROUND};
   cursor: pointer;
-  font: inherit;
-  text-align: left;
+  text-align: center;
 
-  ${(p) =>
-    p.$done
-      ? css`
-          border-color: rgba(22, 163, 74, 0.3);
-          background-color: rgba(22, 163, 74, 0.1);
-          color: ${COLORS.SUCCESS};
-        `
-      : css`
-          border-color: ${COLORS.BORDER};
-          background-color: ${COLORS.BACKGROUND};
-          color: ${COLORS.MUTED_FOREGROUND};
-
-          &:hover {
-            border-color: ${COLORS.PRIMARY};
-            color: ${COLORS.HEADER};
-          }
-        `}
-`;
-
-const Pill = styled.span<{ $done: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  padding: 0.125rem 0.625rem;
-  font-size: ${FONTS.SIZE.XS};
-  border: 1px solid;
-
-  ${(p) =>
-    p.$done
-      ? css`
-          border-color: rgba(22, 163, 74, 0.3);
-          background-color: rgba(22, 163, 74, 0.1);
-          color: ${COLORS.SUCCESS};
-        `
-      : css`
-          border-color: ${COLORS.BORDER};
-          background-color: ${COLORS.BACKGROUND};
-          color: ${COLORS.MUTED_FOREGROUND};
-        `}
-`;
-
-const PillRow = styled.li`
-  display: inline-flex;
-  list-style: none;
-`;
-
-const PillIcon = styled.span`
-  font-size: ${FONTS.SIZE.MICRO};
+  &:hover {
+    color: ${COLORS.ACTION_PRIMARY};
+  }
 `;
 
 export function ProfileCompletenessBar({ items, onNavigateTab }: ProfileCompletenessBarProps) {
@@ -133,41 +122,33 @@ export function ProfileCompletenessBar({ items, onNavigateTab }: ProfileComplete
         <span>
           Profile completeness: <Strong>{done}/{total}</Strong>
         </span>
-        <span>{pct}%</span>
+        <Pct>{pct}%</Pct>
       </Top>
-      <Track>
-        <Fill
-          style={{ width: `${pct}%` }}
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={pct}
-        />
-      </Track>
-      <PillList>
-        {items.map((i) => {
-          const canJump = Boolean(onNavigateTab && i.editTab && !i.done);
+      <StageGrid $count={Math.max(items.length, 1)} aria-label="Profile setup stages">
+        {items.map((item) => {
+          const canJump = Boolean(onNavigateTab && item.editTab && !item.done);
           return (
-            <PillRow key={i.label}>
+            <StageColumn key={item.label}>
+              <StageTrack
+                role="progressbar"
+                aria-label={item.label}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={item.done ? 100 : 0}
+              >
+                <StageFill $done={item.done} />
+              </StageTrack>
               {canJump ? (
-                <PillButton
-                  type="button"
-                  $done={i.done}
-                  onClick={() => onNavigateTab?.(i.editTab!)}
-                >
-                  <PillIcon aria-hidden>{i.done ? "✓" : "○"}</PillIcon>
-                  {i.label}
-                </PillButton>
+                <StageLabelButton type="button" onClick={() => onNavigateTab?.(item.editTab!)}>
+                  {item.label}
+                </StageLabelButton>
               ) : (
-                <Pill $done={i.done}>
-                  <PillIcon aria-hidden>{i.done ? "✓" : "○"}</PillIcon>
-                  {i.label}
-                </Pill>
+                <StageLabel $done={item.done}>{item.label}</StageLabel>
               )}
-            </PillRow>
+            </StageColumn>
           );
         })}
-      </PillList>
+      </StageGrid>
     </Wrap>
   );
 }

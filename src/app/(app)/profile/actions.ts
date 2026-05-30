@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
+import { revalidateTeacherPaths } from "@/server/revalidateTeacherPaths";
 import {
   createOffering,
   createOfferingSchema,
@@ -49,10 +50,7 @@ function flatten(fieldErrors: Record<string, string[] | undefined>): Record<stri
 }
 
 function revalidateTeacher() {
-  revalidatePath("/profile");
-  revalidatePath("/schedule");
-  revalidatePath("/teachers");
-  revalidatePath("/dashboard");
+  revalidateTeacherPaths();
 }
 
 export async function clearTeacherAvatarAction(): Promise<ActionResult> {
@@ -141,6 +139,7 @@ export async function addTeacherCourseAction(formData: FormData): Promise<Action
     regionCode: formData.get("regionCode"),
     hourlyRateMajor: formData.get("hourlyRateMajor"),
     defaultCap: formData.get("defaultCap"),
+    isEdit: formData.get("isEdit"),
   });
   if (!parsed.success) {
     return {
@@ -242,6 +241,14 @@ function parseOfferingForm(formData: FormData) {
   } catch {
     return { ok: false as const, error: "Invalid time" };
   }
+  const periodTypeRaw = String(formData.get("periodType") ?? "OPEN");
+  const periodType = periodTypeRaw === "RESERVED" ? "RESERVED" : "OPEN";
+  const teacherCapRaw = formData.get("teacherCap");
+  const teacherCap =
+    teacherCapRaw != null && String(teacherCapRaw).trim() !== ""
+      ? teacherCapRaw
+      : undefined;
+
   return {
     ok: true as const,
     data: {
@@ -251,7 +258,9 @@ function parseOfferingForm(formData: FormData) {
       dayOfWeek: formData.get("dayOfWeek"),
       startMinutes,
       endMinutes,
-      teacherCap: formData.get("teacherCap"),
+      periodType,
+      teacherCap,
+      invitedStudentProfileIds: formData.getAll("invitedStudentProfileIds").map(String),
     },
   };
 }

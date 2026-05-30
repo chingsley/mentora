@@ -1,6 +1,9 @@
-import type { DayOfWeek } from "@prisma/client";
+import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
+import { COLORS } from "@/constants/colors.constants";
 
 export type CalendarView = "day" | "week" | "month";
+
+export type CalendarEntryVisibility = "available" | "blocked";
 
 export interface CalendarEntry {
   id: string;
@@ -13,11 +16,23 @@ export interface CalendarEntry {
   endMinutes: number;
   enrolled: number;
   effectiveCap: number;
+  visibility?: CalendarEntryVisibility;
+  periodType?: OfferingPeriodType;
 }
 
 export type FillStatus = "open" | "almost" | "full";
 
-export function fillStatus(entry: Pick<CalendarEntry, "enrolled" | "effectiveCap">): FillStatus {
+export const BLOCKED_THEME = {
+  bg: COLORS.CALENDAR_BLOCKED_BG,
+  bgHover: COLORS.CALENDAR_BLOCKED_BG_HOVER,
+  border: COLORS.CALENDAR_BLOCKED_BORDER,
+  text: COLORS.CALENDAR_BLOCKED_TEXT,
+} as const;
+
+export function fillStatus(
+  entry: Pick<CalendarEntry, "enrolled" | "effectiveCap" | "visibility">,
+): FillStatus {
+  if (entry.visibility === "blocked") return "open";
   if (entry.effectiveCap <= 0) return "open";
   const ratio = entry.enrolled / entry.effectiveCap;
   if (entry.enrolled >= entry.effectiveCap) return "full";

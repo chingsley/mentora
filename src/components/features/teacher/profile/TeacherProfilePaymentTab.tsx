@@ -18,6 +18,7 @@ import { FORM_FIELD, formFieldControlBorder } from "@/constants/formField.consta
 import { FONTS } from "@/constants/fonts.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { TEACHER_PAYMENT_FORM_ID } from "./teacherProfileFormIds";
+import { TeacherProfileTabFooter } from "./TeacherProfileTabFooter";
 
 const Wrap = styled.div`
   display: flex;
@@ -79,6 +80,7 @@ export interface TeacherProfilePaymentTabProps {
   payoutPreferredMethod: string | null;
   payoutNotes: string | null;
   onAdvance: () => void;
+  onBack: () => void;
 }
 
 export function TeacherProfilePaymentTab({
@@ -87,9 +89,10 @@ export function TeacherProfilePaymentTab({
   payoutPreferredMethod,
   payoutNotes,
   onAdvance,
+  onBack,
 }: TeacherProfilePaymentTabProps) {
   const router = useRouter();
-  const [, startTransition] = React.useTransition();
+  const [isSaving, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<ActionResult | null>(null);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -158,6 +161,11 @@ export function TeacherProfilePaymentTab({
           </Form>
         </CardContent>
       </Card>
+      <TeacherProfileTabFooter
+        onBack={onBack}
+        continueFormId={TEACHER_PAYMENT_FORM_ID}
+        isLoading={isSaving}
+      />
     </Wrap>
   );
 }

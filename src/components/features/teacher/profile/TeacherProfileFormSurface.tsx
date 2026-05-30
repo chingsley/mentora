@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { BOX_SHADOW_CARD, LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -11,11 +11,7 @@ export const TEACHER_PROFILE_FORM_SURFACE_PADDING = SPACING.SIX;
 /** Extra space below the last block before the card bottom edge. */
 export const TEACHER_PROFILE_FORM_SURFACE_PADDING_BOTTOM = SPACING.TEN;
 
-/**
- * Shared chrome for teacher profile tab forms — matches the merged bio card surface
- * (border, radius, shadow, max-width, container query).
- */
-export const TeacherProfileFormSurface = styled.div`
+const profileFormSurfaceStyles = css`
   container-type: inline-size;
   box-sizing: border-box;
   width: 100%;
@@ -27,10 +23,22 @@ export const TeacherProfileFormSurface = styled.div`
   border: 1px solid ${COLORS.BORDER};
   box-shadow: ${BOX_SHADOW_CARD};
   background-color: ${COLORS.FOREGROUND};
-  // border: 1px solid red;
 
   ${LAYOUT.MEDIA.SM} {
     max-width: ${LAYOUT.MAX_WIDTH.TEACHER_PROFILE_BIO_FORM};
     margin-inline: auto;
   }
+`;
+
+/**
+ * Shared chrome for teacher profile tab forms — matches the merged bio card surface
+ * (border, radius, shadow, max-width, container query).
+ */
+export const TeacherProfileFormSurface = styled.div`
+  ${profileFormSurfaceStyles}
+`;
+
+/** Same chrome as {@link TeacherProfileFormSurface}, as a `<form>` for tab save actions. */
+export const TeacherProfileForm = styled.form`
+  ${profileFormSurfaceStyles}
 `;

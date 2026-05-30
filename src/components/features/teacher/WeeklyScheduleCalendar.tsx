@@ -1,6 +1,6 @@
 "use client";
 
-import type { DayOfWeek } from "@prisma/client";
+import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
 import * as React from "react";
 import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
@@ -9,7 +9,12 @@ import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, DAY_ORDER, minutesToTime } from "@/lib/time";
-import { OfferingDialog, type OfferingDialogSubject, type OfferingDialogValue } from "./OfferingDialog";
+import {
+  OfferingDialog,
+  type OfferingDialogSubject,
+  type OfferingDialogValue,
+} from "./OfferingDialog";
+import type { OfferingInviteableStudent } from "./OfferingStudentInviteField";
 
 const START_HOUR = 6;
 const END_HOUR = 22;
@@ -27,13 +32,16 @@ export interface ScheduleOffering {
   dayOfWeek: DayOfWeek;
   startMinutes: number;
   endMinutes: number;
+  periodType: OfferingPeriodType;
   teacherCap: number;
   enrolled: number;
+  invitedStudentProfileIds: string[];
 }
 
 export interface WeeklyScheduleCalendarProps {
   offerings: ScheduleOffering[];
   subjects: OfferingDialogSubject[];
+  inviteableStudents: OfferingInviteableStudent[];
   globalCap: number;
   readOnly?: boolean;
 }
@@ -266,6 +274,7 @@ const Badge = styled.span`
 export function WeeklyScheduleCalendar({
   offerings,
   subjects,
+  inviteableStudents,
   globalCap,
   readOnly = false,
 }: WeeklyScheduleCalendarProps) {
@@ -288,7 +297,10 @@ export function WeeklyScheduleCalendar({
       dayOfWeek: o.dayOfWeek,
       startMinutes: o.startMinutes,
       endMinutes: o.endMinutes,
+      periodType: o.periodType,
       teacherCap: o.teacherCap,
+      invitedStudentProfileIds: o.invitedStudentProfileIds,
+      enrolled: o.enrolled,
     });
   }
 
@@ -383,6 +395,7 @@ export function WeeklyScheduleCalendar({
         open={dialog !== null}
         onClose={() => setDialog(null)}
         subjects={subjects}
+        inviteableStudents={inviteableStudents}
         globalCap={globalCap}
         initial={dialog}
       />

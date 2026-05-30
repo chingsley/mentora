@@ -1,6 +1,6 @@
 "use client";
 
-import type { DayOfWeek } from "@prisma/client";
+import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
 import * as React from "react";
 import styled from "styled-components";
 import { CalendarShell } from "@/components/features/calendar/CalendarShell";
@@ -10,6 +10,8 @@ import {
   type OfferingDialogSubject,
   type OfferingDialogValue,
 } from "@/components/features/teacher/OfferingDialog";
+import type { OfferingInviteableStudent } from "@/components/features/teacher/OfferingStudentInviteField";
+import { offeringCapacity } from "@/lib/offeringCapacity";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
@@ -33,19 +35,23 @@ export interface TeacherScheduleOffering {
   dayOfWeek: DayOfWeek;
   startMinutes: number;
   endMinutes: number;
+  periodType: OfferingPeriodType;
   teacherCap: number;
   enrolled: number;
+  invitedStudentProfileIds: string[];
 }
 
 export interface TeacherScheduleClientProps {
   offerings: TeacherScheduleOffering[];
   subjects: OfferingDialogSubject[];
+  inviteableStudents: OfferingInviteableStudent[];
   globalCap: number;
 }
 
 export function TeacherScheduleClient({
   offerings,
   subjects,
+  inviteableStudents,
   globalCap,
 }: TeacherScheduleClientProps) {
   const [dialog, setDialog] = React.useState<OfferingDialogValue | null>(null);
@@ -60,7 +66,13 @@ export function TeacherScheduleClient({
     startMinutes: o.startMinutes,
     endMinutes: o.endMinutes,
     enrolled: o.enrolled,
-    effectiveCap: Math.min(o.teacherCap, globalCap),
+    effectiveCap: offeringCapacity({
+      periodType: o.periodType,
+      globalClassCap: globalCap,
+      teacherCap: o.teacherCap,
+      inviteCount: o.invitedStudentProfileIds.length,
+      currentEnrolled: o.enrolled,
+    }).effectiveCap,
   }));
 
   function onEntryClick(entry: CalendarEntry) {
@@ -74,7 +86,10 @@ export function TeacherScheduleClient({
       dayOfWeek: original.dayOfWeek,
       startMinutes: original.startMinutes,
       endMinutes: original.endMinutes,
+      periodType: original.periodType,
       teacherCap: original.teacherCap,
+      invitedStudentProfileIds: original.invitedStudentProfileIds,
+      enrolled: original.enrolled,
     });
   }
 
@@ -101,6 +116,7 @@ export function TeacherScheduleClient({
         open={dialog !== null}
         onClose={() => setDialog(null)}
         subjects={subjects}
+        inviteableStudents={inviteableStudents}
         globalCap={globalCap}
         initial={dialog}
       />

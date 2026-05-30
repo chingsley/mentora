@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 import { requireSession } from "@/lib/auth";
 import {
   getMyStudentEnrollmentsByOffering,
+  getStudentProfileIdForUser,
   getTeacherById,
 } from "@/server/teachers";
 import { getPolicy } from "@/server/policies";
 import { listTestimonialsByTeacher } from "@/server/testimonials";
-import { computeCapacity } from "@/lib/capacity";
+import { offeringCapacity } from "@/lib/offeringCapacity";
+import { buildTeacherOfferingCalendarEntry } from "@/lib/teacherCalendarEntries";
 import { formatPrice } from "@/lib/time";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import type { ClassDetail } from "@/components/features/class/ClassDetailsDialog";
@@ -29,6 +31,11 @@ export default async function TeacherPage({ params }: Props) {
   const session = await requireSession();
   const [teacher, policy] = await Promise.all([getTeacherById(id), getPolicy()]);
   if (!teacher) notFound();
+
+  const viewerStudentProfileId =
+    session.user.role === "STUDENT"
+      ? await getStudentProfileIdForUser(session.user.id)
+      : null;
 
   const [testimonials, myEnrollments] = await Promise.all([
     listTestimonialsByTeacher(teacher.id),
@@ -70,24 +77,21 @@ export default async function TeacherPage({ params }: Props) {
   const detailsByOfferingId: Record<string, ClassDetail> = {};
 
   for (const o of teacher.offerings) {
-    const cap = computeCapacity({
+    const entry = buildTeacherOfferingCalendarEntry({
+      offering: o,
+      globalClassCap: policy.globalClassCap,
+      viewerStudentProfileId,
+    });
+    entries.push(entry);
+    if (entry.visibility === "blocked") continue;
+
+    const cap = offeringCapacity({
+      periodType: o.periodType,
       globalClassCap: policy.globalClassCap,
       teacherCap: o.teacherCap,
+      inviteCount: o.invites.length,
       currentEnrolled: o.enrollments.length,
     });
-    const entry: CalendarEntry = {
-      id: o.id,
-      offeringId: o.id,
-      title: o.title,
-      subtitle: o.subject.name,
-      subjectId: o.subjectId,
-      dayOfWeek: o.dayOfWeek,
-      startMinutes: o.startMinutes,
-      endMinutes: o.endMinutes,
-      enrolled: o.enrollments.length,
-      effectiveCap: cap.effectiveCap,
-    };
-    entries.push(entry);
     detailsByOfferingId[o.id] = {
       offeringId: o.id,
       title: o.title,
@@ -98,6 +102,7 @@ export default async function TeacherPage({ params }: Props) {
       endMinutes: o.endMinutes,
       effectiveCap: cap.effectiveCap,
       enrolled: o.enrollments.length,
+      periodType: o.periodType,
       hourlyRate: findRate(o.subjectId),
       rules: o.rules,
       description: o.description,

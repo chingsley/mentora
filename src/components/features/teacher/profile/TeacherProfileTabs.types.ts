@@ -1,4 +1,4 @@
-import type { DayOfWeek } from "@prisma/client";
+import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
 
 import type { TeacherProfileTabId } from "./teacherProfileTabIds";
 
@@ -25,8 +25,16 @@ export interface TeacherProfileScheduleOffering {
   dayOfWeek: DayOfWeek;
   startMinutes: number;
   endMinutes: number;
+  periodType: OfferingPeriodType;
   teacherCap: number;
   enrolled: number;
+  invitedStudentProfileIds: string[];
+}
+
+export interface TeacherProfileInviteableStudent {
+  id: string;
+  name: string;
+  email: string;
 }
 
 export interface TeacherProfileTabsProps {
@@ -73,4 +81,5 @@ export interface TeacherProfileTabsProps {
   rateRows: { id: string; subjectName: string; regionName: string; hourlyDisplay: string }[];
   dialogSubjects: { id: string; name: string; defaultCap: number }[];
   scheduleOfferings: TeacherProfileScheduleOffering[];
+  inviteableStudents: TeacherProfileInviteableStudent[];
 }

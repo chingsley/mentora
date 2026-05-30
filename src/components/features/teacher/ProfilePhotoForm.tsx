@@ -22,6 +22,17 @@ export interface ProfilePhotoFormProps {
   children?: React.ReactNode;
 }
 
+export interface ProfilePhotoFormHandle {
+  uploadIfPending: () => Promise<
+    { ok: true; url?: string } | { ok: false; error: string }
+  >;
+  hasPendingUpload: () => boolean;
+}
+
+type UploadResult =
+  | { ok: true; url?: string }
+  | { ok: false; error: string };
+
 const MAX_BYTES = 2 * 1024 * 1024;
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
@@ -256,13 +267,24 @@ function usePickAndUpload(
   router: ReturnType<typeof useRouter>,
 ) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const pendingFileRef = React.useRef<File | null>(null);
   const [preview, setPreview] = React.useState<string | null>(null);
+  const [savedImageUrl, setSavedImageUrl] = React.useState<string | null>(null);
   const [pendingFile, setPendingFile] = React.useState<File | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isRemoving, setIsRemoving] = React.useState(false);
 
-  const display = preview ?? currentImage;
+  pendingFileRef.current = pendingFile;
+
+  React.useEffect(() => {
+    if (currentImage) {
+      setSavedImageUrl(null);
+    }
+  }, [currentImage]);
+
+  const display = preview ?? savedImageUrl ?? currentImage;
+  const persistedImage = savedImageUrl ?? currentImage;
 
   function ingestFile(file: File) {
     setError(null);
@@ -292,30 +314,45 @@ function usePickAndUpload(
     e.target.value = "";
   }
 
-  async function handleUpload() {
-    if (!pendingFile) return;
+  const uploadPendingFile = React.useCallback(async (): Promise<UploadResult> => {
+    const file = pendingFileRef.current;
+    if (!file) return { ok: true };
+
     setIsUploading(true);
     setError(null);
     try {
       const fd = new FormData();
-      fd.append("file", pendingFile);
+      fd.append("file", file);
       const res = await fetch("/api/uploads/avatar", { method: "POST", body: fd });
-      const json = (await res.json()) as { ok: boolean; error?: string; };
+      const json = (await res.json()) as { ok: boolean; error?: string; url?: string };
       if (!res.ok || !json.ok) {
-        setError(json.error ?? "Upload failed");
-        return;
+        const message = json.error ?? "Upload failed";
+        setError(message);
+        return { ok: false, error: message };
       }
       setPendingFile(null);
       setPreview((prev) => {
         revokeBlobUrl(prev);
         return null;
       });
+      if (json.url) {
+        setSavedImageUrl(json.url);
+      }
       router.refresh();
+      return { ok: true, url: json.url };
     } catch {
-      setError("Upload failed. Please try again.");
+      const message = "Upload failed. Please try again.";
+      setError(message);
+      return { ok: false, error: message };
     } finally {
       setIsUploading(false);
     }
+  }, [router]);
+
+  const hasPendingUpload = React.useCallback(() => pendingFileRef.current != null, []);
+
+  async function handleUpload() {
+    await uploadPendingFile();
   }
 
   async function handleRemove() {
@@ -329,7 +366,7 @@ function usePickAndUpload(
       return;
     }
 
-    if (!currentImage) return;
+    if (!persistedImage) return;
     const confirmed = window.confirm("Remove your profile photo?");
     if (!confirmed) return;
 
@@ -341,6 +378,7 @@ function usePickAndUpload(
         setError(res.error);
         return;
       }
+      setSavedImageUrl(null);
       router.refresh();
     } catch {
       setError("Failed to remove photo.");
@@ -360,135 +398,152 @@ function usePickAndUpload(
     handleFile,
     handleUpload,
     handleRemove,
-    ingestFile,
+    uploadPendingFile,
+    hasPendingUpload,
   };
 }
 
-export function ProfilePhotoForm({
-  currentImage,
-  fallbackInitials,
-  hint = "PNG, JPEG, or WebP · up to 2 MB. A profile photo is required to complete your teacher profile.",
-  layout = "default",
-  children,
-}: ProfilePhotoFormProps) {
-  const router = useRouter();
-  const {
-    inputRef,
-    display,
-    pendingFile,
-    isUploading,
-    error,
-    isRemoving,
-    handlePick,
-    handleFile,
-    handleUpload,
-    handleRemove,
-  } = usePickAndUpload(currentImage, router);
+export const ProfilePhotoForm = React.forwardRef<ProfilePhotoFormHandle, ProfilePhotoFormProps>(
+  function ProfilePhotoForm(
+    {
+      currentImage,
+      fallbackInitials,
+      hint = "PNG, JPEG, or WebP · up to 2 MB. A profile photo is required to complete your teacher profile.",
+      layout = "default",
+      children,
+    },
+    ref,
+  ) {
+    const router = useRouter();
+    const {
+      inputRef,
+      display,
+      pendingFile,
+      isUploading,
+      error,
+      isRemoving,
+      handlePick,
+      handleFile,
+      handleUpload,
+      handleRemove,
+      uploadPendingFile,
+      hasPendingUpload,
+    } = usePickAndUpload(currentImage, router);
 
-  if (layout === "studio") {
-    return (
-      <StudioWrap>
-        <StudioPhotoRow>
-          <StudioAvatarColumn>
-            <HiddenInput ref={inputRef} type="file" accept={ACCEPT} onChange={handleFile} />
-            <AvatarWithUpload>
-              <Avatar $studio>
-                {display ? (
-                  isLocalPreviewSrc(display) ? (
-                    <AvatarPreviewImg src={display} alt="Your profile photo" />
-                  ) : (
-                    <Image
-                      src={display}
-                      alt="Your profile photo"
-                      fill
-                      sizes="128px"
-                      style={{ objectFit: "cover" }}
-                      unoptimized
-                    />
-                  )
-                ) : (
-                  <Fallback>{fallbackInitials}</Fallback>
-                )}
-              </Avatar>
-              {display ? (
-                <AvatarUploadFab
-                  type="button"
-                  onClick={handleRemove}
-                  disabled={isUploading || isRemoving}
-                  aria-label="Remove profile photo"
-                >
-                  <X size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
-                </AvatarUploadFab>
-              ) : (
-                <AvatarUploadFab
-                  type="button"
-                  onClick={handlePick}
-                  disabled={isUploading || isRemoving}
-                  aria-label="Upload new profile photo"
-                >
-                  <CloudUpload size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
-                </AvatarUploadFab>
-              )}
-            </AvatarWithUpload>
-            <StudioAvatarActions>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleUpload}
-                disabled={isRemoving || !pendingFile}
-                isLoading={isUploading}
-              >
-                Save Upload
-              </Button>
-            </StudioAvatarActions>
-          </StudioAvatarColumn>
-          {children ? <StudioChildrenWrap>{children}</StudioChildrenWrap> : null}
-        </StudioPhotoRow>
-        {hint ? <Hint>{hint}</Hint> : null}
-        <ErrorSlot role="status" aria-live="polite">
-          {error ? <ErrorText>{error}</ErrorText> : null}
-        </ErrorSlot>
-      </StudioWrap>
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        uploadIfPending: uploadPendingFile,
+        hasPendingUpload,
+      }),
+      [uploadPendingFile, hasPendingUpload],
     );
-  }
 
-  return (
-    <Wrap>
-      <Avatar>
-        {display ? (
-          isLocalPreviewSrc(display) ? (
-            <AvatarPreviewImg src={display} alt="Your profile photo" />
+    if (layout === "studio") {
+      return (
+        <StudioWrap>
+          <StudioPhotoRow>
+            <StudioAvatarColumn>
+              <HiddenInput ref={inputRef} type="file" accept={ACCEPT} onChange={handleFile} />
+              <AvatarWithUpload>
+                <Avatar $studio>
+                  {display ? (
+                    isLocalPreviewSrc(display) ? (
+                      <AvatarPreviewImg src={display} alt="Your profile photo" />
+                    ) : (
+                      <Image
+                        src={display}
+                        alt="Your profile photo"
+                        fill
+                        sizes="128px"
+                        style={{ objectFit: "cover" }}
+                        unoptimized
+                      />
+                    )
+                  ) : (
+                    <Fallback>{fallbackInitials}</Fallback>
+                  )}
+                </Avatar>
+                {display ? (
+                  <AvatarUploadFab
+                    type="button"
+                    onClick={handleRemove}
+                    disabled={isUploading || isRemoving}
+                    aria-label="Remove profile photo"
+                  >
+                    <X size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
+                  </AvatarUploadFab>
+                ) : (
+                  <AvatarUploadFab
+                    type="button"
+                    onClick={handlePick}
+                    disabled={isUploading || isRemoving}
+                    aria-label="Upload new profile photo"
+                  >
+                    <CloudUpload size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
+                  </AvatarUploadFab>
+                )}
+              </AvatarWithUpload>
+              <StudioAvatarActions>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleUpload}
+                  disabled={isRemoving || !pendingFile}
+                  isLoading={isUploading}
+                >
+                  Save Upload
+                </Button>
+              </StudioAvatarActions>
+            </StudioAvatarColumn>
+            {children ? <StudioChildrenWrap>{children}</StudioChildrenWrap> : null}
+          </StudioPhotoRow>
+          {hint ? <Hint>{hint}</Hint> : null}
+          <ErrorSlot role="status" aria-live="polite">
+            {error ? <ErrorText>{error}</ErrorText> : null}
+          </ErrorSlot>
+        </StudioWrap>
+      );
+    }
+
+    return (
+      <Wrap>
+        <Avatar>
+          {display ? (
+            isLocalPreviewSrc(display) ? (
+              <AvatarPreviewImg src={display} alt="Your profile photo" />
+            ) : (
+              <Image
+                src={display}
+                alt="Your profile photo"
+                fill
+                sizes="128px"
+                style={{ objectFit: "cover" }}
+                unoptimized
+              />
+            )
           ) : (
-            <Image
-              src={display}
-              alt="Your profile photo"
-              fill
-              sizes="128px"
-              style={{ objectFit: "cover" }}
-              unoptimized
-            />
-          )
-        ) : (
-          <Fallback>{fallbackInitials}</Fallback>
-        )}
-      </Avatar>
-      <Body>
-        <HiddenInput ref={inputRef} type="file" accept={ACCEPT} onChange={handleFile} />
-        <Actions>
-          <Button type="button" variant="secondary" onClick={handlePick}>
-            {currentImage ? "Replace photo" : "Choose photo"}
-          </Button>
-          {pendingFile ? (
-            <Button type="button" onClick={handleUpload} isLoading={isUploading}>
-              Upload
+            <Fallback>{fallbackInitials}</Fallback>
+          )}
+        </Avatar>
+        <Body>
+          <HiddenInput ref={inputRef} type="file" accept={ACCEPT} onChange={handleFile} />
+          <Actions>
+            <Button type="button" variant="secondary" onClick={handlePick}>
+              {currentImage ? "Replace photo" : "Choose photo"}
             </Button>
-          ) : null}
-        </Actions>
-        <Hint>{hint}</Hint>
-        <ErrorSlot role="status" aria-live="polite">
-          {error ? <ErrorText>{error}</ErrorText> : null}
-        </ErrorSlot>
-      </Body>
-    </Wrap>
-  );
-}
+            {pendingFile ? (
+              <Button type="button" onClick={handleUpload} isLoading={isUploading}>
+                Upload
+              </Button>
+            ) : null}
+          </Actions>
+          <Hint>{hint}</Hint>
+          <ErrorSlot role="status" aria-live="polite">
+            {error ? <ErrorText>{error}</ErrorText> : null}
+          </ErrorSlot>
+        </Body>
+      </Wrap>
+    );
+  },
+);

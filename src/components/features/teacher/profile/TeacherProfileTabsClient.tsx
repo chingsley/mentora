@@ -17,15 +17,17 @@ import { TeacherProfilePaymentTab } from "./TeacherProfilePaymentTab";
 import { TeacherProfileScheduleTab } from "./TeacherProfileScheduleTab";
 import type { TeacherProfileTabsProps } from "./TeacherProfileTabs.types";
 import { TeacherProfileViewTab } from "./TeacherProfileViewTab";
-import { isTeacherProfileTabId, nextTabAfterSave } from "./teacherProfileTabIds";
+import {
+  isTeacherProfileTabId,
+  nextTabAfterSave,
+  previousTabBefore,
+  TEACHER_PROFILE_TAB_LABEL,
+} from "./teacherProfileTabIds";
 import type { TeacherProfileTabId } from "./teacherProfileTabIds";
 
 const TAB_LABEL: Record<TeacherProfileTabId, string> = {
   view: "Profile View",
-  bio: "Photo & Bio",
-  courses: "Courses & Rates",
-  schedule: "Scheduling",
-  payment: "Payment Details",
+  ...TEACHER_PROFILE_TAB_LABEL,
 };
 
 const Shell = styled.div`
@@ -142,6 +144,7 @@ function TeacherProfileTabsInner({
           rateCells={props.rateCells}
           teacherRegionCode={props.teacherRegionCode}
           onAdvance={() => setTab(nextTabAfterSave("courses"))}
+          onBack={() => setTab(previousTabBefore("courses"))}
         />
       </TabsContent>
 
@@ -149,7 +152,10 @@ function TeacherProfileTabsInner({
         <TeacherProfileScheduleTab
           scheduleOfferings={props.scheduleOfferings}
           dialogSubjects={props.dialogSubjects}
+          inviteableStudents={props.inviteableStudents}
           globalCap={props.globalCap}
+          onAdvance={() => setTab(nextTabAfterSave("schedule"))}
+          onBack={() => setTab(previousTabBefore("schedule"))}
         />
       </TabsContent>
 
@@ -160,6 +166,7 @@ function TeacherProfileTabsInner({
           payoutPreferredMethod={props.payoutPreferredMethod}
           payoutNotes={props.payoutNotes}
           onAdvance={() => setTab(nextTabAfterSave("payment"))}
+          onBack={() => setTab(previousTabBefore("payment"))}
         />
       </TabsContent>
     </Tabs>

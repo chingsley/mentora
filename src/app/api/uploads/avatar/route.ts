@@ -3,6 +3,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { revalidateTeacherPaths } from "@/server/revalidateTeacherPaths";
+import { recomputeProfileCompleted } from "@/server/teachers";
 
 export const runtime = "nodejs";
 
@@ -57,6 +59,16 @@ export async function POST(request: Request) {
     where: { id: session.user.id },
     data: { image: url },
   });
+
+  const teacher = await db.teacherProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+  if (teacher) {
+    await recomputeProfileCompleted(teacher.id);
+  }
+
+  revalidateTeacherPaths();
 
   return NextResponse.json({ ok: true, url });
 }

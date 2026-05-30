@@ -14,6 +14,7 @@ import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import type { TeacherProfileScheduleOffering } from "./TeacherProfileTabs.types";
+import { TeacherProfileTabFooter } from "./TeacherProfileTabFooter";
 
 const Wrap = styled.div`
   display: flex;
@@ -32,13 +33,19 @@ const InfoBlock = styled.p`
 export interface TeacherProfileScheduleTabProps {
   scheduleOfferings: TeacherProfileScheduleOffering[];
   dialogSubjects: { id: string; name: string; defaultCap: number }[];
+  inviteableStudents: { id: string; name: string; email: string }[];
   globalCap: number;
+  onAdvance: () => void;
+  onBack: () => void;
 }
 
 export function TeacherProfileScheduleTab({
   scheduleOfferings,
   dialogSubjects,
+  inviteableStudents,
   globalCap,
+  onAdvance,
+  onBack,
 }: TeacherProfileScheduleTabProps) {
   return (
     <Wrap>
@@ -59,11 +66,13 @@ export function TeacherProfileScheduleTab({
             <WeeklyScheduleCalendar
               offerings={scheduleOfferings}
               subjects={dialogSubjects}
+              inviteableStudents={inviteableStudents}
               globalCap={globalCap}
             />
           )}
         </CardContent>
       </Card>
+      <TeacherProfileTabFooter onBack={onBack} onContinue={onAdvance} />
     </Wrap>
   );
 }

@@ -185,6 +185,7 @@ export function TeacherProfileAddCourseForm({
     fd.append("regionCode", teacherRegionCode);
     fd.append("hourlyRateMajor", hourlyRate);
     fd.append("defaultCap", classLimit);
+    fd.append("isEdit", isEditing ? "true" : "false");
 
     startTransition(async () => {
       const res = await addTeacherCourseAction(fd);

@@ -1,6 +1,6 @@
 "use client";
 
-import type { DayOfWeek, Role } from "@prisma/client";
+import type { DayOfWeek, OfferingPeriodType, Role } from "@prisma/client";
 import * as React from "react";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +31,7 @@ export interface ClassDetail {
   endMinutes: number;
   effectiveCap: number;
   enrolled: number;
+  periodType?: OfferingPeriodType;
   hourlyRate: { amount: number; currency: string } | null;
   rules: string;
   description?: string | null;
@@ -249,6 +250,7 @@ export function ClassDetailsDialog({
 
   const isStudent = viewerRole === "STUDENT";
   const isEnrolled = Boolean(enrollmentId);
+  const isReserved = detail.periodType === "RESERVED";
   const canEnrol = isStudent && !isEnrolled && status !== "full";
 
   return (
@@ -271,7 +273,10 @@ export function ClassDetailsDialog({
         />
         <Stat label="Duration" value={formatDuration(durationMinutes)} />
         <Stat label="Hourly rate" value={hourlyPrice ? `${hourlyPrice}/hr` : "—"} />
-        <Stat label="Class limit" value={detail.effectiveCap.toString()} />
+        <Stat
+          label={isReserved ? "Invite list" : "Class limit"}
+          value={isReserved ? `${detail.effectiveCap} invited` : detail.effectiveCap.toString()}
+        />
         <Stat label="Currently enrolled" value={detail.enrolled.toString()} />
         <Stat
           label={status === "full" ? "Spots" : "Spots remaining"}

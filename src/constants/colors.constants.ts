@@ -73,6 +73,12 @@ export const COLORS = {
   STATUS_EXCUSED_BG: "#e0e7ff",
   STATUS_EXCUSED_TEXT: "#3730a3",
 
+  /** Calendar slot blocked for viewers not on the invite list */
+  CALENDAR_BLOCKED_BG: "#f1f5f9",
+  CALENDAR_BLOCKED_BG_HOVER: "#e2e8f0",
+  CALENDAR_BLOCKED_BORDER: "#cbd5e1",
+  CALENDAR_BLOCKED_TEXT: "#475569",
+
   // App shell sidebar — aligned with Maje portal (`.maje-teacher-db .sidebar`: `--surface`, `--ink`, `--muted`)
   SIDEBAR_MUTED: "#4d566b",
   SIDEBAR_ACCENT: "#5a6888",

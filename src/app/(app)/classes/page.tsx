@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
-import { computeCapacity } from "@/lib/capacity";
+import { offeringCapacity } from "@/lib/offeringCapacity";
 import { listStudentEnrollments } from "@/server/enrollments";
 import { getPolicy } from "@/server/policies";
 import type { CalendarEntry } from "@/components/features/calendar/types";
@@ -24,9 +24,11 @@ export default async function MyClassesPage() {
 
   const rows: StudentClassRow[] = enrollments.map((e) => {
     const o = e.offering;
-    const capacity = computeCapacity({
+    const capacity = offeringCapacity({
+      periodType: o.periodType,
       globalClassCap: policy.globalClassCap,
       teacherCap: o.teacherCap,
+      inviteCount: o.invites.length,
       currentEnrolled: o.enrollments.length,
     });
     const rate =
@@ -57,6 +59,7 @@ export default async function MyClassesPage() {
       endMinutes: o.endMinutes,
       effectiveCap: capacity.effectiveCap,
       enrolled: o.enrollments.length,
+      periodType: o.periodType,
       hourlyRate: rate
         ? { amount: rate.hourlyRate, currency: rate.region.currency }
         : null,

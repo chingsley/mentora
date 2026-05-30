@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
-import { computeCapacity } from "@/lib/capacity";
+import { offeringCapacity } from "@/lib/offeringCapacity";
 import { assertGuardianHasStudent } from "@/server/guardians";
 import { listEnrollmentsByStudentProfileId } from "@/server/enrollments";
 import { getPolicy } from "@/server/policies";
@@ -41,9 +41,11 @@ export default async function WardProfilePage({ params }: Props) {
 
   const entries: CalendarEntry[] = enrollments.map((e) => {
     const o = e.offering;
-    const cap = computeCapacity({
+    const cap = offeringCapacity({
+      periodType: o.periodType,
       globalClassCap: policy.globalClassCap,
       teacherCap: o.teacherCap,
+      inviteCount: o.invites.length,
       currentEnrolled: o.enrollments.length,
     });
     return {

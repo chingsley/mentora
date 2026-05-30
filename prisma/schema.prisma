@@ -67,6 +67,11 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum OfferingPeriodType {
+  OPEN
+  RESERVED
+}
+
 // ---------- Users ----------
 
 model User {
@@ -173,6 +178,7 @@ model StudentProfile {
   enrollments  Enrollment[]
   testimonials ClassTestimonial[]
   submissions  AssignmentSubmission[]
+  offeringInvites OfferingInvite[]
   createdAt    DateTime               @default(now())
 }
 
@@ -222,6 +228,8 @@ model TeacherSubject {
   courseDescription String @default("") @db.Text
   gradeLevel        String @default("")
   syllabus          String @default("") @db.Text
+  createdAt         DateTime @default(now())
+  sortOrder         Int      @default(0)
   teacherProfile    TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
   subject           Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
@@ -272,27 +280,43 @@ model TeacherRate {
 // ---------- Scheduling & enrollment ----------
 
 model ClassOffering {
-  id               String    @id @default(cuid())
+  id               String             @id @default(cuid())
   teacherProfileId String
   subjectId        String
   title            String
-  description      String?   @db.Text
+  description      String?            @db.Text
   rules            String    @default("") @db.Text
   dayOfWeek        DayOfWeek
   startMinutes     Int // minutes since 00:00 UTC local-to-teacher
   endMinutes       Int
-  teacherCap       Int // teacher's personal cap for THIS period
-  active           Boolean   @default(true)
-  createdAt        DateTime  @default(now())
+  periodType       OfferingPeriodType @default(OPEN)
+  /// Required for OPEN periods; null for RESERVED (invite-only, no numeric cap).
+  teacherCap       Int?
+  active           Boolean            @default(true)
+  createdAt        DateTime           @default(now())
 
   teacherProfile TeacherProfile     @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
   subject        Subject            @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   enrollments    Enrollment[]
+  invites        OfferingInvite[]
   testimonials   ClassTestimonial[]
   assignments    Assignment[]
 
   @@index([teacherProfileId, dayOfWeek])
   @@index([subjectId])
+}
+
+model OfferingInvite {
+  id               String   @id @default(cuid())
+  offeringId       String
+  studentProfileId String
+  createdAt        DateTime @default(now())
+
+  offering       ClassOffering  @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([offeringId, studentProfileId])
+  @@index([studentProfileId])
 }
 
 model Enrollment {

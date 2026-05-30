@@ -5,7 +5,7 @@ import { getTeacherById } from "@/server/teachers";
 import { getPolicy } from "@/server/policies";
 import { listTestimonialsByTeacher } from "@/server/testimonials";
 import { assertGuardianHasStudent } from "@/server/guardians";
-import { computeCapacity } from "@/lib/capacity";
+import { buildTeacherOfferingCalendarEntry } from "@/lib/teacherCalendarEntries";
 import { formatPrice } from "@/lib/time";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import { GuardianTeacherView } from "./GuardianTeacherView";
@@ -33,25 +33,13 @@ export default async function GuardianTeacherPage({ params }: Props) {
   if (!teacher) notFound();
   const testimonials = await listTestimonialsByTeacher(teacher.id);
 
-  const entries: CalendarEntry[] = teacher.offerings.map((o) => {
-    const cap = computeCapacity({
+  const entries: CalendarEntry[] = teacher.offerings.map((o) =>
+    buildTeacherOfferingCalendarEntry({
+      offering: o,
       globalClassCap: policy.globalClassCap,
-      teacherCap: o.teacherCap,
-      currentEnrolled: o.enrollments.length,
-    });
-    return {
-      id: o.id,
-      offeringId: o.id,
-      title: o.title,
-      subtitle: o.subject.name,
-      subjectId: o.subjectId,
-      dayOfWeek: o.dayOfWeek,
-      startMinutes: o.startMinutes,
-      endMinutes: o.endMinutes,
-      enrolled: o.enrollments.length,
-      effectiveCap: cap.effectiveCap,
-    };
-  });
+      viewerStudentProfileId: studentId,
+    }),
+  );
 
   const topRate = teacher.rates[0];
   const priceLabel = topRate

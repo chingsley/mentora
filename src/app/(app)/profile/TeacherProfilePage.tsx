@@ -1,11 +1,15 @@
-import type { DayOfWeek } from "@prisma/client";
+import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { TeacherProfileTabsClient } from "@/components/features/teacher/profile/TeacherProfileTabsClient";
-import type { TeacherProfileChecklistItem } from "@/components/features/teacher/profile/TeacherProfileTabs.types";
+import { buildTeacherProfileChecklist } from "@/components/features/teacher/profile/teacherProfileCompleteness";
 import { smallestToMajor } from "@/lib/money";
 import { formatPrice } from "@/lib/time";
 import { getPolicy, listRegions } from "@/server/policies";
-import { getMyTeacherProfile, listSubjects } from "@/server/teachers";
+import {
+  getMyTeacherProfile,
+  listInviteableStudentsForTeacher,
+  listSubjects,
+} from "@/server/teachers";
 
 /**
  * Explicit shape for `getMyTeacherProfile().profile` on this page.
@@ -19,7 +23,25 @@ interface TeacherSubjectForPage {
   courseDescription: string;
   gradeLevel: string;
   syllabus: string;
-  subject: { id: string; name: string; slug: string };
+  createdAt: Date;
+  sortOrder: number;
+  subject: { id: string; name: string; slug: string; };
+}
+
+function sortTeacherSubjectsForProfile<T extends {
+  createdAt: Date;
+  sortOrder: number;
+  subjectId: string;
+}>(
+  rows: T[],
+): T[] {
+  return [...rows].sort((a, b) => {
+    const bySortOrder = b.sortOrder - a.sortOrder;
+    if (bySortOrder !== 0) return bySortOrder;
+    const byTime = b.createdAt.getTime() - a.createdAt.getTime();
+    if (byTime !== 0) return byTime;
+    return b.subjectId.localeCompare(a.subjectId);
+  });
 }
 
 interface TeacherProfileForPage {
@@ -42,15 +64,15 @@ interface TeacherProfileForPage {
     name: string;
     firstName: string;
     lastName: string;
-    region: { id: string; code: string; name: string; currency: string } | null;
+    region: { id: string; code: string; name: string; currency: string; } | null;
   };
   subjects: TeacherSubjectForPage[];
   rates: Array<{
     id: string;
     subjectId: string;
     hourlyRate: number;
-    subject: { name: string };
-    region: { name: string; code: string; currency: string };
+    subject: { name: string; };
+    region: { name: string; code: string; currency: string; };
   }>;
   offerings: Array<{
     id: string;
@@ -60,9 +82,11 @@ interface TeacherProfileForPage {
     dayOfWeek: DayOfWeek;
     startMinutes: number;
     endMinutes: number;
+    periodType: OfferingPeriodType;
     teacherCap: number | null;
-    enrollments: { id: string }[];
-    subject: { name: string };
+    enrollments: { id: string; }[];
+    invites: { studentProfileId: string; }[];
+    subject: { name: string; };
   }>;
 }
 
@@ -77,11 +101,12 @@ export async function TeacherProfilePage({
   userId: string;
   initialTab?: string | null;
 }) {
-  const [data, subjects, regions, policy] = await Promise.all([
+  const [data, subjects, regions, policy, inviteableStudentRows] = await Promise.all([
     getMyTeacherProfile(userId),
     listSubjects(),
     listRegions(),
     getPolicy(),
+    listInviteableStudentsForTeacher(userId),
   ]);
   if (!data) notFound();
 
@@ -92,7 +117,8 @@ export async function TeacherProfilePage({
   const fullName = `${firstName} ${lastName}`.trim() || profile.user.name;
 
   const teacherSubjectIds = new Set(profile.subjects.map((s) => s.subjectId));
-  const taughtSubjects = profile.subjects.map((ts) => ({
+  const orderedSubjects = sortTeacherSubjectsForProfile(profile.subjects);
+  const taughtSubjects = orderedSubjects.map((ts) => ({
     id: ts.subject.id,
     name: ts.subject.name,
     defaultCap: ts.defaultCap,
@@ -130,42 +156,46 @@ export async function TeacherProfilePage({
     dayOfWeek: o.dayOfWeek,
     startMinutes: o.startMinutes,
     endMinutes: o.endMinutes,
+    periodType: o.periodType,
     teacherCap: o.teacherCap ?? policy.globalClassCap,
     enrolled: o.enrollments.length,
+    invitedStudentProfileIds: o.invites.map((i) => i.studentProfileId),
+  }));
+
+  const inviteableStudents = inviteableStudentRows.map((s) => ({
+    id: s.id,
+    name: s.user.name,
+    email: s.user.email,
   }));
 
   const dialogSubjects = taughtSubjects.map((s) => ({
     id: s.id,
     name: s.name,
-    defaultCap: s.defaultCap ?? Math.min(10, policy.globalClassCap),
+    defaultCap: s.defaultCap ?? policy.globalClassCap,
   }));
 
-  const taughtSubjectsWithStudents = profile.subjects.map((s) => ({
+  const taughtSubjectsWithStudents = orderedSubjects.map((s) => ({
     subjectId: s.subjectId,
     subjectName: s.subject.name,
     defaultCap: s.defaultCap,
     studentCount: studentsPerSubject[s.subjectId] ?? 0,
   }));
 
-  const subjectMetaOk = profile.subjects.every((s) => {
-    const desc = String(s.courseDescription ?? "").trim();
-    const grade = String(s.gradeLevel ?? "").trim();
-    return desc.length >= 10 && grade.length > 0;
+  const checklist = buildTeacherProfileChecklist({
+    image: profile.user.image,
+    bio: profile.bio,
+    spokenLanguages: profile.spokenLanguages ?? "",
+    subjectIds: profile.subjects.map((s) => s.subjectId),
+    rates: profile.rates.map((r) => ({
+      subjectId: r.subjectId,
+      regionCode: r.region.code,
+    })),
+    teacherRegionCode: profile.user.region?.code ?? null,
+    offeringsCount: profile.offerings.length,
+    payoutLegalName: profile.payoutLegalName,
+    payoutCountryCode: profile.payoutCountryCode,
+    payoutPreferredMethod: profile.payoutPreferredMethod,
   });
-
-  const checklist: TeacherProfileChecklistItem[] = [
-    { label: "Profile photo", done: Boolean(profile.user.image), editTab: "bio" },
-    {
-      label: "Languages spoken",
-      done: Boolean(String(profile.spokenLanguages ?? "").trim()),
-      editTab: "bio",
-    },
-    { label: "Bio", done: profile.bio.trim().length > 0, editTab: "bio" },
-    { label: "Subjects & class caps", done: profile.subjects.length > 0, editTab: "courses" },
-    { label: "Course description & grade", done: subjectMetaOk, editTab: "courses" },
-    { label: "Hourly rates", done: profile.rates.length > 0, editTab: "courses" },
-    { label: "Weekly schedule", done: profile.offerings.length > 0, editTab: "schedule" },
-  ];
 
   return (
     <TeacherProfileTabsClient
@@ -208,6 +238,7 @@ export async function TeacherProfilePage({
       rateRows={rateRows}
       dialogSubjects={dialogSubjects}
       scheduleOfferings={scheduleOfferings}
+      inviteableStudents={inviteableStudents}
     />
   );
 }
