@@ -293,6 +293,11 @@ function parseOfferingForm(formData: FormData) {
           if (raw == null || String(raw).trim() === "") return undefined;
           return Number(raw);
         })(),
+        interval: (() => {
+          const raw = formData.get("recurrenceInterval");
+          if (raw == null || String(raw).trim() === "") return undefined;
+          return Number(raw);
+        })(),
       },
     },
   };

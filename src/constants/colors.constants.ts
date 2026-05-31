@@ -79,6 +79,21 @@ export const COLORS = {
   CALENDAR_BLOCKED_BORDER: "#cbd5e1",
   CALENDAR_BLOCKED_TEXT: "#475569",
 
+  /** Time-grid chrome (day/week views) */
+  CALENDAR_TODAY_COLUMN_BG: "rgba(37, 99, 235, 0.06)",
+  CALENDAR_TODAY_COLUMN_BORDER: "rgba(37, 99, 235, 0.35)",
+  CALENDAR_NOW_LINE: "#2563eb",
+  CALENDAR_NOW_LINE_FADED: "rgba(37, 99, 235, 0.35)",
+  CALENDAR_GRID_HOUR_LINE: "#e2e8f0",
+  CALENDAR_GRID_HALF_HOUR_LINE: "rgba(226, 232, 240, 0.75)",
+
+  /** Month-view event chips */
+  CALENDAR_EVENT_BG: "rgba(37, 99, 235, 0.1)",
+  CALENDAR_EVENT_BG_HOVER: "rgba(37, 99, 235, 0.16)",
+  CALENDAR_EVENT_ACCENT: "#2563eb",
+  CALENDAR_EVENT_TEXT: "#1e3a8a",
+  CALENDAR_OUT_OF_MONTH_BG: "rgba(248, 248, 248, 0.85)",
+
   // App shell sidebar — aligned with Maje portal (`.maje-teacher-db .sidebar`: `--surface`, `--ink`, `--muted`)
   SIDEBAR_MUTED: "#4d566b",
   SIDEBAR_ACCENT: "#5a6888",

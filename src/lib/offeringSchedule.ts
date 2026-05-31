@@ -1,9 +1,16 @@
 import type { DayOfWeek, OfferingPeriodType, OfferingRecurrenceKind } from "@prisma/client";
 import { DAY_ORDER, minutesToTime } from "@/lib/time";
 import {
-  DEFAULT_OFFERING_RECURRENCE,
-  type OfferingRecurrence,
+  dayOfWeekFromDate,
+  formatIsoDate,
+  frequencyViewToRecurrence,
+  nextDateForDayOfWeek,
+  parseIsoDate,
   recurrenceFromDb,
+  recurrenceToFrequencyView,
+  type MonthlyPositionId,
+  type OfferingRecurrence,
+  type OfferingRecurrenceInput,
 } from "@/lib/offeringRecurrence";
 
 export interface OfferingDaySlot {
@@ -66,73 +73,6 @@ export function nextUnusedDay(usedDays: DayOfWeek[]): DayOfWeek {
   return DAY_ORDER.find((day) => !usedDays.includes(day)) ?? "MON";
 }
 
-export const WEEKDAY_DAYS: DayOfWeek[] = ["MON", "TUE", "WED", "THU", "FRI"];
-
-export type ScheduleDayPresetId =
-  | "ONCE_WEEKLY"
-  | "WEEKDAYS"
-  | "MON_WED_FRI"
-  | "TUE_THU"
-  | "EVERY_DAY";
-
-export interface ScheduleDayPreset {
-  id: ScheduleDayPresetId;
-  label: string;
-  days: DayOfWeek[] | null;
-}
-
-export const SCHEDULE_DAY_PRESETS: ScheduleDayPreset[] = [
-  { id: "ONCE_WEEKLY", label: "Once a week", days: null },
-  { id: "WEEKDAYS", label: "Weekdays", days: WEEKDAY_DAYS },
-  { id: "MON_WED_FRI", label: "Mon, Wed, Fri", days: ["MON", "WED", "FRI"] },
-  { id: "TUE_THU", label: "Tue, Thu", days: ["TUE", "THU"] },
-  { id: "EVERY_DAY", label: "Every day", days: DAY_ORDER },
-];
-
-function slotsShareSameTimes(slots: OfferingDaySlotInput[]): boolean {
-  if (slots.length <= 1) return true;
-  const { startTime, endTime } = slots[0]!;
-  return slots.every((slot) => slot.startTime === startTime && slot.endTime === endTime);
-}
-
-function slotsMatchDays(slots: OfferingDaySlotInput[], days: DayOfWeek[]): boolean {
-  if (slots.length !== days.length) return false;
-  const slotDays = uniqueDaysOfWeek(slots.map((slot) => slot.dayOfWeek));
-  return slotDays.length === days.length && days.every((day) => slotDays.includes(day));
-}
-
-export function activeScheduleDayPreset(slots: OfferingDaySlotInput[]): ScheduleDayPresetId | null {
-  if (!slotsShareSameTimes(slots)) return null;
-
-  for (const preset of SCHEDULE_DAY_PRESETS) {
-    if (preset.id === "ONCE_WEEKLY") {
-      if (slots.length === 1) return preset.id;
-      continue;
-    }
-    if (preset.days && slotsMatchDays(slots, preset.days)) return preset.id;
-  }
-
-  return null;
-}
-
-export function applyScheduleDayPreset(
-  currentSlots: OfferingDaySlotInput[],
-  presetId: ScheduleDayPresetId,
-): OfferingDaySlotInput[] {
-  const template =
-    currentSlots[0] ?? defaultOfferingDaySlot("MON", 9 * 60, 10 * 60);
-  const { startTime, endTime } = template;
-
-  if (presetId === "ONCE_WEEKLY") {
-    return [{ dayOfWeek: template.dayOfWeek, startTime, endTime }];
-  }
-
-  const preset = SCHEDULE_DAY_PRESETS.find((row) => row.id === presetId);
-  if (!preset?.days) return currentSlots;
-
-  return preset.days.map((dayOfWeek) => ({ dayOfWeek, startTime, endTime }));
-}
-
 export function findOfferingScheduleSiblings<T extends OfferingScheduleSource>(
   offerings: T[],
   target: T,
@@ -157,6 +97,135 @@ export function scheduleGroupIdForSlotCount(slotCount: number): string | null {
   return slotCount > 1 ? newScheduleGroupId() : null;
 }
 
+export type ScheduleRepeatUnit = "week" | "month";
+
+export interface OfferingScheduleEditorValue {
+  startDate: string;
+  startTime: string;
+  endTime: string;
+  isRecurring: boolean;
+  repeatInterval: number;
+  repeatUnit: ScheduleRepeatUnit;
+  selectedDays: DayOfWeek[];
+  monthlyPosition: MonthlyPositionId;
+  untilDate: string;
+}
+
+export function defaultOfferingScheduleEditorValue(
+  dayOfWeek: DayOfWeek = "TUE",
+  startMinutes = 9 * 60,
+  endMinutes = 10 * 60,
+): OfferingScheduleEditorValue {
+  return {
+    startDate: formatIsoDate(nextDateForDayOfWeek(dayOfWeek)),
+    startTime: minutesToTime(startMinutes),
+    endTime: minutesToTime(endMinutes),
+    isRecurring: true,
+    repeatInterval: 1,
+    repeatUnit: "week",
+    selectedDays: [dayOfWeek],
+    monthlyPosition: "NTH_1",
+    untilDate: "",
+  };
+}
+
+function sortSlotInputs(slots: OfferingDaySlotInput[]): OfferingDaySlotInput[] {
+  return [...slots].sort(
+    (a, b) => DAY_ORDER.indexOf(a.dayOfWeek) - DAY_ORDER.indexOf(b.dayOfWeek),
+  );
+}
+
+export function scheduleEditorValueFromSlots(
+  slots: OfferingDaySlotInput[],
+  recurrence: OfferingRecurrenceInput,
+): OfferingScheduleEditorValue {
+  const orderedSlots = sortSlotInputs(slots);
+  const template = orderedSlots[0] ?? defaultOfferingDaySlot("MON", 9 * 60, 10 * 60);
+  const selectedDays = uniqueDaysOfWeek(orderedSlots.map((slot) => slot.dayOfWeek));
+  const isRecurring = recurrence.kind !== "ONCE";
+  const primaryDay = selectedDays[0] ?? template.dayOfWeek;
+  const startDate =
+    recurrence.anchorDate.trim() !== ""
+      ? recurrence.anchorDate
+      : formatIsoDate(nextDateForDayOfWeek(primaryDay));
+
+  let repeatInterval = 1;
+  let repeatUnit: ScheduleRepeatUnit = "week";
+  let monthlyPosition: MonthlyPositionId = "NTH_1";
+
+  if (recurrence.kind === "BIWEEKLY") {
+    repeatInterval = recurrence.interval === "" ? 2 : recurrence.interval;
+    repeatUnit = "week";
+  } else {
+    const { frequency, monthlyPosition: position } = recurrenceToFrequencyView(recurrence);
+    if (frequency === "MONTHLY") {
+      repeatUnit = "month";
+      repeatInterval = 1;
+      monthlyPosition = position;
+    }
+  }
+
+  return {
+    startDate,
+    startTime: template.startTime,
+    endTime: template.endTime,
+    isRecurring,
+    repeatInterval,
+    repeatUnit,
+    selectedDays: isRecurring ? selectedDays : [dayOfWeekFromDate(parseIsoDate(startDate))],
+    monthlyPosition,
+    untilDate: "",
+  };
+}
+
+export function slotsAndRecurrenceFromScheduleEditor(value: OfferingScheduleEditorValue): {
+  slots: OfferingDaySlotInput[];
+  recurrence: OfferingRecurrenceInput;
+} {
+  const fallbackDay = dayOfWeekFromDate(
+    parseIsoDate(value.startDate || formatIsoDate(new Date())),
+  );
+  const days =
+    value.isRecurring && value.selectedDays.length > 0
+      ? uniqueDaysOfWeek(value.selectedDays)
+      : [fallbackDay];
+
+  const slots = days.map((dayOfWeek) => ({
+    dayOfWeek,
+    startTime: value.startTime,
+    endTime: value.endTime,
+  }));
+
+  let recurrence: OfferingRecurrenceInput;
+
+  if (!value.isRecurring) {
+    recurrence = {
+      kind: "ONCE",
+      anchorDate: value.startDate,
+      ordinal: "",
+      interval: "",
+    };
+  } else if (value.repeatUnit === "month") {
+    recurrence = frequencyViewToRecurrence(
+      "MONTHLY",
+      value.monthlyPosition,
+      { kind: "WEEKLY", anchorDate: "", ordinal: "", interval: "" },
+      days[0] ?? fallbackDay,
+    );
+  } else if (value.repeatInterval <= 1) {
+    recurrence = { kind: "WEEKLY", anchorDate: "", ordinal: "", interval: "" };
+  } else {
+    recurrence = {
+      kind: "BIWEEKLY",
+      anchorDate: value.startDate,
+      ordinal: "",
+      interval: value.repeatInterval,
+    };
+  }
+
+  return { slots, recurrence };
+}
+
 export interface OfferingDialogSeed {
   id: string;
   scheduleGroupId: string | null;
@@ -173,6 +242,7 @@ export interface OfferingDialogSeed {
   recurrenceKind?: OfferingRecurrenceKind;
   recurrenceAnchorDate?: Date | null;
   recurrenceOrdinal?: number | null;
+  recurrenceInterval?: number | null;
 }
 
 export function recurrenceFromOfferingSeed(seed: OfferingDialogSeed): OfferingRecurrence {
@@ -181,9 +251,15 @@ export function recurrenceFromOfferingSeed(seed: OfferingDialogSeed): OfferingRe
       recurrenceKind: seed.recurrenceKind,
       recurrenceAnchorDate: seed.recurrenceAnchorDate ?? null,
       recurrenceOrdinal: seed.recurrenceOrdinal ?? null,
+      recurrenceInterval: seed.recurrenceInterval ?? null,
     });
   }
-  return DEFAULT_OFFERING_RECURRENCE;
+  return recurrenceFromDb({
+    recurrenceKind: "WEEKLY",
+    recurrenceAnchorDate: null,
+    recurrenceOrdinal: null,
+    recurrenceInterval: null,
+  });
 }
 
 export function buildOfferingDialogInitial(

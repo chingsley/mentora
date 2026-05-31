@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import type { DayOfWeek } from "@prisma/client";
 import { requireSession } from "@/lib/auth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { TeacherCard } from "@/components/features/TeacherCard";
 import {
   Grid,
@@ -92,26 +91,19 @@ export default async function TeachersPage({ searchParams }: Props) {
         </Muted>
       </PageHeader>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Search &amp; filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TeachersFilters
-            q={q}
-            subject={subject}
-            region={region}
-            max={max}
-            day={day}
-            rating={rating}
-            subjects={subjects}
-            regions={regions}
-            maxRegion={maxRegion}
-          />
-        </CardContent>
-      </Card>
+      <TeachersFilters
+        q={q}
+        subject={subject}
+        region={region}
+        max={max}
+        day={day}
+        rating={rating}
+        subjects={subjects}
+        regions={regions}
+        maxRegion={maxRegion}
+      />
 
-      {recommended.length > 0 && !q && !subject && !region && !dayFilter && !minRating ? (
+      {recommended.length > 0 && !q && !subject && !region && !dayFilter && !minRating && !max ? (
         <Section>
           <TeachersSectionHeading>Recommended for you</TeachersSectionHeading>
           <Grid $smCols={2} $mdCols={3} $gap="FOUR">

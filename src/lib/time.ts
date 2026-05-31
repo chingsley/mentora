@@ -13,6 +13,17 @@ export const DAY_LABEL: Record<DayOfWeek, string> = {
   SUN: "Sunday",
 };
 
+/** Single-letter labels for day-of-week toggle chips (Mon–Sun). */
+export const DAY_CHIP_LABEL: Record<DayOfWeek, string> = {
+  MON: "M",
+  TUE: "T",
+  WED: "W",
+  THU: "T",
+  FRI: "F",
+  SAT: "S",
+  SUN: "S",
+};
+
 export function minutesToTime(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

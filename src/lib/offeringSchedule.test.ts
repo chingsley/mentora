@@ -1,10 +1,10 @@
 import type { DayOfWeek } from "@prisma/client";
 import {
-  activeScheduleDayPreset,
-  applyScheduleDayPreset,
   buildOfferingDialogInitial,
   findOfferingScheduleSiblings,
+  scheduleEditorValueFromSlots,
   scheduleGroupDays,
+  slotsAndRecurrenceFromScheduleEditor,
   sortOfferingDaySlots,
   uniqueDaysOfWeek,
 } from "./offeringSchedule";
@@ -94,38 +94,56 @@ describe("offeringSchedule", () => {
     ]);
   });
 
-  it("applies weekday preset using the first slot as a time template", () => {
-    const current = [{ dayOfWeek: "TUE" as DayOfWeek, startTime: "14:30", endTime: "15:30" }];
-    expect(applyScheduleDayPreset(current, "WEEKDAYS")).toEqual([
-      { dayOfWeek: "MON", startTime: "14:30", endTime: "15:30" },
-      { dayOfWeek: "TUE", startTime: "14:30", endTime: "15:30" },
-      { dayOfWeek: "WED", startTime: "14:30", endTime: "15:30" },
-      { dayOfWeek: "THU", startTime: "14:30", endTime: "15:30" },
-      { dayOfWeek: "FRI", startTime: "14:30", endTime: "15:30" },
+  it("converts schedule editor value to weekly slots and recurrence", () => {
+    const result = slotsAndRecurrenceFromScheduleEditor({
+      startDate: "2026-06-02",
+      startTime: "13:30",
+      endTime: "14:00",
+      isRecurring: true,
+      repeatInterval: 1,
+      repeatUnit: "week",
+      selectedDays: ["TUE", "THU"],
+      monthlyPosition: "NTH_1",
+      untilDate: "",
+    });
+
+    expect(result.slots).toEqual([
+      { dayOfWeek: "TUE", startTime: "13:30", endTime: "14:00" },
+      { dayOfWeek: "THU", startTime: "13:30", endTime: "14:00" },
     ]);
+    expect(result.recurrence.kind).toBe("WEEKLY");
   });
 
-  it("collapses to a single day for once-a-week preset", () => {
-    const current = [
-      { dayOfWeek: "MON" as DayOfWeek, startTime: "09:00", endTime: "10:00" },
-      { dayOfWeek: "WED" as DayOfWeek, startTime: "09:00", endTime: "10:00" },
+  it("round-trips bi-weekly schedule editor state", () => {
+    const slots = [
+      { dayOfWeek: "TUE" as DayOfWeek, startTime: "13:30", endTime: "14:00" },
     ];
-    expect(applyScheduleDayPreset(current, "ONCE_WEEKLY")).toEqual([
-      { dayOfWeek: "MON", startTime: "09:00", endTime: "10:00" },
-    ]);
+    const recurrence = {
+      kind: "BIWEEKLY" as const,
+      anchorDate: "2026-06-02",
+      ordinal: "" as const,
+      interval: 3 as const,
+    };
+    const editor = scheduleEditorValueFromSlots(slots, recurrence);
+    expect(editor.repeatInterval).toBe(3);
+    expect(slotsAndRecurrenceFromScheduleEditor(editor).recurrence).toEqual(recurrence);
   });
 
-  it("detects the active schedule preset", () => {
-    const weekdays = applyScheduleDayPreset(
-      [{ dayOfWeek: "MON", startTime: "09:00", endTime: "10:00" }],
-      "WEEKDAYS",
-    );
-    expect(activeScheduleDayPreset(weekdays)).toBe("WEEKDAYS");
-    expect(
-      activeScheduleDayPreset([
-        { dayOfWeek: "MON", startTime: "09:00", endTime: "10:00" },
-        { dayOfWeek: "WED", startTime: "12:00", endTime: "13:00" },
-      ]),
-    ).toBeNull();
+  it("maps one-time schedule editor value to a single slot", () => {
+    const result = slotsAndRecurrenceFromScheduleEditor({
+      startDate: "2026-06-15",
+      startTime: "09:00",
+      endTime: "10:00",
+      isRecurring: false,
+      repeatInterval: 1,
+      repeatUnit: "week",
+      selectedDays: ["MON"],
+      monthlyPosition: "NTH_1",
+      untilDate: "",
+    });
+
+    expect(result.recurrence.kind).toBe("ONCE");
+    expect(result.slots).toHaveLength(1);
+    expect(result.slots[0]?.dayOfWeek).toBe("MON");
   });
 });

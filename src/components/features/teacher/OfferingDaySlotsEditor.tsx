@@ -1,77 +1,59 @@
 "use client";
 
+import type { ChangeEvent } from "react";
 import type { DayOfWeek } from "@prisma/client";
-import * as React from "react";
+import { Repeat, Trash2 } from "lucide-react";
 import styled, { css } from "styled-components";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import type { OfferingDaySlotInput } from "@/lib/offeringSchedule";
+import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import {
-  activeScheduleDayPreset,
-  applyScheduleDayPreset,
-  nextUnusedDay,
-  SCHEDULE_DAY_PRESETS,
-} from "@/lib/offeringSchedule";
-import { DAY_LABEL, DAY_ORDER } from "@/lib/time";
+  MONTHLY_POSITION_OPTIONS,
+  RECURRENCE_WEEK_INTERVAL,
+} from "@/lib/offeringRecurrence";
+import type { OfferingScheduleEditorValue } from "@/lib/offeringSchedule";
+import { DAY_CHIP_LABEL, DAY_LABEL, DAY_ORDER } from "@/lib/time";
 
 const Wrap = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.THREE};
+  border: 1px solid ${COLORS.BORDER};
+  border-radius: ${LAYOUT.RADIUS.LG};
+  padding: ${SPACING.FOUR};
+  background-color: ${COLORS.FOREGROUND};
 `;
 
-const Header = styled.div`
+const DateTimeRow = styled.div`
+  display: grid;
+  gap: ${SPACING.THREE};
+  grid-template-columns: minmax(0, 1fr);
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+`;
+
+const OptionsRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: ${SPACING.TWO};
+  gap: ${SPACING.THREE};
 `;
 
-const Label = styled.span`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-`;
-
-const Hint = styled.p`
-  margin: 0;
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.MUTED_FOREGROUND};
-  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
-`;
-
-const PresetSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.TWO};
-`;
-
-const PresetLabel = styled.span`
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const PresetList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${SPACING.TWO};
-`;
-
-const PresetButton = styled.button<{ $active: boolean }>`
+const RecurringButton = styled.button<{ $active: boolean }>`
   display: inline-flex;
   align-items: center;
+  gap: ${SPACING.TWO};
   border-radius: ${LAYOUT.RADIUS.FULL};
   border: 1px solid ${COLORS.BORDER};
-  padding: ${SPACING.ONE} ${SPACING.THREE};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
   font-family: ${FONTS.FAMILY.PRIMARY};
-  font-size: ${FONTS.SIZE.XS};
+  font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
   line-height: ${FONTS.LINE_HEIGHT.NORMAL};
   cursor: pointer;
@@ -83,8 +65,81 @@ const PresetButton = styled.button<{ $active: boolean }>`
   ${(p) =>
     p.$active
       ? css`
-          border-color: ${COLORS.HEADER};
-          background-color: ${COLORS.HEADER};
+          border-color: ${COLORS.HEADER_BORDER_25};
+          background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+          color: ${COLORS.HEADER};
+        `
+      : css`
+          background-color: ${COLORS.FOREGROUND};
+          color: ${COLORS.MUTED_FOREGROUND};
+
+          &:hover:not(:disabled) {
+            background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+            border-color: ${COLORS.SURFACE_NEUTRAL_BORDER_HOVER};
+          }
+        `}
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const RecurrenceRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: ${SPACING.TWO} ${SPACING.THREE};
+`;
+
+const InlineLabel = styled.span`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  white-space: nowrap;
+`;
+
+const CompactSelectWrap = styled.div<{ $width?: "interval" | "unit" | "position" | "until" }>`
+  flex: 0 0 auto;
+  min-width: ${(p) => {
+    if (p.$width === "interval") return `calc(${SPACING.TEN} + ${SPACING.FOUR})`;
+    if (p.$width === "unit") return `calc(${SPACING.TEN} * 1.5)`;
+    if (p.$width === "position") return `calc(${SPACING.TEN} * 2)`;
+    if (p.$width === "until") return `calc(${SPACING.TEN} * 2.5)`;
+    return `calc(${SPACING.TEN} * 2)`;
+  }};
+`;
+
+const DayToggleList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${SPACING.ONE};
+`;
+
+const DayToggle = styled.button<{ $selected: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(${SPACING.TEN} - ${SPACING.ONE});
+  height: calc(${SPACING.TEN} - ${SPACING.ONE});
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid ${COLORS.BORDER};
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+
+  ${(p) =>
+    p.$selected
+      ? css`
+          border-color: ${COLORS.ACTION_PRIMARY};
+          background-color: ${COLORS.ACTION_PRIMARY};
           color: ${COLORS.WHITE};
         `
       : css`
@@ -103,30 +158,30 @@ const PresetButton = styled.button<{ $active: boolean }>`
   }
 `;
 
-const SlotList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.THREE};
-`;
+const IconButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: ${SPACING.TWO};
+  border: none;
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background: ${COLORS.TRANSPARENT};
+  color: ${COLORS.MUTED_FOREGROUND};
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 
-const SlotRow = styled.div`
-  display: grid;
-  gap: ${SPACING.THREE};
-  border: 1px solid ${COLORS.BORDER};
-  border-radius: ${LAYOUT.RADIUS.LG};
-  padding: ${SPACING.THREE};
-  background-color: ${COLORS.FOREGROUND};
-
-  ${LAYOUT.MEDIA.SM} {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
-    align-items: end;
+  &:hover:not(:disabled) {
+    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+    color: ${COLORS.DESTRUCTIVE};
   }
-`;
 
-const RemoveWrap = styled.div`
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 const SectionError = styled.p`
@@ -135,141 +190,208 @@ const SectionError = styled.p`
   color: ${COLORS.DESTRUCTIVE};
 `;
 
+const REPEAT_UNIT_OPTIONS = [
+  { value: "week", label: "week" },
+  { value: "month", label: "month" },
+] as const;
+
+const INTERVAL_OPTIONS = Array.from(
+  { length: RECURRENCE_WEEK_INTERVAL.MAX },
+  (_, index) => {
+    const value = String(index + 1);
+    return { value, label: value };
+  },
+);
+
 export interface OfferingDaySlotsEditorProps {
-  slots: OfferingDaySlotInput[];
-  onChange: (slots: OfferingDaySlotInput[]) => void;
+  schedule: OfferingScheduleEditorValue;
+  onChange: (schedule: OfferingScheduleEditorValue) => void;
   fieldErrors?: Record<string, string>;
   disabled?: boolean;
-  singleDayOnly?: boolean;
-}
-
-function slotError(fieldErrors: Record<string, string> | undefined, index: number, key: string) {
-  return fieldErrors?.[`slots.${index}.${key}`];
 }
 
 export function OfferingDaySlotsEditor({
-  slots,
+  schedule,
   onChange,
   fieldErrors,
   disabled = false,
-  singleDayOnly = false,
 }: OfferingDaySlotsEditorProps) {
-  function updateSlot(index: number, patch: Partial<OfferingDaySlotInput>) {
-    onChange(slots.map((slot, i) => (i === index ? { ...slot, ...patch } : slot)));
+  function patch(next: Partial<OfferingScheduleEditorValue>) {
+    onChange({ ...schedule, ...next });
   }
 
-  function addSlot() {
-    const usedDays = slots.map((slot) => slot.dayOfWeek);
-    const template = slots[0];
-    onChange([
-      ...slots,
-      {
-        dayOfWeek: nextUnusedDay(usedDays),
-        startTime: template?.startTime ?? "09:00",
-        endTime: template?.endTime ?? "10:00",
-      },
-    ]);
+  function handleStartDateChange(event: ChangeEvent<HTMLInputElement>) {
+    patch({ startDate: event.target.value });
   }
 
-  function removeSlot(index: number) {
-    if (slots.length === 1) return;
-    onChange(slots.filter((_, i) => i !== index));
+  function handleRepeatUnitChange(event: ChangeEvent<HTMLSelectElement>) {
+    patch({
+      repeatUnit: event.target.value as OfferingScheduleEditorValue["repeatUnit"],
+      repeatInterval: 1,
+    });
   }
 
-  const usedDays = slots.map((slot) => slot.dayOfWeek);
-  const canAddSlot = !singleDayOnly && usedDays.length < DAY_ORDER.length;
-  const activePreset = singleDayOnly ? null : activeScheduleDayPreset(slots);
-
-  function applyPreset(presetId: (typeof SCHEDULE_DAY_PRESETS)[number]["id"]) {
-    onChange(applyScheduleDayPreset(slots, presetId));
+  function toggleDay(day: DayOfWeek) {
+    const selected = new Set(schedule.selectedDays);
+    if (selected.has(day)) {
+      if (selected.size <= 1) return;
+      selected.delete(day);
+    } else {
+      selected.add(day);
+    }
+    patch({
+      selectedDays: DAY_ORDER.filter((candidate) => selected.has(candidate)),
+    });
   }
+
+  function clearRecurrence() {
+    patch({ isRecurring: false, untilDate: "" });
+  }
+
+  const slotsError = fieldErrors?.slots;
+  const recurrenceError =
+    fieldErrors?.["recurrence.kind"] ?? fieldErrors?.["recurrence.anchorDate"];
 
   return (
     <Wrap>
-      <Header>
-        <Label>Weekly time slots</Label>
-        <Button
+      <DateTimeRow>
+        <Input
+          type="date"
+          label="Start date"
+          required
+          value={schedule.startDate}
+          disabled={disabled}
+          onChange={handleStartDateChange}
+          error={fieldErrors?.["recurrence.anchorDate"]}
+        />
+        <Input
+          type="time"
+          label="Start time"
+          required
+          value={schedule.startTime}
+          disabled={disabled}
+          onChange={(event) => patch({ startTime: event.target.value })}
+          error={fieldErrors?.["slots.0.startTime"]}
+        />
+        <Input
+          type="time"
+          label="End time"
+          required
+          value={schedule.endTime}
+          disabled={disabled}
+          onChange={(event) => patch({ endTime: event.target.value })}
+          error={fieldErrors?.["slots.0.endMinutes"]}
+        />
+      </DateTimeRow>
+
+      <OptionsRow>
+        <RecurringButton
           type="button"
-          variant="secondary"
-          onClick={addSlot}
-          disabled={disabled || !canAddSlot}
+          $active={schedule.isRecurring}
+          disabled={disabled}
+          aria-pressed={schedule.isRecurring}
+          onClick={() => patch({ isRecurring: !schedule.isRecurring })}
         >
-          Add another day
-        </Button>
-      </Header>
-      <PresetSection>
-        <PresetLabel>Quick schedule</PresetLabel>
-        <PresetList role="group" aria-label="Quick schedule presets">
-          {(singleDayOnly ? SCHEDULE_DAY_PRESETS.filter((preset) => preset.id === "ONCE_WEEKLY") : SCHEDULE_DAY_PRESETS).map((preset) => (
-            <PresetButton
-              key={preset.id}
-              type="button"
-              $active={activePreset === preset.id}
-              disabled={disabled}
-              aria-pressed={activePreset === preset.id}
-              onClick={() => applyPreset(preset.id)}
-            >
-              {preset.label}
-            </PresetButton>
-          ))}
-        </PresetList>
-      </PresetSection>
-      <Hint>
-        Pick a quick schedule, then set the day and time below. Use &ldquo;Add another day&rdquo; for
-        custom mixes — for example Monday 9:00, Wednesday 12:00, and Friday 15:00.
-      </Hint>
-      {fieldErrors?.slots ? <SectionError>{fieldErrors.slots}</SectionError> : null}
-      <SlotList>
-        {slots.map((slot, index) => (
-          <SlotRow key={`${index}-${slot.dayOfWeek}`}>
+          <Repeat
+            size={ICON_SIZE.SM}
+            strokeWidth={ICON_STROKE.NORMAL}
+            color={schedule.isRecurring ? COLORS.HEADER : COLORS.MUTED_FOREGROUND}
+          />
+          Recurring
+        </RecurringButton>
+      </OptionsRow>
+
+      {schedule.isRecurring ? (
+        <RecurrenceRow>
+          <InlineLabel>Repeat every</InlineLabel>
+          <CompactSelectWrap $width="interval">
             <Select
-              label="Day"
+              aria-label="Repeat interval"
               required
-              value={slot.dayOfWeek}
-              disabled={disabled}
+              value={String(schedule.repeatInterval)}
+              disabled={disabled || schedule.repeatUnit === "month"}
               onChange={(event) =>
-                updateSlot(index, { dayOfWeek: event.target.value as DayOfWeek })
+                patch({ repeatInterval: Number.parseInt(event.target.value, 10) || 1 })
               }
-              options={DAY_ORDER.filter(
-                (day) => day === slot.dayOfWeek || !usedDays.includes(day),
-              ).map((day) => ({
-                value: day,
-                label: DAY_LABEL[day],
-              }))}
-              error={slotError(fieldErrors, index, "dayOfWeek")}
+              options={INTERVAL_OPTIONS}
+              error={recurrenceError}
             />
-            <Input
-              type="time"
-              label="Start time"
+          </CompactSelectWrap>
+          <CompactSelectWrap $width="unit">
+            <Select
+              aria-label="Repeat unit"
               required
-              value={slot.startTime}
+              value={schedule.repeatUnit}
               disabled={disabled}
-              onChange={(event) => updateSlot(index, { startTime: event.target.value })}
-              error={slotError(fieldErrors, index, "startTime")}
+              onChange={handleRepeatUnitChange}
+              options={[...REPEAT_UNIT_OPTIONS]}
             />
-            <Input
-              type="time"
-              label="End time"
-              required
-              value={slot.endTime}
-              disabled={disabled}
-              onChange={(event) => updateSlot(index, { endTime: event.target.value })}
-              error={slotError(fieldErrors, index, "endMinutes")}
-            />
-            <RemoveWrap>
-              <Button
+          </CompactSelectWrap>
+
+          {schedule.repeatUnit === "month" ? (
+            <>
+              <InlineLabel>on the</InlineLabel>
+              <CompactSelectWrap $width="position">
+                <Select
+                  aria-label="Week of month"
+                  required
+                  value={schedule.monthlyPosition}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    patch({
+                      monthlyPosition:
+                        event.target.value as OfferingScheduleEditorValue["monthlyPosition"],
+                    })
+                  }
+                  options={MONTHLY_POSITION_OPTIONS.map((option) => ({
+                    value: option.id,
+                    label: option.label,
+                  }))}
+                />
+              </CompactSelectWrap>
+            </>
+          ) : null}
+
+          <DayToggleList role="group" aria-label="Days of the week">
+            {DAY_ORDER.map((day) => (
+              <DayToggle
+                key={day}
                 type="button"
-                variant="ghost"
-                onClick={() => removeSlot(index)}
-                disabled={disabled || slots.length === 1}
-                aria-label={`Remove ${DAY_LABEL[slot.dayOfWeek]} slot`}
+                $selected={schedule.selectedDays.includes(day)}
+                disabled={disabled}
+                aria-pressed={schedule.selectedDays.includes(day)}
+                aria-label={DAY_LABEL[day]}
+                title={DAY_LABEL[day]}
+                onClick={() => toggleDay(day)}
               >
-                Remove
-              </Button>
-            </RemoveWrap>
-          </SlotRow>
-        ))}
-      </SlotList>
+                {DAY_CHIP_LABEL[day]}
+              </DayToggle>
+            ))}
+          </DayToggleList>
+
+          <InlineLabel>Until</InlineLabel>
+          <CompactSelectWrap $width="until">
+            <Input
+              type="date"
+              aria-label="Until date"
+              value={schedule.untilDate}
+              disabled={disabled}
+              onChange={(event) => patch({ untilDate: event.target.value })}
+            />
+          </CompactSelectWrap>
+
+          <IconButton
+            type="button"
+            disabled={disabled}
+            aria-label="Clear recurrence"
+            onClick={clearRecurrence}
+          >
+            <Trash2 size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.NORMAL} />
+          </IconButton>
+        </RecurrenceRow>
+      ) : null}
+
+      {slotsError ? <SectionError>{slotsError}</SectionError> : null}
     </Wrap>
   );
 }

@@ -11,6 +11,7 @@ import { DAY_LABEL, DAY_ORDER } from "@/lib/time";
 import { calendarEntriesForDate } from "@/lib/offeringRecurrence";
 import { ClassTile } from "./ClassTile";
 import type { CalendarEntry, CalendarTileColorMode } from "./types";
+import { isToday } from "./timeGrid";
 import { startOfISOWeek } from "./WeekGrid";
 
 export interface MonthGridProps {
@@ -35,11 +36,12 @@ const HeaderRow = styled.div`
 `;
 
 const HeaderCell = styled.div`
-  padding: ${SPACING.TWO};
-  text-align: center;
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  text-align: left;
   font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.MUTED_FOREGROUND};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
 `;
 
 const Body = styled.div`
@@ -47,25 +49,33 @@ const Body = styled.div`
   grid-template-columns: repeat(7, minmax(0, 1fr));
 `;
 
-const DayCell = styled.button<{ $inMonth: boolean; $clickable: boolean }>`
+const DayCell = styled.button<{ $inMonth: boolean; $isToday: boolean; $clickable: boolean }>`
   position: relative;
   display: flex;
+  min-height: calc(${SPACING.TEN} * 2.2);
   flex-direction: column;
   gap: ${SPACING.ONE};
-  min-height: 5.5rem;
   border-bottom: 1px solid ${COLORS.BORDER};
-  border-left: 1px solid ${COLORS.BORDER};
-  padding: ${SPACING.ONE} 0.375rem;
+  border-right: 1px solid ${COLORS.BORDER};
+  padding: ${SPACING.TWO};
   text-align: left;
-  background-color: ${(p) => (p.$inMonth ? COLORS.FOREGROUND : "rgba(245, 245, 247, 0.5)")};
+  background-color: ${(p) =>
+    p.$inMonth ? COLORS.FOREGROUND : COLORS.CALENDAR_OUT_OF_MONTH_BG};
   transition: background-color 0.15s ease;
   cursor: ${(p) => (p.$clickable ? "pointer" : "default")};
+
+  ${(p) =>
+    p.$isToday &&
+    css`
+      background-color: ${COLORS.CALENDAR_TODAY_COLUMN_BG};
+      box-shadow: inset 0 0 0 1px ${COLORS.CALENDAR_TODAY_COLUMN_BORDER};
+    `}
 
   ${(p) =>
     p.$clickable &&
     css`
       &:hover {
-        background-color: rgba(23, 32, 51, 0.03);
+        background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
       }
     `}
 
@@ -75,28 +85,30 @@ const DayCell = styled.button<{ $inMonth: boolean; $clickable: boolean }>`
 `;
 
 const DateNumber = styled.span<{ $inMonth: boolean; $isToday: boolean }>`
-  font-size: ${FONTS.SIZE.META};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(${SPACING.FOUR} + ${SPACING.HALF});
+  height: calc(${SPACING.FOUR} + ${SPACING.HALF});
+  font-size: ${FONTS.SIZE.XS};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${(p) => (p.$inMonth ? COLORS.HEADER : COLORS.MUTED_FOREGROUND)};
+  font-variant-numeric: tabular-nums;
+  color: ${(p) =>
+    p.$isToday ? COLORS.WHITE : p.$inMonth ? COLORS.HEADER : COLORS.MUTED_FOREGROUND};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
 
   ${(p) =>
     p.$isToday &&
     css`
-      display: inline-flex;
-      height: 1.25rem;
-      width: 1.25rem;
-      align-items: center;
-      justify-content: center;
       border-radius: ${LAYOUT.RADIUS.FULL};
-      background-color: ${COLORS.HEADER};
-      color: ${COLORS.WHITE};
+      background-color: ${COLORS.ACTION_PRIMARY};
     `}
 `;
 
 const Tiles = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: ${SPACING.ONE};
 `;
 
 const More = styled.span`
@@ -105,6 +117,7 @@ const More = styled.span`
   white-space: nowrap;
   font-size: ${FONTS.SIZE.MICRO};
   color: ${COLORS.MUTED_FOREGROUND};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
 `;
 
 export function MonthGrid({
@@ -138,20 +151,17 @@ export function MonthGrid({
     return map;
   }, [entries, cells]);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   return (
     <Wrap>
       <HeaderRow>
         {DAY_ORDER.map((d) => (
-          <HeaderCell key={d}>{DAY_LABEL[d].slice(0, 3)}</HeaderCell>
+          <HeaderCell key={d}>{DAY_LABEL[d]}</HeaderCell>
         ))}
       </HeaderRow>
       <Body>
         {cells.map((date) => {
           const inMonth = date.getMonth() === anchorDate.getMonth();
-          const isToday = date.getTime() === today.getTime();
+          const today = isToday(date);
           const dayEntries = entriesByDay.get(date.toISOString()) ?? [];
           const visible = dayEntries.slice(0, 3);
           const more = dayEntries.length - visible.length;
@@ -163,10 +173,11 @@ export function MonthGrid({
               onClick={onDayClick ? () => onDayClick(date) : undefined}
               disabled={!onDayClick}
               $inMonth={inMonth}
+              $isToday={today}
               $clickable={!!onDayClick}
             >
-              <DateNumber $inMonth={inMonth} $isToday={isToday}>
-                {date.getDate()}
+              <DateNumber $inMonth={inMonth} $isToday={today}>
+                {String(date.getDate()).padStart(2, "0")}
               </DateNumber>
               <Tiles>
                 {visible.map((entry) => (
@@ -174,7 +185,7 @@ export function MonthGrid({
                     key={`${entry.id}-${date.toISOString()}`}
                     entry={entry}
                     onClick={onEntryClick}
-                    variant="pill"
+                    variant="month-bar"
                     colorMode={tileColorMode}
                   />
                 ))}

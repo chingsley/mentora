@@ -15,6 +15,7 @@ import {
 } from "@/lib/offeringSchedule";
 import {
   offeringRecurrenceSchema,
+  recurrenceFromInput,
   recurrenceToDb,
 } from "@/lib/offeringRecurrence";
 import { TEACHER_PROFILE_ADD_COURSE } from "@/constants/teacherProfileCourse.constants";
@@ -776,11 +777,14 @@ export async function createOfferingSchedule(
   }
 
   const scheduleGroupId = scheduleGroupIdForSlotCount(slots.length);
-  const recurrenceData = recurrenceToDb({
-    kind: input.recurrence.kind,
-    anchorDate: input.recurrence.anchorDate ?? null,
-    ordinal: input.recurrence.ordinal ?? null,
-  });
+  const recurrenceData = recurrenceToDb(
+    recurrenceFromInput({
+      kind: input.recurrence.kind,
+      anchorDate: input.recurrence.anchorDate ?? "",
+      ordinal: input.recurrence.ordinal ?? "",
+      interval: "",
+    }),
+  );
 
   await db.$transaction(async (tx) => {
     for (const slot of slots) {
@@ -873,11 +877,14 @@ export async function updateOfferingSchedule(
     periodType: input.periodType,
     teacherCap: cap,
     scheduleGroupId: nextGroupId,
-    ...recurrenceToDb({
-      kind: input.recurrence.kind,
-      anchorDate: input.recurrence.anchorDate ?? null,
-      ordinal: input.recurrence.ordinal ?? null,
-    }),
+    ...recurrenceToDb(
+      recurrenceFromInput({
+        kind: input.recurrence.kind,
+        anchorDate: input.recurrence.anchorDate ?? "",
+        ordinal: input.recurrence.ordinal ?? "",
+        interval: "",
+      }),
+    ),
   };
 
   await db.$transaction(async (tx) => {

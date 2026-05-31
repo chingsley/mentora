@@ -310,6 +310,8 @@ model ClassOffering {
   recurrenceAnchorDate DateTime?              @db.Date
   /// 1–4 for MONTHLY_NTH (e.g. 2 = second Monday of the month).
   recurrenceOrdinal    Int?
+  /// 2+ for BIWEEKLY (every N weeks from anchor); null means 2 for legacy rows.
+  recurrenceInterval   Int?
   createdAt        DateTime           @default(now())
 
   teacherProfile TeacherProfile     @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)

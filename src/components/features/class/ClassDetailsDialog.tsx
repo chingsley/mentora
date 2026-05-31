@@ -11,7 +11,7 @@ import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, formatPrice, minutesToTime } from "@/lib/time";
-import { formatRecurrenceLabel } from "@/lib/offeringRecurrence";
+import { DEFAULT_OFFERING_RECURRENCE, formatRecurrenceLabel } from "@/lib/offeringRecurrence";
 import { FILL_LABEL, FILL_THEME, fillStatus } from "@/components/features/calendar/types";
 import { JoinClassButton } from "@/components/features/student/JoinClassButton";
 
@@ -271,7 +271,7 @@ export function ClassDetailsDialog({
       <StatGrid>
         <Stat
           label="Schedule"
-          value={formatRecurrenceLabel(detail.recurrence ?? { kind: "WEEKLY", anchorDate: null, ordinal: null }, detail.dayOfWeek)}
+          value={formatRecurrenceLabel(detail.recurrence ?? DEFAULT_OFFERING_RECURRENCE, detail.dayOfWeek)}
         />
         <Stat
           label="Time"

@@ -1,168 +1,265 @@
 "use client";
 
+import type { DayOfWeek } from "@prisma/client";
+import { ChevronDown, Search, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import styled, { css } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
+import { FORM_FIELD } from "@/constants/formField.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { LAYOUT } from "@/constants/layout.constants";
+import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
+import { BOX_SHADOW_INPUTS, LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import type { DayOfWeek } from "@prisma/client";
 import { DAY_LABEL, DAY_ORDER } from "@/lib/time";
 
-const Form = styled.form`
+const Toolbar = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${SPACING.FOUR};
-`;
-
-const Grid = styled.div`
-  display: grid;
   gap: ${SPACING.THREE};
+  margin-bottom: ${SPACING.FIVE};
+`;
 
-  ${LAYOUT.MEDIA.SM} {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+const SearchForm = styled.form`
+  display: flex;
+  align-items: center;
+  gap: ${SPACING.TWO};
+  width: 100%;
+  min-height: ${FORM_FIELD.CONTROL_MIN_HEIGHT};
+  padding: 0 ${SPACING.FOUR};
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  box-shadow: ${BOX_SHADOW_INPUTS};
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
-  ${LAYOUT.MEDIA.LG} {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  &:focus-within {
+    border-color: ${COLORS.ACTION_PRIMARY_BORDER_25};
+    box-shadow: ${COLORS.ACTION_PRIMARY_SHADOW_MD};
   }
 `;
 
-const Field = styled.label<{ $span2?: boolean }>`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.ONE};
+const SearchInput = styled.input`
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-family: ${FONTS.FAMILY.PRIMARY};
   font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.NORMAL};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  color: ${COLORS.TEXT};
+  outline: none;
+
+  &::placeholder {
+    color: ${COLORS.MUTED_FOREGROUND};
+  }
+`;
+
+const SearchSubmit = styled.button`
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: ${COLORS.ACTION_PRIMARY};
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    color: ${COLORS.ACTION_PRIMARY_HOVER};
+  }
+`;
+
+const ChipRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${SPACING.TWO};
+`;
+
+const ChipWrap = styled.div`
+  position: relative;
+`;
+
+const chipActiveStyles = css`
+  border-color: ${COLORS.ACTION_PRIMARY_BORDER_25};
+  background-color: ${COLORS.ACTION_PRIMARY_TINT_10};
+  color: ${COLORS.ACTION_PRIMARY};
+`;
+
+const ChipButton = styled.button<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: ${SPACING.ONE};
+  max-width: 100%;
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: ${SPACING.ONE} ${SPACING.THREE};
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  color: ${COLORS.HEADER};
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+
+  ${(p) => p.$active && chipActiveStyles}
+
+  &:hover {
+    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+    border-color: ${COLORS.SURFACE_NEUTRAL_BORDER_HOVER};
+  }
 
   ${(p) =>
-    p.$span2 &&
+    p.$active &&
     css`
-      ${LAYOUT.MEDIA.SM} {
-        grid-column: span 2 / span 2;
+      &:hover {
+        background-color: ${COLORS.ACTION_PRIMARY_TINT_16};
+        border-color: ${COLORS.ACTION_PRIMARY_BORDER_25};
       }
     `}
 `;
 
-const FieldLabel = styled.span`
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
+const ChipLabel = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
-const Input = styled.input`
-  height: 2.5rem;
-  border-radius: ${LAYOUT.RADIUS.MD};
+const Panel = styled.div`
+  position: absolute;
+  top: calc(100% + ${SPACING.ONE});
+  left: 0;
+  z-index: ${LAYOUT.Z.STICKY};
+  min-width: 12rem;
+  max-width: min(20rem, calc(100vw - ${SPACING.EIGHT}));
+  border-radius: ${LAYOUT.RADIUS.LG};
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.FOREGROUND};
-  padding: 0 ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.TEXT};
+  box-shadow: ${LAYOUT.SHADOW.LG};
+  padding: ${SPACING.TWO};
 `;
 
-const SelectInput = styled.select`
-  height: 2.5rem;
-  border-radius: ${LAYOUT.RADIUS.MD};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
-  padding: 0 ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.TEXT};
-`;
-
-const Fieldset = styled.fieldset`
+const PanelList = styled.ul`
   display: flex;
   flex-direction: column;
-  gap: ${SPACING.TWO};
+  gap: ${SPACING.ONE};
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+
+const PanelOption = styled.button<{ $selected: boolean }>`
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
   border: none;
-  padding: 0;
-`;
-
-const Legend = styled.legend`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-`;
-
-const DayRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-`;
-
-const DayInput = styled.input`
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-`;
-
-const DayLabel = styled.label<{ $active: boolean }>`
-  cursor: pointer;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  border: 1px solid;
-  padding: 0.25rem ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  transition: background-color 0.15s ease, color 0.15s ease;
-
-  ${(p) =>
-    p.$active
-      ? css`
-          border-color: ${COLORS.HEADER};
-          background-color: ${COLORS.HEADER};
-          color: ${COLORS.WHITE};
-        `
-      : css`
-          border-color: ${COLORS.BORDER};
-          background-color: ${COLORS.FOREGROUND};
-          color: ${COLORS.HEADER};
-
-          &:hover {
-            background-color: rgba(23, 32, 51, 0.05);
-          }
-        `}
-`;
-
-const Actions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${SPACING.THREE};
-`;
-
-const Submit = styled.button`
-  display: inline-flex;
-  height: 2.5rem;
-  align-items: center;
   border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: ${COLORS.HEADER};
-  padding: 0 ${SPACING.FOUR};
+  background-color: ${(p) => (p.$selected ? COLORS.ACTION_PRIMARY_TINT_10 : COLORS.TRANSPARENT)};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  text-align: left;
+  font-family: ${FONTS.FAMILY.PRIMARY};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.WHITE};
-  border: none;
+  font-weight: ${(p) => (p.$selected ? FONTS.WEIGHT.MEDIUM : FONTS.WEIGHT.NORMAL)};
+  color: ${(p) => (p.$selected ? COLORS.ACTION_PRIMARY : COLORS.HEADER)};
   cursor: pointer;
 
   &:hover {
-    background-color: rgba(23, 32, 51, 0.9);
+    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+  }
+`;
+
+const DayGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${SPACING.ONE};
+`;
+
+const DayChip = styled.button<{ $selected: boolean }>`
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${(p) => (p.$selected ? COLORS.ACTION_PRIMARY_TINT_10 : COLORS.FOREGROUND)};
+  padding: ${SPACING.ONE} ${SPACING.TWO};
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${(p) => (p.$selected ? COLORS.ACTION_PRIMARY : COLORS.HEADER)};
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+  }
+`;
+
+const PriceField = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+  padding: ${SPACING.ONE};
+`;
+
+const PriceLabel = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const PriceInput = styled.input`
+  height: ${FORM_FIELD.CONTROL_MIN_HEIGHT};
+  border-radius: ${FORM_FIELD.CONTROL_RADIUS};
+  border: 1px solid ${COLORS.BORDER};
+  background-color: ${COLORS.FOREGROUND};
+  padding: 0 ${FORM_FIELD.CONTROL_PADDING_INLINE};
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.TEXT};
+  outline: none;
+
+  &:focus {
+    border-color: ${COLORS.ACTION_PRIMARY_BORDER_25};
+  }
+`;
+
+const PriceApply = styled.button`
+  align-self: flex-start;
+  border: none;
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  background-color: ${COLORS.ACTION_PRIMARY};
+  padding: ${SPACING.ONE} ${SPACING.FOUR};
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.WHITE};
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${COLORS.ACTION_PRIMARY_HOVER};
   }
 `;
 
 const ClearLink = styled(Link)`
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.MUTED_FOREGROUND};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.ACTION_PRIMARY};
   text-decoration: none;
+  white-space: nowrap;
 
   &:hover {
-    color: ${COLORS.HEADER};
     text-decoration: underline;
   }
 `;
+
+type MenuId = "subject" | "region" | "max" | "rating" | "day";
 
 export interface TeachersFiltersProps {
   q?: string;
@@ -176,6 +273,22 @@ export interface TeachersFiltersProps {
   maxRegion: { currency: string } | undefined;
 }
 
+function buildTeachersHref(values: {
+  q?: string;
+  subject?: string;
+  region?: string;
+  max?: string;
+  day?: string;
+  rating?: string;
+}): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(values)) {
+    if (value != null && String(value).trim() !== "") params.set(key, String(value).trim());
+  }
+  const qs = params.toString();
+  return qs ? `/teachers?${qs}` : "/teachers";
+}
+
 export function TeachersFilters({
   q,
   subject,
@@ -187,102 +300,262 @@ export function TeachersFilters({
   regions,
   maxRegion,
 }: TeachersFiltersProps) {
+  const router = useRouter();
+  const [openMenu, setOpenMenu] = React.useState<MenuId | null>(null);
+  const [searchDraft, setSearchDraft] = React.useState(q ?? "");
+  const [maxDraft, setMaxDraft] = React.useState(max ?? "");
+  const toolbarRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    setSearchDraft(q ?? "");
+  }, [q]);
+
+  React.useEffect(() => {
+    setMaxDraft(max ?? "");
+  }, [max]);
+
+  React.useEffect(() => {
+    function onPointerDown(event: MouseEvent) {
+      if (!toolbarRef.current?.contains(event.target as Node)) {
+        setOpenMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, []);
+
+  const currency = maxRegion?.currency ?? "USD";
+  const subjectName = subjects.find((s) => s.slug === subject)?.name;
+  const regionName = regions.find((r) => r.code === region)?.name;
+  const ratingLabel =
+    rating === "4.5" ? "4.5+ stars" : rating === "4" ? "4+ stars" : rating === "3" ? "3+ stars" : null;
+  const dayLabel = day ? DAY_LABEL[day as DayOfWeek] : null;
+
+  const hasActiveFilters = Boolean(q || subject || region || max || day || rating);
+
+  function navigate(
+    patch: Partial<{
+      q?: string;
+      subject?: string;
+      region?: string;
+      max?: string;
+      day?: string;
+      rating?: string;
+    }>,
+  ) {
+    router.push(
+      buildTeachersHref({
+        q,
+        subject,
+        region,
+        max,
+        day,
+        rating,
+        ...patch,
+      }),
+    );
+    setOpenMenu(null);
+  }
+
+  function toggleMenu(id: MenuId) {
+    setOpenMenu((current) => (current === id ? null : id));
+  }
+
+  function onSearchSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    navigate({ q: searchDraft.trim() || undefined });
+  }
+
+  function clearSearch() {
+    setSearchDraft("");
+    navigate({ q: undefined });
+  }
+
   return (
-    <Form method="get">
-      <Grid>
-        <Field $span2>
-          <FieldLabel>Search</FieldLabel>
-          <Input name="q" defaultValue={q ?? ""} placeholder="Teacher name, ID, or subject" />
-        </Field>
-        <Field>
-          <FieldLabel>Subject</FieldLabel>
-          <SelectInput name="subject" defaultValue={subject ?? ""}>
-            <option value="">Any</option>
+    <Toolbar ref={toolbarRef}>
+      <SearchForm onSubmit={onSearchSubmit} role="search" aria-label="Search teachers">
+        <Search
+          size={ICON_SIZE.SM}
+          strokeWidth={ICON_STROKE.NORMAL}
+          color={COLORS.MUTED_FOREGROUND}
+          aria-hidden
+        />
+        <SearchInput
+          name="q"
+          value={searchDraft}
+          onChange={(event) => setSearchDraft(event.target.value)}
+          placeholder="Search by name, teacher ID, or subject"
+          aria-label="Search teachers"
+        />
+        {searchDraft ? (
+          <SearchSubmit type="button" onClick={clearSearch} aria-label="Clear search">
+            <X size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.NORMAL} />
+          </SearchSubmit>
+        ) : null}
+        <SearchSubmit type="submit" aria-label="Search">
+          <Search size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.MEDIUM} />
+        </SearchSubmit>
+      </SearchForm>
+
+      <ChipRow role="group" aria-label="Filter teachers">
+        <FilterChip
+          label="Subject"
+          summary={subjectName}
+          active={Boolean(subject)}
+          open={openMenu === "subject"}
+          onToggle={() => toggleMenu("subject")}
+        >
+          <PanelList>
+            <li>
+              <PanelOption $selected={!subject} onClick={() => navigate({ subject: undefined })}>
+                Any subject
+              </PanelOption>
+            </li>
             {subjects.map((s) => (
-              <option key={s.id} value={s.slug}>
-                {s.name}
-              </option>
+              <li key={s.id}>
+                <PanelOption
+                  $selected={subject === s.slug}
+                  onClick={() => navigate({ subject: s.slug })}
+                >
+                  {s.name}
+                </PanelOption>
+              </li>
             ))}
-          </SelectInput>
-        </Field>
-        <Field>
-          <FieldLabel>Region</FieldLabel>
-          <SelectInput name="region" defaultValue={region ?? ""}>
-            <option value="">Any</option>
+          </PanelList>
+        </FilterChip>
+
+        <FilterChip
+          label="Region"
+          summary={regionName}
+          active={Boolean(region)}
+          open={openMenu === "region"}
+          onToggle={() => toggleMenu("region")}
+        >
+          <PanelList>
+            <li>
+              <PanelOption $selected={!region} onClick={() => navigate({ region: undefined })}>
+                Any region
+              </PanelOption>
+            </li>
             {regions.map((r) => (
-              <option key={r.id} value={r.code}>
-                {r.name}
-              </option>
+              <li key={r.id}>
+                <PanelOption
+                  $selected={region === r.code}
+                  onClick={() => navigate({ region: r.code, max: undefined })}
+                >
+                  {r.name}
+                </PanelOption>
+              </li>
             ))}
-          </SelectInput>
-        </Field>
-        <Field>
-          <FieldLabel>Max hourly ({maxRegion?.currency ?? "USD"})</FieldLabel>
-          <Input
-            name="max"
-            defaultValue={max ?? ""}
-            placeholder={
-              maxRegion
-                ? `e.g. ${maxRegion.currency === "NGN" ? "5000" : "25"}`
-                : "e.g. 25"
-            }
-            inputMode="decimal"
-            step="0.01"
-            min={0}
-          />
-        </Field>
-        <Field>
-          <FieldLabel>Minimum rating</FieldLabel>
-          <SelectInput name="rating" defaultValue={rating ?? ""}>
-            <option value="">Any</option>
-            <option value="3">3+ stars</option>
-            <option value="4">4+ stars</option>
-            <option value="4.5">4.5+ stars</option>
-          </SelectInput>
-        </Field>
-      </Grid>
+          </PanelList>
+        </FilterChip>
 
-      <Fieldset>
-        <Legend>Teaches on</Legend>
-        <DayRow>
-          <DayRadio current={day} value="" label="Any day" />
-          {DAY_ORDER.map((d: DayOfWeek) => (
-            <DayRadio key={d} current={day} value={d} label={DAY_LABEL[d].slice(0, 3)} />
-          ))}
-        </DayRow>
-      </Fieldset>
+        <FilterChip
+          label="Max price"
+          summary={max ? `≤ ${max} ${currency}` : undefined}
+          active={Boolean(max)}
+          open={openMenu === "max"}
+          onToggle={() => toggleMenu("max")}
+        >
+          <PriceField>
+            <PriceLabel>Max hourly rate ({currency})</PriceLabel>
+            <PriceInput
+              value={maxDraft}
+              onChange={(event) => setMaxDraft(event.target.value)}
+              placeholder={currency === "NGN" ? "5000" : "25"}
+              inputMode="decimal"
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  navigate({ max: maxDraft.trim() || undefined });
+                }
+              }}
+            />
+            <PriceApply type="button" onClick={() => navigate({ max: maxDraft.trim() || undefined })}>
+              Apply
+            </PriceApply>
+          </PriceField>
+        </FilterChip>
 
-      <Actions>
-        <Submit type="submit">Apply filters</Submit>
-        <ClearLink href="/teachers">Clear all</ClearLink>
-      </Actions>
-    </Form>
+        <FilterChip
+          label="Rating"
+          summary={ratingLabel ?? undefined}
+          active={Boolean(rating)}
+          open={openMenu === "rating"}
+          onToggle={() => toggleMenu("rating")}
+        >
+          <PanelList>
+            {[
+              { value: undefined, label: "Any rating" },
+              { value: "3", label: "3+ stars" },
+              { value: "4", label: "4+ stars" },
+              { value: "4.5", label: "4.5+ stars" },
+            ].map((option) => (
+              <li key={option.label}>
+                <PanelOption
+                  $selected={(rating ?? "") === (option.value ?? "")}
+                  onClick={() => navigate({ rating: option.value })}
+                >
+                  {option.label}
+                </PanelOption>
+              </li>
+            ))}
+          </PanelList>
+        </FilterChip>
+
+        <FilterChip
+          label="Day"
+          summary={dayLabel ?? undefined}
+          active={Boolean(day)}
+          open={openMenu === "day"}
+          onToggle={() => toggleMenu("day")}
+        >
+          <DayGrid>
+            <DayChip $selected={!day} onClick={() => navigate({ day: undefined })}>
+              Any
+            </DayChip>
+            {DAY_ORDER.map((d) => (
+              <DayChip key={d} $selected={day === d} onClick={() => navigate({ day: d })}>
+                {DAY_LABEL[d].slice(0, 3)}
+              </DayChip>
+            ))}
+          </DayGrid>
+        </FilterChip>
+
+        {hasActiveFilters ? <ClearLink href="/teachers">Clear filters</ClearLink> : null}
+      </ChipRow>
+    </Toolbar>
   );
 }
 
-function DayRadio({
-  current,
-  value,
-  label,
-}: {
-  current: string | undefined;
-  value: string;
+interface FilterChipProps {
   label: string;
-}) {
-  const id = `day-${value || "any"}`;
-  const isActive = (current ?? "") === value;
+  summary?: string;
+  active: boolean;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}
+
+function FilterChip({ label, summary, active, open, onToggle, children }: FilterChipProps) {
   return (
-    <>
-      <DayInput
-        type="radio"
-        id={id}
-        name="day"
-        value={value}
-        defaultChecked={isActive}
-      />
-      <DayLabel htmlFor={id} $active={isActive}>
-        {label}
-      </DayLabel>
-    </>
+    <ChipWrap>
+      <ChipButton
+        type="button"
+        $active={active}
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <ChipLabel>{summary ?? label}</ChipLabel>
+        <ChevronDown
+          size={ICON_SIZE.XS}
+          strokeWidth={ICON_STROKE.MEDIUM}
+          color={active ? ICON_THEME.MAJE_BRAND : COLORS.MUTED_FOREGROUND}
+          aria-hidden
+        />
+      </ChipButton>
+      {open ? <Panel role="listbox">{children}</Panel> : null}
+    </ChipWrap>
   );
 }

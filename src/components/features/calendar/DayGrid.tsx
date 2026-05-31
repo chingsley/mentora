@@ -6,13 +6,12 @@ import styled from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import { DAY_LABEL, minutesToTime } from "@/lib/time";
+import { DAY_LABEL } from "@/lib/time";
 import { calendarEntriesForDate } from "@/lib/offeringRecurrence";
 import { ClassTile } from "./ClassTile";
 import type { CalendarEntry, CalendarTileColorMode } from "./types";
-import { HOURS, SLOTS, SLOT_MINUTES, SLOT_PX, START_HOUR, clamp, tileGeometry } from "./timeGrid";
-
-const WEEKDAY_TO_ENUM: DayOfWeek[] = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+import { TimeGridLayout } from "./TimeGridLayout";
+import { tileGeometry } from "./timeGrid";
 
 export interface DayGridProps {
   entries: CalendarEntry[];
@@ -22,55 +21,33 @@ export interface DayGridProps {
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
 }
 
+const WEEKDAY_TO_ENUM: DayOfWeek[] = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
 const DayHeader = styled.div`
-  margin-bottom: ${SPACING.TWO};
-  padding: 0 ${SPACING.ONE};
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: ${SPACING.THREE} ${SPACING.FOUR};
+`;
+
+const DayHeaderMain = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.HALF};
+`;
+
+const DayNumber = styled.span`
+  font-size: ${FONTS.SIZE.PAGE_HEADER};
+  font-weight: ${FONTS.WEIGHT.BOLD};
+  line-height: ${FONTS.LINE_HEIGHT.TIGHT};
+  color: ${COLORS.ACTION_PRIMARY};
+`;
+
+const DayName = styled.span`
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-`;
-
-const DateLabel = styled.span`
-  margin-left: ${SPACING.TWO};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.NORMAL};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: 5rem 1fr;
-`;
-
-const TimeColumn = styled.div`
-  position: relative;
-  height: ${SLOTS * SLOT_PX}px;
-  border-top: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
-`;
-
-const TimeLabel = styled.div`
-  position: absolute;
-  right: ${SPACING.TWO};
-  transform: translateY(-50%);
-  font-size: ${FONTS.SIZE.MICRO};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const Column = styled.div<{ $clickable: boolean }>`
-  position: relative;
-  height: ${SLOTS * SLOT_PX}px;
-  border-top: 1px solid ${COLORS.BORDER};
-  border-left: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
-  cursor: ${(p) => (p.$clickable ? "cell" : "default")};
-`;
-
-const HourLine = styled.div`
-  pointer-events: none;
-  position: absolute;
-  inset-inline: 0;
-  border-top: 1px dashed rgba(226, 232, 240, 0.6);
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.ACTION_PRIMARY};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
 `;
 
 const Empty = styled.div`
@@ -78,14 +55,17 @@ const Empty = styled.div`
   height: 100%;
   align-items: center;
   justify-content: center;
+  padding: ${SPACING.THREE};
   font-size: ${FONTS.SIZE.SM};
   color: ${COLORS.MUTED_FOREGROUND};
+  text-align: center;
 `;
 
 const Tile = styled.div`
   position: absolute;
   left: ${SPACING.ONE};
   right: ${SPACING.ONE};
+  z-index: 1;
 
   & > button {
     height: 100%;
@@ -102,48 +82,30 @@ export function DayGrid({
 }: DayGridProps) {
   const day = WEEKDAY_TO_ENUM[date.getDay()]!;
   const list = React.useMemo(
-    () =>
-      calendarEntriesForDate(entries, date).sort((a, b) => a.startMinutes - b.startMinutes),
+    () => calendarEntriesForDate(entries, date).sort((a, b) => a.startMinutes - b.startMinutes),
     [entries, date],
   );
 
-  function onColumnClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (!onEmptySlotClick) return;
-    if (e.target !== e.currentTarget) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const offsetY = e.clientY - rect.top;
-    const slotIndex = clamp(Math.floor(offsetY / SLOT_PX), 0, SLOTS - 1);
-    onEmptySlotClick({
-      dayOfWeek: day,
-      minutes: START_HOUR * 60 + slotIndex * SLOT_MINUTES,
-      date,
-    });
-  }
+  const column = {
+    id: date.toISOString(),
+    date,
+    dayOfWeek: day,
+  };
 
   return (
-    <div>
-      <DayHeader>
-        {DAY_LABEL[day]}
-        <DateLabel>
-          {date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-        </DateLabel>
-      </DayHeader>
-      <Grid>
-        <TimeColumn>
-          {Array.from({ length: HOURS + 1 }).map((_, i) => (
-            <TimeLabel key={i} style={{ top: i * (SLOT_PX * (60 / SLOT_MINUTES)) }}>
-              {minutesToTime((START_HOUR + i) * 60)}
-            </TimeLabel>
-          ))}
-        </TimeColumn>
-        <Column
-          $clickable={!!onEmptySlotClick}
-          onClick={onColumnClick}
-          role={onEmptySlotClick ? "button" : undefined}
-        >
-          {Array.from({ length: HOURS }).map((_, i) => (
-            <HourLine key={i} aria-hidden style={{ top: (i + 1) * (SLOT_PX * (60 / SLOT_MINUTES)) }} />
-          ))}
+    <TimeGridLayout
+      columns={[column]}
+      onEmptySlotClick={onEmptySlotClick}
+      header={
+        <DayHeader>
+          <DayHeaderMain>
+            <DayNumber>{String(date.getDate()).padStart(2, "0")}</DayNumber>
+            <DayName>{DAY_LABEL[day]}</DayName>
+          </DayHeaderMain>
+        </DayHeader>
+      }
+      renderColumn={() => (
+        <>
           {list.length === 0 ? <Empty>No classes scheduled for this day.</Empty> : null}
           {list.map((entry) => {
             const { top, height } = tileGeometry(entry.startMinutes, entry.endMinutes);
@@ -153,8 +115,8 @@ export function DayGrid({
               </Tile>
             );
           })}
-        </Column>
-      </Grid>
-    </div>
+        </>
+      )}
+    />
   );
 }

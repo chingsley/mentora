@@ -2,16 +2,17 @@
 
 import type { DayOfWeek } from "@prisma/client";
 import * as React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import { DAY_LABEL, DAY_ORDER, minutesToTime } from "@/lib/time";
+import { DAY_LABEL, DAY_ORDER } from "@/lib/time";
 import { calendarEntriesForDate } from "@/lib/offeringRecurrence";
 import { ClassTile } from "./ClassTile";
 import type { CalendarEntry, CalendarTileColorMode } from "./types";
-import { HOURS, SLOTS, SLOT_MINUTES, SLOT_PX, START_HOUR, clamp, tileGeometry } from "./timeGrid";
+import { TimeGridLayout } from "./TimeGridLayout";
+import { TIME_GUTTER_WIDTH, isToday, tileGeometry } from "./timeGrid";
 
 export interface WeekGridProps {
   entries: CalendarEntry[];
@@ -39,70 +40,50 @@ const MobileOnly = styled.div`
   }
 `;
 
-const Grid = styled.div`
+const WeekHeader = styled.div`
   display: grid;
-  grid-template-columns: 5rem repeat(7, minmax(0, 1fr));
+  grid-template-columns: ${TIME_GUTTER_WIDTH} repeat(7, minmax(0, 1fr));
 `;
 
-const TopLeftCell = styled.div`
-  position: sticky;
-  left: 0;
-  z-index: 10;
-  background-color: ${COLORS.FOREGROUND};
-`;
+const HeaderSpacer = styled.div``;
 
-const HeaderCell = styled.div`
-  border-bottom: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
-  padding: ${SPACING.TWO};
+const HeaderCell = styled.div<{ $isToday: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${SPACING.HALF};
+  padding: ${SPACING.TWO} ${SPACING.ONE};
   text-align: center;
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
+  border-right: 1px solid ${COLORS.BORDER};
+
+  ${(p) =>
+    p.$isToday &&
+    css`
+      background-color: ${COLORS.CALENDAR_TODAY_COLUMN_BG};
+      box-shadow: inset 0 3px 0 0 ${COLORS.CALENDAR_NOW_LINE};
+    `}
 `;
 
-const HeaderDate = styled.span`
-  display: block;
+const HeaderDayNum = styled.span<{ $isToday: boolean }>`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.BOLD};
+  font-variant-numeric: tabular-nums;
+  color: ${(p) => (p.$isToday ? COLORS.ACTION_PRIMARY : COLORS.HEADER)};
+  line-height: ${FONTS.LINE_HEIGHT.TIGHT};
+`;
+
+const HeaderDayLabel = styled.span`
   font-size: ${FONTS.SIZE.MICRO};
-  font-weight: ${FONTS.WEIGHT.NORMAL};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
   color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const TimeColumn = styled.div`
-  position: relative;
-  height: ${SLOTS * SLOT_PX}px;
-  border-top: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
-`;
-
-const TimeLabel = styled.div`
-  position: absolute;
-  right: ${SPACING.TWO};
-  transform: translateY(-50%);
-  font-size: ${FONTS.SIZE.MICRO};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const Column = styled.div<{ $clickable: boolean }>`
-  position: relative;
-  height: ${SLOTS * SLOT_PX}px;
-  border-top: 1px solid ${COLORS.BORDER};
-  border-left: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
-  cursor: ${(p) => (p.$clickable ? "cell" : "default")};
-`;
-
-const HourLine = styled.div`
-  pointer-events: none;
-  position: absolute;
-  inset-inline: 0;
-  border-top: 1px dashed rgba(226, 232, 240, 0.6);
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
 `;
 
 const Tile = styled.div`
   position: absolute;
   left: ${SPACING.ONE};
   right: ${SPACING.ONE};
+  z-index: 1;
 
   & > button {
     height: 100%;
@@ -165,62 +146,82 @@ export function WeekGrid({
 }: WeekGridProps) {
   const weekStart = startOfISOWeek(anchorDate);
 
-  const dateByDay: Record<DayOfWeek, Date> = {} as Record<DayOfWeek, Date>;
-  DAY_ORDER.forEach((d, idx) => {
-    const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + idx);
-    dateByDay[d] = date;
-  });
+  const dateByDay = React.useMemo(() => {
+    const map = {} as Record<DayOfWeek, Date>;
+    DAY_ORDER.forEach((day, index) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + index);
+      map[day] = date;
+    });
+    return map;
+  }, [weekStart]);
 
-  function entriesForDate(day: DayOfWeek) {
-    return calendarEntriesForDate(entries, dateByDay[day]).sort(
-      (a, b) => a.startMinutes - b.startMinutes,
-    );
-  }
+  const columns = DAY_ORDER.map((day) => ({
+    id: day,
+    date: dateByDay[day],
+    dayOfWeek: day,
+  }));
+
+  const entriesByDay = React.useMemo(() => {
+    const map = new Map<DayOfWeek, CalendarEntry[]>();
+    for (const day of DAY_ORDER) {
+      map.set(
+        day,
+        calendarEntriesForDate(entries, dateByDay[day]).sort(
+          (a, b) => a.startMinutes - b.startMinutes,
+        ),
+      );
+    }
+    return map;
+  }, [entries, dateByDay]);
 
   return (
     <div>
       <DesktopOnly>
-        <Grid>
-          <TopLeftCell aria-hidden />
-          {DAY_ORDER.map((d) => (
-            <HeaderCell key={d}>
-              <span>{DAY_LABEL[d].slice(0, 3)}</span>
-              <HeaderDate>{dateByDay[d].getDate()}</HeaderDate>
-            </HeaderCell>
-          ))}
-
-          <TimeColumn>
-            {Array.from({ length: HOURS + 1 }).map((_, i) => (
-              <TimeLabel key={i} style={{ top: i * (SLOT_PX * (60 / SLOT_MINUTES)) }}>
-                {minutesToTime((START_HOUR + i) * 60)}
-              </TimeLabel>
-            ))}
-          </TimeColumn>
-
-          {DAY_ORDER.map((d) => (
-            <DayColumn
-              key={d}
-              day={d}
-              date={dateByDay[d]}
-              entries={entriesForDate(d)}
-              tileColorMode={tileColorMode}
-              onEntryClick={onEntryClick}
-              onEmptySlotClick={onEmptySlotClick}
-            />
-          ))}
-        </Grid>
+        <TimeGridLayout
+          columns={columns}
+          onEmptySlotClick={onEmptySlotClick}
+          header={
+            <WeekHeader>
+              <HeaderSpacer aria-hidden />
+              {DAY_ORDER.map((day) => {
+                const date = dateByDay[day];
+                const today = isToday(date);
+                return (
+                  <HeaderCell key={day} $isToday={today}>
+                    <HeaderDayNum $isToday={today}>
+                      {String(date.getDate()).padStart(2, "0")}
+                    </HeaderDayNum>
+                    <HeaderDayLabel>{DAY_LABEL[day].slice(0, 3)}</HeaderDayLabel>
+                  </HeaderCell>
+                );
+              })}
+            </WeekHeader>
+          }
+          renderColumn={(column) => {
+            const dayEntries = entriesByDay.get(column.dayOfWeek) ?? [];
+            return dayEntries.map((entry) => {
+              const { top, height } = tileGeometry(entry.startMinutes, entry.endMinutes);
+              return (
+                <Tile key={entry.id} style={{ top, height }}>
+                  <ClassTile entry={entry} onClick={onEntryClick} colorMode={tileColorMode} />
+                </Tile>
+              );
+            });
+          }}
+        />
       </DesktopOnly>
 
       <MobileOnly>
-        {DAY_ORDER.map((d) => {
-          const list = entriesForDate(d);
+        {DAY_ORDER.map((day) => {
+          const list = entriesByDay.get(day) ?? [];
+          const date = dateByDay[day];
           return (
-            <Section key={d}>
+            <Section key={day}>
               <SectionHeader>
                 <SectionTitle>
-                  {DAY_LABEL[d]}
-                  <SectionDate>{dateByDay[d].getDate()}</SectionDate>
+                  {DAY_LABEL[day]}
+                  <SectionDate>{date.getDate()}</SectionDate>
                 </SectionTitle>
               </SectionHeader>
               {list.length === 0 ? (
@@ -232,7 +233,7 @@ export function WeekGrid({
                       <ClassTile
                         entry={entry}
                         onClick={onEntryClick}
-                        variant="pill"
+                        variant="month-bar"
                         colorMode={tileColorMode}
                       />
                     </li>
@@ -244,56 +245,6 @@ export function WeekGrid({
         })}
       </MobileOnly>
     </div>
-  );
-}
-
-function DayColumn({
-  day,
-  date,
-  entries,
-  tileColorMode = "capacity",
-  onEntryClick,
-  onEmptySlotClick,
-}: {
-  day: DayOfWeek;
-  date: Date;
-  entries: CalendarEntry[];
-  tileColorMode?: CalendarTileColorMode;
-  onEntryClick?: (entry: CalendarEntry) => void;
-  onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
-}) {
-  function onColumnClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (!onEmptySlotClick) return;
-    if (e.target !== e.currentTarget) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const offsetY = e.clientY - rect.top;
-    const slotIndex = clamp(Math.floor(offsetY / SLOT_PX), 0, SLOTS - 1);
-    onEmptySlotClick({
-      dayOfWeek: day,
-      minutes: START_HOUR * 60 + slotIndex * SLOT_MINUTES,
-      date,
-    });
-  }
-
-  return (
-    <Column
-      $clickable={!!onEmptySlotClick}
-      onClick={onColumnClick}
-      role={onEmptySlotClick ? "button" : undefined}
-      aria-label={onEmptySlotClick ? `Add period on ${day}` : undefined}
-    >
-      {Array.from({ length: HOURS }).map((_, i) => (
-        <HourLine key={i} aria-hidden style={{ top: (i + 1) * (SLOT_PX * (60 / SLOT_MINUTES)) }} />
-      ))}
-      {entries.map((entry) => {
-        const { top, height } = tileGeometry(entry.startMinutes, entry.endMinutes);
-        return (
-          <Tile key={entry.id} style={{ top, height }}>
-            <ClassTile entry={entry} onClick={onEntryClick} colorMode={tileColorMode} />
-          </Tile>
-        );
-      })}
-    </Column>
   );
 }
 

@@ -1,9 +1,12 @@
 "use client";
 
 import styled from "styled-components";
+import { Repeat } from "lucide-react";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { COLORS } from "@/constants/colors.constants";
+import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import { minutesToTime } from "@/lib/time";
 import { subjectThemeForId } from "@/lib/subjectPalette";
 import {
@@ -19,7 +22,7 @@ import {
 export interface ClassTileProps {
   entry: CalendarEntry;
   onClick?: (entry: CalendarEntry) => void;
-  variant?: "block" | "pill";
+  variant?: "block" | "pill" | "month-bar";
   colorMode?: CalendarTileColorMode;
   className?: string;
 }
@@ -27,7 +30,7 @@ export interface ClassTileProps {
 const TileBase = styled.button<{
   $status: FillStatus;
   $blocked: boolean;
-  $variant: "block" | "pill";
+  $variant: "block" | "pill" | "month-bar";
   $interactive: boolean;
   $subjectBg?: string;
   $subjectBgHover?: string;
@@ -37,37 +40,47 @@ const TileBase = styled.button<{
 }>`
   display: ${(p) => (p.$variant === "block" ? "flex" : "inline-flex")};
   flex-direction: ${(p) => (p.$variant === "block" ? "column" : "row")};
-  align-items: ${(p) => (p.$variant === "block" ? "stretch" : "center")};
-  gap: ${(p) => (p.$variant === "block" ? "0.125rem" : "0.375rem")};
+  align-items: ${(p) => (p.$variant === "month-bar" ? "center" : p.$variant === "block" ? "stretch" : "center")};
+  gap: ${(p) =>
+    p.$variant === "block" ? SPACING.HALF : p.$variant === "month-bar" ? SPACING.TWO : "0.375rem"};
   width: 100%;
   overflow: hidden;
   text-align: left;
-  border-radius: ${LAYOUT.RADIUS.MD};
+  border-radius: ${(p) => (p.$variant === "month-bar" ? LAYOUT.RADIUS.SM : LAYOUT.RADIUS.MD)};
   border: 1px solid
     ${(p) =>
       p.$blocked
         ? BLOCKED_THEME.border
-        : p.$useSubjectTheme
-          ? p.$subjectBorder
-          : FILL_THEME[p.$status].border};
+        : p.$variant === "month-bar"
+          ? COLORS.TRANSPARENT
+          : p.$useSubjectTheme
+            ? p.$subjectBorder
+            : FILL_THEME[p.$status].border};
   padding: ${(p) =>
     p.$variant === "block"
       ? `${SPACING.ONE} ${SPACING.TWO}`
-      : `0.125rem ${SPACING.THREE}`};
-  font-size: ${(p) => (p.$variant === "block" ? FONTS.SIZE.META : FONTS.SIZE.MICRO)};
+      : p.$variant === "month-bar"
+        ? `${SPACING.ONE} ${SPACING.TWO}`
+        : `0.125rem ${SPACING.THREE}`};
+  font-size: ${(p) =>
+    p.$variant === "block" ? FONTS.SIZE.META : p.$variant === "month-bar" ? FONTS.SIZE.MICRO : FONTS.SIZE.MICRO};
   line-height: ${FONTS.LINE_HEIGHT.SNUG};
   background-color: ${(p) =>
     p.$blocked
       ? BLOCKED_THEME.bg
-      : p.$useSubjectTheme
-        ? p.$subjectBg
-        : FILL_THEME[p.$status].bg};
+      : p.$variant === "month-bar"
+        ? COLORS.CALENDAR_EVENT_BG
+        : p.$useSubjectTheme
+          ? p.$subjectBg
+          : FILL_THEME[p.$status].bg};
   color: ${(p) =>
     p.$blocked
       ? BLOCKED_THEME.text
-      : p.$useSubjectTheme
-        ? p.$subjectText
-        : FILL_THEME[p.$status].text};
+      : p.$variant === "month-bar"
+        ? COLORS.CALENDAR_EVENT_TEXT
+        : p.$useSubjectTheme
+          ? p.$subjectText
+          : FILL_THEME[p.$status].text};
   cursor: ${(p) => (p.$interactive ? "pointer" : "default")};
   box-shadow: ${(p) => (p.$variant === "block" ? LAYOUT.SHADOW.SM : "none")};
   transition: background-color 0.15s ease;
@@ -76,14 +89,38 @@ const TileBase = styled.button<{
     background-color: ${(p) =>
       p.$blocked
         ? BLOCKED_THEME.bgHover
-        : p.$useSubjectTheme
-          ? p.$subjectBgHover
-          : FILL_THEME[p.$status].bgHover};
+        : p.$variant === "month-bar"
+          ? COLORS.CALENDAR_EVENT_BG_HOVER
+          : p.$useSubjectTheme
+            ? p.$subjectBgHover
+            : FILL_THEME[p.$status].bgHover};
   }
 
   &:disabled {
     cursor: default;
   }
+`;
+
+const MonthBarAccent = styled.span`
+  flex-shrink: 0;
+  align-self: stretch;
+  width: ${SPACING.HALF};
+  border-radius: ${LAYOUT.RADIUS.SM};
+  background-color: ${COLORS.CALENDAR_EVENT_ACCENT};
+`;
+
+const MonthBarText = styled.span`
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+`;
+
+const RecurrenceIconWrap = styled.span`
+  flex-shrink: 0;
+  display: inline-flex;
+  color: ${COLORS.CALENDAR_EVENT_ACCENT};
 `;
 
 const TitleSpan = styled.span`
@@ -112,6 +149,7 @@ export function ClassTile({
   const interactive = !!onClick && !blocked;
   const useSubjectTheme = colorMode === "subject" && !blocked;
   const subjectTheme = useSubjectTheme ? subjectThemeForId(entry.subjectId) : null;
+  const showsRecurrenceIcon = !entry.recurrence || entry.recurrence.kind !== "ONCE";
   const ariaLabel = blocked
     ? `Blocked — ${minutesToTime(entry.startMinutes)} to ${minutesToTime(entry.endMinutes)}`
     : useSubjectTheme
@@ -150,6 +188,18 @@ export function ClassTile({
                   ? "Full"
                   : `${entry.enrolled}/${entry.effectiveCap} enrolled`}
           </DimSpan>
+        </>
+      ) : variant === "month-bar" ? (
+        <>
+          <MonthBarAccent aria-hidden />
+          <MonthBarText>
+            {minutesToTime(entry.startMinutes)} {blocked ? "Blocked" : entry.title}
+          </MonthBarText>
+          {showsRecurrenceIcon ? (
+            <RecurrenceIconWrap aria-hidden>
+              <Repeat size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.NORMAL} />
+            </RecurrenceIconWrap>
+          ) : null}
         </>
       ) : (
         <DimSpan>

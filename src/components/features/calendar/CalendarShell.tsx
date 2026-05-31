@@ -3,15 +3,16 @@
 import type { DayOfWeek } from "@prisma/client";
 import * as React from "react";
 import styled from "styled-components";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import { Button } from "@/components/ui/Button";
 import { DayGrid } from "./DayGrid";
 import { MonthGrid } from "./MonthGrid";
-import { WeekGrid } from "./WeekGrid";
+import { WeekGrid, startOfISOWeek } from "./WeekGrid";
 import type { CalendarEntry, CalendarTileColorMode, CalendarView } from "./types";
 
 export interface CalendarShellProps {
@@ -41,61 +42,113 @@ const Toolbar = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: ${SPACING.THREE};
+  padding-bottom: ${SPACING.ONE};
 `;
 
 const NavGroup = styled.div`
   display: flex;
   align-items: center;
-  gap: ${SPACING.TWO};
+  gap: ${SPACING.ONE};
 `;
 
-const Title = styled.h2`
-  margin-left: ${SPACING.TWO};
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+const IconButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(${SPACING.FOUR} + ${SPACING.TWO});
+  height: calc(${SPACING.FOUR} + ${SPACING.TWO});
+  border: 1px solid ${COLORS.BORDER};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: ${COLORS.FOREGROUND};
   color: ${COLORS.HEADER};
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 
-  ${LAYOUT.MEDIA.SM} {
-    font-size: ${FONTS.SIZE.BASE};
+  &:hover {
+    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+    border-color: ${COLORS.SURFACE_NEUTRAL_BORDER_HOVER};
   }
 `;
 
-const ViewTabs = styled.div`
+const RangeButton = styled.button`
   display: inline-flex;
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
-  border-radius: ${LAYOUT.RADIUS.MD};
-  padding: 0.125rem;
+  align-items: center;
+  gap: ${SPACING.TWO};
+  border: none;
+  background: ${COLORS.TRANSPARENT};
+  padding: ${SPACING.ONE} ${SPACING.TWO};
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+  cursor: default;
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
 `;
 
-const ViewTab = styled.button<{ $active: boolean }>`
-  height: 2rem;
-  padding: 0 ${SPACING.THREE};
-  border-radius: ${LAYOUT.RADIUS.SM};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  border: none;
-  background-color: ${(p) => (p.$active ? COLORS.HEADER : "transparent")};
-  color: ${(p) => (p.$active ? COLORS.WHITE : COLORS.HEADER)};
-  transition: background-color 0.15s ease;
+const ViewSelectWrap = styled.div`
+  position: relative;
+  display: inline-flex;
+`;
 
-  &:hover:not([aria-selected="true"]) {
-    background-color: rgba(23, 32, 51, 0.06);
+const ViewSelectButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: ${SPACING.TWO};
+  height: calc(${SPACING.FOUR} + ${SPACING.TWO});
+  border: 1px solid ${COLORS.BORDER};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: ${COLORS.FOREGROUND};
+  padding: 0 ${SPACING.THREE};
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+    border-color: ${COLORS.SURFACE_NEUTRAL_BORDER_HOVER};
+  }
+`;
+
+const ViewMenu = styled.div`
+  position: absolute;
+  top: calc(100% + ${SPACING.ONE});
+  right: 0;
+  z-index: ${LAYOUT.Z.STICKY};
+  min-width: calc(${SPACING.TEN} * 1.5);
+  overflow: hidden;
+  border: 1px solid ${COLORS.BORDER};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: ${COLORS.FOREGROUND};
+  box-shadow: ${LAYOUT.SHADOW.MD};
+`;
+
+const ViewMenuItem = styled.button<{ $active: boolean }>`
+  display: block;
+  width: 100%;
+  border: none;
+  background-color: ${(p) => (p.$active ? COLORS.CALENDAR_TODAY_COLUMN_BG : COLORS.FOREGROUND)};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  text-align: left;
+  font-family: ${FONTS.FAMILY.PRIMARY};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${(p) => (p.$active ? FONTS.WEIGHT.SEMIBOLD : FONTS.WEIGHT.NORMAL)};
+  color: ${COLORS.HEADER};
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
   }
 `;
 
 const EmptyBanner = styled.div`
   margin-bottom: ${SPACING.THREE};
-`;
-
-const Caret = styled(ChevronLeft)`
-  width: 1rem;
-  height: 1rem;
-`;
-
-const CaretRight = styled(ChevronRight)`
-  width: 1rem;
-  height: 1rem;
 `;
 
 export function CalendarShell({
@@ -108,6 +161,19 @@ export function CalendarShell({
 }: CalendarShellProps) {
   const [view, setView] = React.useState<CalendarView>(initialView);
   const [anchor, setAnchor] = React.useState<Date>(() => new Date());
+  const [viewMenuOpen, setViewMenuOpen] = React.useState(false);
+  const viewMenuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!viewMenuOpen) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!viewMenuRef.current?.contains(event.target as Node)) {
+        setViewMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [viewMenuOpen]);
 
   function shift(direction: -1 | 1) {
     const next = new Date(anchor);
@@ -122,6 +188,7 @@ export function CalendarShell({
   }
 
   const title = formatRange(view, anchor);
+  const activeViewLabel = VIEWS.find((item) => item.id === view)?.label ?? "Week";
   const allowEmptyGrid = Boolean(onEmptySlotClick);
   const showGrid = entries.length > 0 || allowEmptyGrid;
 
@@ -129,34 +196,52 @@ export function CalendarShell({
     <Wrap>
       <Toolbar>
         <NavGroup>
-          <Button type="button" variant="ghost" onClick={() => shift(-1)} aria-label="Previous">
-            <Caret aria-hidden />
-          </Button>
+          <IconButton type="button" onClick={() => shift(-1)} aria-label="Previous">
+            <ChevronLeft size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.MEDIUM} />
+          </IconButton>
+          <IconButton type="button" onClick={() => shift(1)} aria-label="Next">
+            <ChevronRight size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.MEDIUM} />
+          </IconButton>
           <Button type="button" variant="secondary" onClick={goToday}>
             Today
           </Button>
-          <Button type="button" variant="ghost" onClick={() => shift(1)} aria-label="Next">
-            <CaretRight aria-hidden />
-          </Button>
-          <Title>{title}</Title>
+          <RangeButton type="button" aria-live="polite">
+            {title}
+            <ChevronDown size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.NORMAL} color={COLORS.MUTED_FOREGROUND} />
+          </RangeButton>
         </NavGroup>
-        <ViewTabs role="tablist" aria-label="Calendar view">
-          {VIEWS.map((v) => {
-            const active = v.id === view;
-            return (
-              <ViewTab
-                key={v.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                $active={active}
-                onClick={() => setView(v.id)}
-              >
-                {v.label}
-              </ViewTab>
-            );
-          })}
-        </ViewTabs>
+
+        <ViewSelectWrap ref={viewMenuRef}>
+          <ViewSelectButton
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded={viewMenuOpen}
+            onClick={() => setViewMenuOpen((open) => !open)}
+          >
+            <CalendarDays size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.NORMAL} />
+            {activeViewLabel}
+            <ChevronDown size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.NORMAL} />
+          </ViewSelectButton>
+          {viewMenuOpen ? (
+            <ViewMenu role="listbox" aria-label="Calendar view">
+              {VIEWS.map((item) => (
+                <ViewMenuItem
+                  key={item.id}
+                  type="button"
+                  role="option"
+                  aria-selected={item.id === view}
+                  $active={item.id === view}
+                  onClick={() => {
+                    setView(item.id);
+                    setViewMenuOpen(false);
+                  }}
+                >
+                  {item.label}
+                </ViewMenuItem>
+              ))}
+            </ViewMenu>
+          ) : null}
+        </ViewSelectWrap>
       </Toolbar>
 
       {entries.length === 0 && emptyState ? (
@@ -197,22 +282,18 @@ export function CalendarShell({
 
 function formatRange(view: CalendarView, anchor: Date): string {
   if (view === "day") {
-    return anchor.toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    const day = String(anchor.getDate()).padStart(2, "0");
+    const month = anchor.toLocaleDateString(undefined, { month: "long" });
+    return `${day} ${month}, ${anchor.getFullYear()}`;
   }
   if (view === "week") {
-    const start = new Date(anchor);
-    const day = start.getDay();
-    const diff = (day + 6) % 7;
-    start.setDate(start.getDate() - diff);
+    const start = startOfISOWeek(anchor);
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
-    const fmt = (d: Date) => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    return `${fmt(start)} – ${fmt(end)}, ${end.getFullYear()}`;
+    const startDay = String(start.getDate()).padStart(2, "0");
+    const endDay = String(end.getDate()).padStart(2, "0");
+    const month = end.toLocaleDateString(undefined, { month: "long" });
+    return `${startDay}–${endDay} ${month}, ${end.getFullYear()}`;
   }
   return anchor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }

@@ -15,7 +15,7 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import { formatRecurrenceLabel } from "@/lib/offeringRecurrence";
+import { DEFAULT_OFFERING_RECURRENCE, formatRecurrenceLabel } from "@/lib/offeringRecurrence";
 import { minutesToTime } from "@/lib/time";
 import { JoinClassButton } from "@/components/features/student/JoinClassButton";
 import { dropAction } from "./actions";
@@ -233,7 +233,7 @@ export function StudentClassesClient({ rows, viewerName }: StudentClassesClientP
                   {r.detail.subjectName} · with {r.teacherName}
                 </ItemMeta>
                 <ItemMeta>
-                  {formatRecurrenceLabel(r.entry.recurrence ?? { kind: "WEEKLY", anchorDate: null, ordinal: null }, r.entry.dayOfWeek)} · {minutesToTime(r.entry.startMinutes)}–
+                  {formatRecurrenceLabel(r.entry.recurrence ?? DEFAULT_OFFERING_RECURRENCE, r.entry.dayOfWeek)} · {minutesToTime(r.entry.startMinutes)}–
                   {minutesToTime(r.entry.endMinutes)} · {r.detail.enrolled}/
                   {r.detail.effectiveCap} enrolled
                 </ItemMeta>

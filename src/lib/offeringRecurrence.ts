@@ -18,25 +18,45 @@ export interface OfferingRecurrence {
   kind: OfferingRecurrenceKind;
   anchorDate: string | null;
   ordinal: number | null;
+  interval: number | null;
 }
 
 export interface OfferingRecurrenceInput {
   kind: OfferingRecurrenceKind;
   anchorDate: string;
   ordinal: number | "";
+  interval: number | "";
 }
 
 export const DEFAULT_OFFERING_RECURRENCE: OfferingRecurrence = {
   kind: "WEEKLY",
   anchorDate: null,
   ordinal: null,
+  interval: null,
 };
 
 export const DEFAULT_OFFERING_RECURRENCE_INPUT: OfferingRecurrenceInput = {
   kind: "WEEKLY",
   anchorDate: "",
   ordinal: "",
+  interval: "",
 };
+
+export const RECURRENCE_WEEK_INTERVAL = {
+  MIN: 1,
+  MAX: 52,
+  DEFAULT: 1,
+} as const;
+
+export type RecurrenceFrequencyId = "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "ONCE";
+
+export type MonthlyPositionId =
+  | "NTH_1"
+  | "NTH_2"
+  | "NTH_3"
+  | "NTH_4"
+  | "LAST"
+  | "FIRST_AND_LAST";
 
 export type RecurrencePatternId =
   | "WEEKLY"
@@ -49,6 +69,28 @@ export type RecurrencePatternId =
   | "MONTHLY_LAST"
   | "MONTHLY_FIRST_AND_LAST"
   | "ONCE";
+
+export const RECURRENCE_FREQUENCY_OPTIONS: ReadonlyArray<{
+  id: RecurrenceFrequencyId;
+  label: string;
+}> = [
+  { id: "WEEKLY", label: "Weekly" },
+  { id: "BIWEEKLY", label: "Every 2 weeks" },
+  { id: "MONTHLY", label: "Monthly" },
+  { id: "ONCE", label: "One time" },
+];
+
+export const MONTHLY_POSITION_OPTIONS: ReadonlyArray<{
+  id: MonthlyPositionId;
+  label: string;
+}> = [
+  { id: "NTH_1", label: "1st" },
+  { id: "NTH_2", label: "2nd" },
+  { id: "NTH_3", label: "3rd" },
+  { id: "NTH_4", label: "4th" },
+  { id: "LAST", label: "Last" },
+  { id: "FIRST_AND_LAST", label: "First & last" },
+];
 
 export interface RecurrencePatternOption {
   id: RecurrencePatternId;
@@ -86,6 +128,7 @@ export const offeringRecurrenceSchema = z
     ]),
     anchorDate: z.string().optional(),
     ordinal: z.coerce.number().int().min(1).max(4).optional(),
+    interval: z.coerce.number().int().min(RECURRENCE_WEEK_INTERVAL.MIN).max(RECURRENCE_WEEK_INTERVAL.MAX).optional(),
   })
   .superRefine((value, ctx) => {
     if (value.kind === "BIWEEKLY" || value.kind === "ONCE") {
@@ -94,6 +137,16 @@ export const offeringRecurrenceSchema = z
           code: z.ZodIssueCode.custom,
           message: value.kind === "ONCE" ? "Pick the event date" : "Pick a start date",
           path: ["anchorDate"],
+        });
+      }
+    }
+    if (value.kind === "BIWEEKLY") {
+      const interval = value.interval ?? 2;
+      if (interval < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Use weekly recurrence for every-week schedules",
+          path: ["interval"],
         });
       }
     }
@@ -173,6 +226,7 @@ export function recurrenceFromDb(args: {
   recurrenceKind: OfferingRecurrenceKind;
   recurrenceAnchorDate: Date | null;
   recurrenceOrdinal: number | null;
+  recurrenceInterval?: number | null;
 }): OfferingRecurrence {
   return {
     kind: args.recurrenceKind,
@@ -180,6 +234,8 @@ export function recurrenceFromDb(args: {
       ? formatIsoDate(args.recurrenceAnchorDate)
       : null,
     ordinal: args.recurrenceOrdinal,
+    interval:
+      args.recurrenceKind === "BIWEEKLY" ? (args.recurrenceInterval ?? 2) : null,
   };
 }
 
@@ -187,6 +243,7 @@ export function recurrenceToDb(recurrence: OfferingRecurrence): {
   recurrenceKind: OfferingRecurrenceKind;
   recurrenceAnchorDate: Date | null;
   recurrenceOrdinal: number | null;
+  recurrenceInterval: number | null;
 } {
   const needsAnchor = recurrence.kind === "BIWEEKLY" || recurrence.kind === "ONCE";
   return {
@@ -194,6 +251,8 @@ export function recurrenceToDb(recurrence: OfferingRecurrence): {
     recurrenceAnchorDate:
       needsAnchor && recurrence.anchorDate ? parseIsoDate(recurrence.anchorDate) : null,
     recurrenceOrdinal: recurrence.kind === "MONTHLY_NTH" ? recurrence.ordinal : null,
+    recurrenceInterval:
+      recurrence.kind === "BIWEEKLY" ? (recurrence.interval ?? 2) : null,
   };
 }
 
@@ -201,12 +260,14 @@ export function recurrenceInputFromDb(args: {
   recurrenceKind: OfferingRecurrenceKind;
   recurrenceAnchorDate: Date | null;
   recurrenceOrdinal: number | null;
+  recurrenceInterval?: number | null;
 }): OfferingRecurrenceInput {
   const recurrence = recurrenceFromDb(args);
   return {
     kind: recurrence.kind,
     anchorDate: recurrence.anchorDate ?? "",
     ordinal: recurrence.ordinal ?? "",
+    interval: recurrence.interval ?? "",
   };
 }
 
@@ -215,6 +276,12 @@ export function recurrenceFromInput(input: OfferingRecurrenceInput): OfferingRec
     kind: input.kind,
     anchorDate: input.anchorDate.trim() ? input.anchorDate.trim() : null,
     ordinal: input.ordinal === "" ? null : input.ordinal,
+    interval:
+      input.kind === "BIWEEKLY"
+        ? input.interval === ""
+          ? 2
+          : input.interval
+        : null,
   };
 }
 
@@ -225,33 +292,111 @@ export function patternToRecurrence(
 ): OfferingRecurrenceInput {
   switch (patternId) {
     case "WEEKLY":
-      return { kind: "WEEKLY", anchorDate: "", ordinal: "" };
+      return { kind: "WEEKLY", anchorDate: "", ordinal: "", interval: "" };
     case "BIWEEKLY":
       return {
         kind: "BIWEEKLY",
         anchorDate: current.anchorDate || formatIsoDate(nextDateForDayOfWeek(dayOfWeek)),
         ordinal: "",
+        interval: current.interval === "" ? 2 : current.interval,
       };
     case "MONTHLY_1ST":
-      return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 1 };
+      return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 1, interval: "" };
     case "MONTHLY_2ND":
-      return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 2 };
+      return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 2, interval: "" };
     case "MONTHLY_3RD":
-      return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 3 };
+      return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 3, interval: "" };
     case "MONTHLY_4TH":
-      return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 4 };
+      return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 4, interval: "" };
     case "MONTHLY_FIRST":
-      return { kind: "MONTHLY_FIRST", anchorDate: "", ordinal: "" };
+      return { kind: "MONTHLY_FIRST", anchorDate: "", ordinal: "", interval: "" };
     case "MONTHLY_LAST":
-      return { kind: "MONTHLY_LAST", anchorDate: "", ordinal: "" };
+      return { kind: "MONTHLY_LAST", anchorDate: "", ordinal: "", interval: "" };
     case "MONTHLY_FIRST_AND_LAST":
-      return { kind: "MONTHLY_FIRST_AND_LAST", anchorDate: "", ordinal: "" };
+      return { kind: "MONTHLY_FIRST_AND_LAST", anchorDate: "", ordinal: "", interval: "" };
     case "ONCE":
       return {
         kind: "ONCE",
         anchorDate: current.anchorDate || formatIsoDate(nextDateForDayOfWeek(dayOfWeek)),
         ordinal: "",
+        interval: "",
       };
+  }
+}
+
+export function recurrenceToFrequencyView(recurrence: OfferingRecurrenceInput): {
+  frequency: RecurrenceFrequencyId;
+  monthlyPosition: MonthlyPositionId;
+} {
+  if (recurrence.kind === "WEEKLY") {
+    return { frequency: "WEEKLY", monthlyPosition: "NTH_1" };
+  }
+  if (recurrence.kind === "BIWEEKLY") {
+    return { frequency: "BIWEEKLY", monthlyPosition: "NTH_1" };
+  }
+  if (recurrence.kind === "ONCE") {
+    return { frequency: "ONCE", monthlyPosition: "NTH_1" };
+  }
+  if (recurrence.kind === "MONTHLY_LAST") {
+    return { frequency: "MONTHLY", monthlyPosition: "LAST" };
+  }
+  if (recurrence.kind === "MONTHLY_FIRST_AND_LAST") {
+    return { frequency: "MONTHLY", monthlyPosition: "FIRST_AND_LAST" };
+  }
+  if (recurrence.kind === "MONTHLY_FIRST") {
+    return { frequency: "MONTHLY", monthlyPosition: "NTH_1" };
+  }
+  if (recurrence.kind === "MONTHLY_NTH") {
+    const ordinal = recurrence.ordinal === "" ? 1 : recurrence.ordinal;
+    const byOrdinal: Record<number, MonthlyPositionId> = {
+      1: "NTH_1",
+      2: "NTH_2",
+      3: "NTH_3",
+      4: "NTH_4",
+    };
+    return { frequency: "MONTHLY", monthlyPosition: byOrdinal[ordinal] ?? "NTH_1" };
+  }
+  return { frequency: "WEEKLY", monthlyPosition: "NTH_1" };
+}
+
+export function frequencyViewToRecurrence(
+  frequency: RecurrenceFrequencyId,
+  monthlyPosition: MonthlyPositionId,
+  current: OfferingRecurrenceInput,
+  dayOfWeek: DayOfWeek,
+): OfferingRecurrenceInput {
+  switch (frequency) {
+    case "WEEKLY":
+      return { kind: "WEEKLY", anchorDate: "", ordinal: "", interval: "" };
+    case "BIWEEKLY":
+      return {
+        kind: "BIWEEKLY",
+        anchorDate: current.anchorDate || formatIsoDate(nextDateForDayOfWeek(dayOfWeek)),
+        ordinal: "",
+        interval: current.interval === "" ? 2 : current.interval,
+      };
+    case "ONCE":
+      return {
+        kind: "ONCE",
+        anchorDate: current.anchorDate || formatIsoDate(nextDateForDayOfWeek(dayOfWeek)),
+        ordinal: "",
+        interval: "",
+      };
+    case "MONTHLY":
+      switch (monthlyPosition) {
+        case "NTH_1":
+          return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 1, interval: "" };
+        case "NTH_2":
+          return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 2, interval: "" };
+        case "NTH_3":
+          return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 3, interval: "" };
+        case "NTH_4":
+          return { kind: "MONTHLY_NTH", anchorDate: "", ordinal: 4, interval: "" };
+        case "LAST":
+          return { kind: "MONTHLY_LAST", anchorDate: "", ordinal: "", interval: "" };
+        case "FIRST_AND_LAST":
+          return { kind: "MONTHLY_FIRST_AND_LAST", anchorDate: "", ordinal: "", interval: "" };
+      }
   }
 }
 
@@ -285,7 +430,8 @@ export function offeringOccursOnDate(
       if (!recurrence.anchorDate) return false;
       const anchor = startOfDay(parseIsoDate(recurrence.anchorDate));
       const weeks = Math.floor(daysBetween(anchor, day) / 7);
-      return weeks >= 0 && weeks % 2 === 0;
+      const interval = recurrence.interval ?? 2;
+      return weeks >= 0 && weeks % interval === 0;
     }
     case "MONTHLY_NTH": {
       if (!recurrence.ordinal) return false;
@@ -351,8 +497,12 @@ export function formatRecurrenceLabel(
   switch (recurrence.kind) {
     case "WEEKLY":
       return `Every ${day}`;
-    case "BIWEEKLY":
-      return `Every other ${day}`;
+    case "BIWEEKLY": {
+      const interval = recurrence.interval ?? 2;
+      return interval === 2
+        ? `Every other ${day}`
+        : `Every ${interval} weeks on ${day}`;
+    }
     case "MONTHLY_NTH":
       return `${ORDINAL_LABELS[(recurrence.ordinal ?? 1) - 1] ?? `${recurrence.ordinal}th`} ${day} of the month`;
     case "MONTHLY_FIRST":
