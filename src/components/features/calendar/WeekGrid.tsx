@@ -8,13 +8,15 @@ import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, DAY_ORDER, minutesToTime } from "@/lib/time";
+import { calendarEntriesForDate } from "@/lib/offeringRecurrence";
 import { ClassTile } from "./ClassTile";
-import type { CalendarEntry } from "./types";
+import type { CalendarEntry, CalendarTileColorMode } from "./types";
 import { HOURS, SLOTS, SLOT_MINUTES, SLOT_PX, START_HOUR, clamp, tileGeometry } from "./timeGrid";
 
 export interface WeekGridProps {
   entries: CalendarEntry[];
   anchorDate: Date;
+  tileColorMode?: CalendarTileColorMode;
   onEntryClick?: (entry: CalendarEntry) => void;
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
 }
@@ -154,8 +156,13 @@ const SectionList = styled.ul`
   }
 `;
 
-export function WeekGrid({ entries, anchorDate, onEntryClick, onEmptySlotClick }: WeekGridProps) {
-  const byDay = React.useMemo(() => groupByDay(entries), [entries]);
+export function WeekGrid({
+  entries,
+  anchorDate,
+  tileColorMode = "capacity",
+  onEntryClick,
+  onEmptySlotClick,
+}: WeekGridProps) {
   const weekStart = startOfISOWeek(anchorDate);
 
   const dateByDay: Record<DayOfWeek, Date> = {} as Record<DayOfWeek, Date>;
@@ -164,6 +171,12 @@ export function WeekGrid({ entries, anchorDate, onEntryClick, onEmptySlotClick }
     date.setDate(weekStart.getDate() + idx);
     dateByDay[d] = date;
   });
+
+  function entriesForDate(day: DayOfWeek) {
+    return calendarEntriesForDate(entries, dateByDay[day]).sort(
+      (a, b) => a.startMinutes - b.startMinutes,
+    );
+  }
 
   return (
     <div>
@@ -190,7 +203,8 @@ export function WeekGrid({ entries, anchorDate, onEntryClick, onEmptySlotClick }
               key={d}
               day={d}
               date={dateByDay[d]}
-              entries={byDay.get(d) ?? []}
+              entries={entriesForDate(d)}
+              tileColorMode={tileColorMode}
               onEntryClick={onEntryClick}
               onEmptySlotClick={onEmptySlotClick}
             />
@@ -200,7 +214,7 @@ export function WeekGrid({ entries, anchorDate, onEntryClick, onEmptySlotClick }
 
       <MobileOnly>
         {DAY_ORDER.map((d) => {
-          const list = byDay.get(d) ?? [];
+          const list = entriesForDate(d);
           return (
             <Section key={d}>
               <SectionHeader>
@@ -215,7 +229,12 @@ export function WeekGrid({ entries, anchorDate, onEntryClick, onEmptySlotClick }
                 <SectionList>
                   {list.map((entry) => (
                     <li key={entry.id}>
-                      <ClassTile entry={entry} onClick={onEntryClick} variant="pill" />
+                      <ClassTile
+                        entry={entry}
+                        onClick={onEntryClick}
+                        variant="pill"
+                        colorMode={tileColorMode}
+                      />
                     </li>
                   ))}
                 </SectionList>
@@ -232,12 +251,14 @@ function DayColumn({
   day,
   date,
   entries,
+  tileColorMode = "capacity",
   onEntryClick,
   onEmptySlotClick,
 }: {
   day: DayOfWeek;
   date: Date;
   entries: CalendarEntry[];
+  tileColorMode?: CalendarTileColorMode;
   onEntryClick?: (entry: CalendarEntry) => void;
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
 }) {
@@ -268,20 +289,12 @@ function DayColumn({
         const { top, height } = tileGeometry(entry.startMinutes, entry.endMinutes);
         return (
           <Tile key={entry.id} style={{ top, height }}>
-            <ClassTile entry={entry} onClick={onEntryClick} />
+            <ClassTile entry={entry} onClick={onEntryClick} colorMode={tileColorMode} />
           </Tile>
         );
       })}
     </Column>
   );
-}
-
-function groupByDay(entries: CalendarEntry[]): Map<DayOfWeek, CalendarEntry[]> {
-  const map = new Map<DayOfWeek, CalendarEntry[]>();
-  for (const d of DAY_ORDER) map.set(d, []);
-  for (const e of entries) map.get(e.dayOfWeek)!.push(e);
-  for (const arr of map.values()) arr.sort((a, b) => a.startMinutes - b.startMinutes);
-  return map;
 }
 
 export function startOfISOWeek(d: Date): Date {

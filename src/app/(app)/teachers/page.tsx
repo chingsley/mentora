@@ -92,18 +92,6 @@ export default async function TeachersPage({ searchParams }: Props) {
         </Muted>
       </PageHeader>
 
-      {recommended.length > 0 && !q && !subject && !region && !dayFilter && !minRating ? (
-        <Section>
-          <TeachersSectionHeading>Recommended for you</TeachersSectionHeading>
-          <Grid $smCols={2} $mdCols={3} $gap="FOUR">
-            {recommended.map((t) => {
-              const props = toCardProps(t);
-              return <TeacherCard key={t.id} {...props} />;
-            })}
-          </Grid>
-        </Section>
-      ) : null}
-
       <Card>
         <CardHeader>
           <CardTitle>Search &amp; filters</CardTitle>
@@ -122,6 +110,18 @@ export default async function TeachersPage({ searchParams }: Props) {
           />
         </CardContent>
       </Card>
+
+      {recommended.length > 0 && !q && !subject && !region && !dayFilter && !minRating ? (
+        <Section>
+          <TeachersSectionHeading>Recommended for you</TeachersSectionHeading>
+          <Grid $smCols={2} $mdCols={3} $gap="FOUR">
+            {recommended.map((t) => {
+              const props = toCardProps(t);
+              return <TeacherCard key={t.id} {...props} />;
+            })}
+          </Grid>
+        </Section>
+      ) : null}
 
       <Section>
         <Muted>

@@ -12,11 +12,12 @@ import { Button } from "@/components/ui/Button";
 import { DayGrid } from "./DayGrid";
 import { MonthGrid } from "./MonthGrid";
 import { WeekGrid } from "./WeekGrid";
-import type { CalendarEntry, CalendarView } from "./types";
+import type { CalendarEntry, CalendarTileColorMode, CalendarView } from "./types";
 
 export interface CalendarShellProps {
   entries: CalendarEntry[];
   initialView?: CalendarView;
+  tileColorMode?: CalendarTileColorMode;
   onEntryClick?: (entry: CalendarEntry) => void;
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
   emptyState?: React.ReactNode;
@@ -83,6 +84,10 @@ const ViewTab = styled.button<{ $active: boolean }>`
   }
 `;
 
+const EmptyBanner = styled.div`
+  margin-bottom: ${SPACING.THREE};
+`;
+
 const Caret = styled(ChevronLeft)`
   width: 1rem;
   height: 1rem;
@@ -96,6 +101,7 @@ const CaretRight = styled(ChevronRight)`
 export function CalendarShell({
   entries,
   initialView = "week",
+  tileColorMode = "capacity",
   onEntryClick,
   onEmptySlotClick,
   emptyState,
@@ -116,6 +122,8 @@ export function CalendarShell({
   }
 
   const title = formatRange(view, anchor);
+  const allowEmptyGrid = Boolean(onEmptySlotClick);
+  const showGrid = entries.length > 0 || allowEmptyGrid;
 
   return (
     <Wrap>
@@ -152,32 +160,37 @@ export function CalendarShell({
       </Toolbar>
 
       {entries.length === 0 && emptyState ? (
-        <div>{emptyState}</div>
-      ) : view === "day" ? (
+        allowEmptyGrid ? <EmptyBanner>{emptyState}</EmptyBanner> : <div>{emptyState}</div>
+      ) : null}
+
+      {showGrid && view === "day" ? (
         <DayGrid
           entries={entries}
           date={anchor}
+          tileColorMode={tileColorMode}
           onEntryClick={onEntryClick}
           onEmptySlotClick={onEmptySlotClick}
         />
-      ) : view === "week" ? (
+      ) : showGrid && view === "week" ? (
         <WeekGrid
           entries={entries}
           anchorDate={anchor}
+          tileColorMode={tileColorMode}
           onEntryClick={onEntryClick}
           onEmptySlotClick={onEmptySlotClick}
         />
-      ) : (
+      ) : showGrid ? (
         <MonthGrid
           entries={entries}
           anchorDate={anchor}
+          tileColorMode={tileColorMode}
           onEntryClick={onEntryClick}
           onDayClick={(date) => {
             setAnchor(date);
             setView("day");
           }}
         />
-      )}
+      ) : null}
     </Wrap>
   );
 }

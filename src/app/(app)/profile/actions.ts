@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireRole } from "@/lib/auth";
 import { revalidateTeacherPaths } from "@/server/revalidateTeacherPaths";
 import {
-  createOffering,
-  createOfferingSchema,
+  createOfferingSchedule,
   deleteOffering as deleteOfferingServer,
+  offeringSchedulePayloadSchema,
   OfferingScheduleConflictError,
   recomputeProfileCompleted,
   removeTeacherRate,
@@ -25,8 +26,7 @@ import {
   removeTeacherCourse,
   removeTeacherCourseSchema,
   updateBioSchema,
-  updateOffering,
-  updateOfferingSchema,
+  updateOfferingSchedule,
   updateTeacherBio,
 } from "@/server/teachers";
 import {
@@ -230,17 +230,16 @@ export async function clearRateAction(formData: FormData): Promise<ActionResult>
   return { ok: true };
 }
 
-function parseOfferingForm(formData: FormData) {
-  const start = String(formData.get("startTime") ?? "");
-  const end = String(formData.get("endTime") ?? "");
-  let startMinutes: number;
-  let endMinutes: number;
-  try {
-    startMinutes = timeToMinutes(start);
-    endMinutes = timeToMinutes(end);
-  } catch {
-    return { ok: false as const, error: "Invalid time" };
+function flattenFieldErrors(error: z.ZodError): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const key = issue.path.map(String).join(".");
+    if (!out[key]) out[key] = issue.message;
   }
+  return out;
+}
+
+function parseOfferingForm(formData: FormData) {
   const periodTypeRaw = String(formData.get("periodType") ?? "OPEN");
   const periodType = periodTypeRaw === "RESERVED" ? "RESERVED" : "OPEN";
   const teacherCapRaw = formData.get("teacherCap");
@@ -249,18 +248,52 @@ function parseOfferingForm(formData: FormData) {
       ? teacherCapRaw
       : undefined;
 
+  const slots: Array<{
+    dayOfWeek: string;
+    startMinutes: number;
+    endMinutes: number;
+  }> = [];
+
+  for (let index = 0; index < 7; index += 1) {
+    const dayOfWeek = formData.get(`slots[${index}].dayOfWeek`);
+    if (!dayOfWeek) break;
+
+    const start = String(formData.get(`slots[${index}].startTime`) ?? "");
+    const end = String(formData.get(`slots[${index}].endTime`) ?? "");
+    try {
+      slots.push({
+        dayOfWeek: String(dayOfWeek),
+        startMinutes: timeToMinutes(start),
+        endMinutes: timeToMinutes(end),
+      });
+    } catch {
+      return { ok: false as const, error: "Invalid time" };
+    }
+  }
+
+  if (slots.length === 0) {
+    return { ok: false as const, error: "Add at least one weekly time slot" };
+  }
+
   return {
     ok: true as const,
     data: {
       subjectId: formData.get("subjectId"),
       title: formData.get("title"),
       description: formData.get("description") || undefined,
-      dayOfWeek: formData.get("dayOfWeek"),
-      startMinutes,
-      endMinutes,
+      slots,
       periodType,
       teacherCap,
       invitedStudentProfileIds: formData.getAll("invitedStudentProfileIds").map(String),
+      recurrence: {
+        kind: String(formData.get("recurrenceKind") ?? "WEEKLY"),
+        anchorDate: String(formData.get("recurrenceAnchorDate") ?? ""),
+        ordinal: (() => {
+          const raw = formData.get("recurrenceOrdinal");
+          if (raw == null || String(raw).trim() === "") return undefined;
+          return Number(raw);
+        })(),
+      },
     },
   };
 }
@@ -270,16 +303,16 @@ export async function createOfferingAction(formData: FormData): Promise<ActionRe
   const payload = parseOfferingForm(formData);
   if (!payload.ok) return { ok: false, error: payload.error };
 
-  const parsed = createOfferingSchema.safeParse(payload.data);
+  const parsed = offeringSchedulePayloadSchema.safeParse(payload.data);
   if (!parsed.success) {
     return {
       ok: false,
       error: "Please fix the highlighted fields.",
-      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+      fieldErrors: flattenFieldErrors(parsed.error),
     };
   }
   try {
-    await createOffering(session.user.id, parsed.data);
+    await createOfferingSchedule(session.user.id, parsed.data);
   } catch (err) {
     if (err instanceof OfferingScheduleConflictError) {
       return { ok: false, error: err.message };
@@ -299,16 +332,16 @@ export async function updateOfferingAction(formData: FormData): Promise<ActionRe
   const payload = parseOfferingForm(formData);
   if (!payload.ok) return { ok: false, error: payload.error };
 
-  const parsed = updateOfferingSchema.safeParse(payload.data);
+  const parsed = offeringSchedulePayloadSchema.safeParse(payload.data);
   if (!parsed.success) {
     return {
       ok: false,
       error: "Please fix the highlighted fields.",
-      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+      fieldErrors: flattenFieldErrors(parsed.error),
     };
   }
   try {
-    await updateOffering(session.user.id, offeringId, parsed.data);
+    await updateOfferingSchedule(session.user.id, offeringId, parsed.data);
   } catch (err) {
     if (err instanceof OfferingScheduleConflictError) {
       return { ok: false, error: err.message };

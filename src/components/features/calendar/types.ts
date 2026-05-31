@@ -1,7 +1,11 @@
 import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
+import type { OfferingRecurrence } from "@/lib/offeringRecurrence";
 import { COLORS } from "@/constants/colors.constants";
 
 export type CalendarView = "day" | "week" | "month";
+
+/** How class tiles are colored on the calendar grid. */
+export type CalendarTileColorMode = "capacity" | "subject";
 
 export type CalendarEntryVisibility = "available" | "blocked";
 
@@ -18,6 +22,7 @@ export interface CalendarEntry {
   effectiveCap: number;
   visibility?: CalendarEntryVisibility;
   periodType?: OfferingPeriodType;
+  recurrence?: OfferingRecurrence;
 }
 
 export type FillStatus = "open" | "almost" | "full";

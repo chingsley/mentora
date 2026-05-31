@@ -3,6 +3,12 @@ import { z } from "zod";
 import type { AttendanceStatus, AttendanceSource } from "@prisma/client";
 import { db } from "@/lib/db";
 import { nextOccurrence } from "@/lib/recurrence";
+import {
+  DEFAULT_OFFERING_RECURRENCE,
+  offeringOccursOnDate,
+  recurrenceFromDb,
+  type OfferingRecurrence,
+} from "@/lib/offeringRecurrence";
 
 const JOIN_WINDOW_BEFORE_MS = 15 * 60 * 1000;
 const LATE_AFTER_MS = 5 * 60 * 1000;
@@ -29,11 +35,15 @@ function keyForOccurrence(occurrence: Date): Date {
 export function resolveCurrentSessionDate(args: {
   dayOfWeek: "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
   startMinutes: number;
+  recurrence?: OfferingRecurrence;
   now?: Date;
 }): Date | null {
   const now = args.now ?? new Date();
+  const recurrence = args.recurrence ?? DEFAULT_OFFERING_RECURRENCE;
+  if (!offeringOccursOnDate(recurrence, args.dayOfWeek, now)) return null;
+
   const lookback = new Date(now.getTime() - 3 * 60 * 60 * 1000);
-  const occurrence = nextOccurrence(args.dayOfWeek, args.startMinutes, lookback);
+  const occurrence = nextOccurrence(args.dayOfWeek, args.startMinutes, lookback, recurrence);
   const diff = occurrence.getTime() - now.getTime();
   if (diff > JOIN_WINDOW_BEFORE_MS) return null;
   if (now.getTime() - occurrence.getTime() > 3 * 60 * 60 * 1000) return null;
@@ -189,10 +199,28 @@ export async function getTeacherTodaySessions(teacherUserId: string) {
   });
 
   return Promise.all(
-    offerings.map(async (o) => {
+    offerings
+      .filter((o) =>
+        offeringOccursOnDate(
+          recurrenceFromDb({
+            recurrenceKind: o.recurrenceKind,
+            recurrenceAnchorDate: o.recurrenceAnchorDate,
+            recurrenceOrdinal: o.recurrenceOrdinal,
+          }),
+          o.dayOfWeek,
+          now,
+        ),
+      )
+      .map(async (o) => {
+      const recurrence = recurrenceFromDb({
+        recurrenceKind: o.recurrenceKind,
+        recurrenceAnchorDate: o.recurrenceAnchorDate,
+        recurrenceOrdinal: o.recurrenceOrdinal,
+      });
       const sessionDate = resolveCurrentSessionDate({
         dayOfWeek: o.dayOfWeek,
         startMinutes: o.startMinutes,
+        recurrence,
         now,
       });
       const attendanceRows = sessionDate
@@ -208,7 +236,14 @@ export async function getTeacherTodaySessions(teacherUserId: string) {
       // window, so teachers can correct earlier sessions.
       const nominalDate =
         sessionDate ??
-        keyForOccurrence(nextOccurrence(o.dayOfWeek, o.startMinutes, new Date(now.getTime() - 3 * 60 * 60 * 1000)));
+        keyForOccurrence(
+          nextOccurrence(
+            o.dayOfWeek,
+            o.startMinutes,
+            new Date(now.getTime() - 3 * 60 * 60 * 1000),
+            recurrence,
+          ),
+        );
       return {
         offeringId: o.id,
         offeringTitle: o.title,

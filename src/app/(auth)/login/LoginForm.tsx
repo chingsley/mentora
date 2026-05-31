@@ -4,12 +4,13 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import {
   AuthAuxiliaryRow,
-  AuthCheckRow,
   AuthFeedbackBanner,
   AuthFoot,
   AuthForm,
   AuthFormActions,
   AuthLink,
+  AuthPasswordField,
+  AuthPasswordVisibilityCheckbox,
   AuthSubmitButton,
   AuthTextField,
 } from "../AuthFormControls";
@@ -22,6 +23,7 @@ export function LoginForm() {
   const [isPending, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<LoginActionResult | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
+  const [password, setPassword] = React.useState("");
 
   const globalError =
     result && !result.ok && !result.fieldErrors ? result.error : null;
@@ -57,10 +59,12 @@ export function LoginForm() {
         error={emailError}
       />
 
-      <AuthTextField
+      <AuthPasswordField
         id={passwordId}
         name="password"
-        type={showPassword ? "text" : "password"}
+        visible={showPassword}
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
         autoComplete="current-password"
         label="Password"
         required
@@ -68,15 +72,12 @@ export function LoginForm() {
         error={passwordError}
       />
 
-      <AuthCheckRow htmlFor={`${passwordId}-show`}>
-        <input
-          id={`${passwordId}-show`}
-          type="checkbox"
-          checked={showPassword}
-          onChange={(event) => setShowPassword(event.target.checked)}
-        />
-        <span>Show password</span>
-      </AuthCheckRow>
+      <AuthPasswordVisibilityCheckbox
+        checked={showPassword}
+        onCheckedChange={setShowPassword}
+      >
+        Show password
+      </AuthPasswordVisibilityCheckbox>
 
       <AuthAuxiliaryRow>
         <AuthLink href="/login">Forgot password?</AuthLink>

@@ -4,12 +4,13 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import {
   AuthCallout,
-  AuthCheckRow,
   AuthFeedbackBanner,
   AuthFoot,
   AuthForm,
   AuthFormActions,
   AuthLink,
+  AuthPasswordField,
+  AuthPasswordVisibilityCheckbox,
   AuthRoleRadioGroup,
   type AuthRegisterRole,
   AuthSubmitButton,
@@ -30,6 +31,8 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
   const [result, setResult] = React.useState<RegisterActionResult | null>(null);
   const [role, setRole] = React.useState<AuthRegisterRole>(defaultRole);
   const [showPassword, setShowPassword] = React.useState(false);
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
 
   const fieldErrors = result && !result.ok ? result.fieldErrors : undefined;
   const globalError =
@@ -87,10 +90,12 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
       />
 
       <AuthFieldGrid>
-        <AuthTextField
+        <AuthPasswordField
           id={passwordId}
           name="password"
-          type={showPassword ? "text" : "password"}
+          visible={showPassword}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
           label="Password"
           autoComplete="new-password"
           required
@@ -98,10 +103,12 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
           hint="At least 8 characters."
           error={fieldErrors?.password}
         />
-        <AuthTextField
+        <AuthPasswordField
           id={confirmPasswordId}
           name="confirmPassword"
-          type={showPassword ? "text" : "password"}
+          visible={showPassword}
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
           label="Confirm password"
           autoComplete="new-password"
           required
@@ -110,15 +117,12 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
         />
       </AuthFieldGrid>
 
-      <AuthCheckRow htmlFor={`${passwordId}-show`}>
-        <input
-          id={`${passwordId}-show`}
-          type="checkbox"
-          checked={showPassword}
-          onChange={(event) => setShowPassword(event.target.checked)}
-        />
-        <span>Show passwords</span>
-      </AuthCheckRow>
+      <AuthPasswordVisibilityCheckbox
+        checked={showPassword}
+        onCheckedChange={setShowPassword}
+      >
+        Show passwords
+      </AuthPasswordVisibilityCheckbox>
 
       {/* {role === "STUDENT" ? (
         <AuthCallout>

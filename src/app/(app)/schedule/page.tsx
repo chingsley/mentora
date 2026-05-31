@@ -52,6 +52,7 @@ export default async function TeacherSchedulePage() {
     description: o.description,
     subjectId: o.subjectId,
     subjectName: o.subject.name,
+    scheduleGroupId: o.scheduleGroupId ?? null,
     dayOfWeek: o.dayOfWeek,
     startMinutes: o.startMinutes,
     endMinutes: o.endMinutes,
@@ -59,6 +60,9 @@ export default async function TeacherSchedulePage() {
     teacherCap: o.teacherCap ?? policy.globalClassCap,
     enrolled: o.enrollments.length,
     invitedStudentProfileIds: o.invites.map((i) => i.studentProfileId),
+    recurrenceKind: o.recurrenceKind,
+    recurrenceAnchorDate: o.recurrenceAnchorDate,
+    recurrenceOrdinal: o.recurrenceOrdinal,
   }));
 
   const inviteableStudents = inviteableStudentRows.map((s) => ({

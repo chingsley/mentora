@@ -15,6 +15,7 @@ These apply to **every** implementation and edit, in addition to the sections be
 - **Best practices**: Follow idiomatic patterns for this stack and repo; prefer the smallest change that fully solves the task without cutting corners on types, validation, accessibility, or security.
 - **Avoid code duplication**: Prefer shared utilities, tokens (`COLORS`, `FONTS`, `SPACING`, `LAYOUT`, `ICON_SIZE`, `ICON_STROKE`, `ICON_THEME`, `FORM_FIELD`), types, and components. Duplicate logic or markup **only** when keeping it separate is clearer or avoids harmful coupling between unrelated features.
 - **Make no mistakes**: Ship changes that are internally consistent—TypeScript strict, no avoidable runtime hazards, lint-clean when the edit touches those files, and behavior verified against the user’s intent and existing call sites.
+- **Preserve existing behavior**: When replacing, refactoring, or extending a feature, carry forward user-visible behavior (styling, interactions, empty states, accessibility, copy) unless the task explicitly changes it. Before finishing, compare against the prior implementation and every affected call site; run or update tests when they exist. Do not swap in a generic/shared component if it drops behavior the old one had—extend the shared piece or keep a feature-specific option (e.g. a prop or variant) so nothing regresses.
 
 ## 1. Architecture
 

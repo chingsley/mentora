@@ -1,6 +1,7 @@
 "use client";
 
 import { OfferingPeriodType } from "@prisma/client";
+import type { DayOfWeek } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import styled from "styled-components";
@@ -12,13 +13,25 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import { DAY_LABEL, DAY_ORDER, minutesToTime } from "@/lib/time";
-import type { DayOfWeek } from "@prisma/client";
+import type { OfferingDaySlot, OfferingDaySlotInput } from "@/lib/offeringSchedule";
+import {
+  defaultOfferingDaySlot,
+  slotsFromMinutes,
+} from "@/lib/offeringSchedule";
+import {
+  DEFAULT_OFFERING_RECURRENCE_INPUT,
+  dayOfWeekFromDate,
+  parseIsoDate,
+  recurrenceIsOneTime,
+  type OfferingRecurrenceInput,
+} from "@/lib/offeringRecurrence";
 import {
   createOfferingAction,
   updateOfferingAction,
   type ActionResult,
 } from "@/app/(app)/profile/actions";
+import { OfferingDaySlotsEditor } from "./OfferingDaySlotsEditor";
+import { OfferingRecurrenceEditor } from "./OfferingRecurrenceEditor";
 import {
   OfferingStudentInviteField,
   type OfferingInviteableStudent,
@@ -102,12 +115,17 @@ export interface OfferingDialogValue {
   description?: string;
   subjectId?: string;
   dayOfWeek: DayOfWeek;
+  slots?: OfferingDaySlot[];
+  scheduleGroupId?: string | null;
   startMinutes: number;
   endMinutes: number;
   periodType?: OfferingPeriodType;
   teacherCap?: number;
   invitedStudentProfileIds?: string[];
   enrolled?: number;
+  groupEnrolled?: number;
+  groupDayCount?: number;
+  recurrence?: import("@/lib/offeringRecurrence").OfferingRecurrence;
 }
 
 export interface OfferingDialogProps {
@@ -136,6 +154,13 @@ function fieldError(
   return msg && msg.length > 0 ? msg : undefined;
 }
 
+function initialSlotRows(initial: OfferingDialogValue): OfferingDaySlotInput[] {
+  if (initial.slots?.length) {
+    return slotsFromMinutes(initial.slots);
+  }
+  return [defaultOfferingDaySlot(initial.dayOfWeek, initial.startMinutes, initial.endMinutes)];
+}
+
 export function OfferingDialog({
   open,
   onClose,
@@ -151,6 +176,12 @@ export function OfferingDialog({
   const [periodType, setPeriodType] = React.useState<OfferingPeriodType>(OfferingPeriodType.OPEN);
   const [teacherCap, setTeacherCap] = React.useState("");
   const [invitedIds, setInvitedIds] = React.useState<string[]>([]);
+  const [slots, setSlots] = React.useState<OfferingDaySlotInput[]>([
+    defaultOfferingDaySlot("MON", 9 * 60, 10 * 60),
+  ]);
+  const [recurrence, setRecurrence] = React.useState<OfferingRecurrenceInput>(
+    DEFAULT_OFFERING_RECURRENCE_INPUT,
+  );
   const [deleteTarget, setDeleteTarget] = React.useState<OfferingDeletePeriodTarget | null>(null);
   const isEdit = Boolean(initial?.id);
 
@@ -160,6 +191,8 @@ export function OfferingDialog({
     setPeriodType(OfferingPeriodType.OPEN);
     setTeacherCap("");
     setInvitedIds([]);
+    setSlots([defaultOfferingDaySlot("MON", 9 * 60, 10 * 60)]);
+    setRecurrence(DEFAULT_OFFERING_RECURRENCE_INPUT);
     onClose();
   }, [onClose]);
 
@@ -167,6 +200,17 @@ export function OfferingDialog({
     if (!open || !initial) return;
 
     setResult(null);
+    setSlots(initialSlotRows(initial));
+    setRecurrence(
+      initial.recurrence
+        ? {
+            kind: initial.recurrence.kind,
+            anchorDate: initial.recurrence.anchorDate ?? "",
+            ordinal: initial.recurrence.ordinal ?? "",
+          }
+        : DEFAULT_OFFERING_RECURRENCE_INPUT,
+    );
+
     if (isEdit && initial.subjectId) {
       setSubjectId(initial.subjectId);
       setPeriodType(initial.periodType ?? OfferingPeriodType.OPEN);
@@ -209,10 +253,20 @@ export function OfferingDialog({
 
   if (!initial) return null;
 
+  const dialogInitial = initial;
+
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     fd.set("periodType", periodType);
+    fd.set("recurrenceKind", recurrence.kind);
+    if (recurrence.anchorDate) fd.set("recurrenceAnchorDate", recurrence.anchorDate);
+    if (recurrence.ordinal !== "") fd.set("recurrenceOrdinal", String(recurrence.ordinal));
+    slots.forEach((slot, index) => {
+      fd.set(`slots[${index}].dayOfWeek`, slot.dayOfWeek);
+      fd.set(`slots[${index}].startTime`, slot.startTime);
+      fd.set(`slots[${index}].endTime`, slot.endTime);
+    });
     if (periodType === OfferingPeriodType.RESERVED) {
       fd.delete("teacherCap");
     }
@@ -232,7 +286,8 @@ export function OfferingDialog({
     if (!initial?.id) return;
     setDeleteTarget({
       offeringId: initial.id,
-      enrolled: initial.enrolled ?? 0,
+      enrolled: initial.groupEnrolled ?? initial.enrolled ?? 0,
+      dayCount: initial.groupDayCount ?? slots.length,
     });
   }
 
@@ -246,6 +301,28 @@ export function OfferingDialog({
 
   const errs = result && !result.ok ? result.fieldErrors : undefined;
   const isOpenPeriod = periodType === OfferingPeriodType.OPEN;
+  const primaryDayOfWeek = slots[0]?.dayOfWeek ?? dialogInitial.dayOfWeek;
+  const singleDayOnly = recurrenceIsOneTime(recurrence.kind);
+
+  function handleRecurrenceChange(next: OfferingRecurrenceInput) {
+    setRecurrence(next);
+    if (!recurrenceIsOneTime(next.kind)) return;
+
+    setSlots((current) => {
+      const template =
+        current[0] ??
+        defaultOfferingDaySlot(
+          dialogInitial.dayOfWeek,
+          dialogInitial.startMinutes,
+          dialogInitial.endMinutes,
+        );
+      const dayOfWeek =
+        next.anchorDate.trim() !== ""
+          ? dayOfWeekFromDate(parseIsoDate(next.anchorDate))
+          : template.dayOfWeek;
+      return [{ ...template, dayOfWeek }];
+    });
+  }
 
   return (
     <Dialog
@@ -271,7 +348,7 @@ export function OfferingDialog({
             <Input
               name="title"
               label="Title"
-              placeholder="e.g. Algebra I — Tuesday Group"
+              placeholder="e.g. Math 101 — Algebra I"
               defaultValue={initial.title ?? ""}
               required
               error={errs?.title}
@@ -287,30 +364,27 @@ export function OfferingDialog({
             placeholder="Select a subject"
             error={errs?.subjectId}
           />
-          <Select
-            name="dayOfWeek"
-            label="Day"
-            required
-            defaultValue={initial.dayOfWeek}
-            options={DAY_ORDER.map((d) => ({ value: d, label: DAY_LABEL[d] }))}
-            error={errs?.dayOfWeek}
-          />
-          <Input
-            name="startTime"
-            type="time"
-            label="Start time"
-            defaultValue={minutesToTime(initial.startMinutes)}
-            required
-            error={errs?.startTime}
-          />
-          <Input
-            name="endTime"
-            type="time"
-            label="End time"
-            defaultValue={minutesToTime(initial.endMinutes)}
-            required
-            error={errs?.endMinutes}
-          />
+          <Span2>
+            <OfferingRecurrenceEditor
+              recurrence={recurrence}
+              onChange={handleRecurrenceChange}
+              primaryDayOfWeek={primaryDayOfWeek}
+              fieldErrors={{
+                recurrenceKind: errs?.["recurrence.kind"],
+                recurrenceAnchorDate: errs?.["recurrence.anchorDate"],
+              }}
+              disabled={isPending}
+            />
+          </Span2>
+          <Span2>
+            <OfferingDaySlotsEditor
+              slots={slots}
+              onChange={setSlots}
+              fieldErrors={errs}
+              disabled={isPending}
+              singleDayOnly={singleDayOnly}
+            />
+          </Span2>
           <Select
             name="periodType"
             label="Class type"

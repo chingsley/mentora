@@ -5,12 +5,14 @@ import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { minutesToTime } from "@/lib/time";
+import { subjectThemeForId } from "@/lib/subjectPalette";
 import {
   BLOCKED_THEME,
   FILL_LABEL,
   FILL_THEME,
   fillStatus,
   type CalendarEntry,
+  type CalendarTileColorMode,
   type FillStatus,
 } from "./types";
 
@@ -18,6 +20,7 @@ export interface ClassTileProps {
   entry: CalendarEntry;
   onClick?: (entry: CalendarEntry) => void;
   variant?: "block" | "pill";
+  colorMode?: CalendarTileColorMode;
   className?: string;
 }
 
@@ -26,6 +29,11 @@ const TileBase = styled.button<{
   $blocked: boolean;
   $variant: "block" | "pill";
   $interactive: boolean;
+  $subjectBg?: string;
+  $subjectBgHover?: string;
+  $subjectBorder?: string;
+  $subjectText?: string;
+  $useSubjectTheme: boolean;
 }>`
   display: ${(p) => (p.$variant === "block" ? "flex" : "inline-flex")};
   flex-direction: ${(p) => (p.$variant === "block" ? "column" : "row")};
@@ -36,22 +44,41 @@ const TileBase = styled.button<{
   text-align: left;
   border-radius: ${LAYOUT.RADIUS.MD};
   border: 1px solid
-    ${(p) => (p.$blocked ? BLOCKED_THEME.border : FILL_THEME[p.$status].border)};
+    ${(p) =>
+      p.$blocked
+        ? BLOCKED_THEME.border
+        : p.$useSubjectTheme
+          ? p.$subjectBorder
+          : FILL_THEME[p.$status].border};
   padding: ${(p) =>
     p.$variant === "block"
       ? `${SPACING.ONE} ${SPACING.TWO}`
       : `0.125rem ${SPACING.THREE}`};
-  font-size: ${(p) => (p.$variant === "block" ? "0.6875rem" : "0.625rem")};
+  font-size: ${(p) => (p.$variant === "block" ? FONTS.SIZE.META : FONTS.SIZE.MICRO)};
   line-height: ${FONTS.LINE_HEIGHT.SNUG};
-  background-color: ${(p) => (p.$blocked ? BLOCKED_THEME.bg : FILL_THEME[p.$status].bg)};
-  color: ${(p) => (p.$blocked ? BLOCKED_THEME.text : FILL_THEME[p.$status].text)};
+  background-color: ${(p) =>
+    p.$blocked
+      ? BLOCKED_THEME.bg
+      : p.$useSubjectTheme
+        ? p.$subjectBg
+        : FILL_THEME[p.$status].bg};
+  color: ${(p) =>
+    p.$blocked
+      ? BLOCKED_THEME.text
+      : p.$useSubjectTheme
+        ? p.$subjectText
+        : FILL_THEME[p.$status].text};
   cursor: ${(p) => (p.$interactive ? "pointer" : "default")};
   box-shadow: ${(p) => (p.$variant === "block" ? LAYOUT.SHADOW.SM : "none")};
   transition: background-color 0.15s ease;
 
   &:hover:not(:disabled) {
     background-color: ${(p) =>
-      p.$blocked ? BLOCKED_THEME.bgHover : FILL_THEME[p.$status].bgHover};
+      p.$blocked
+        ? BLOCKED_THEME.bgHover
+        : p.$useSubjectTheme
+          ? p.$subjectBgHover
+          : FILL_THEME[p.$status].bgHover};
   }
 
   &:disabled {
@@ -73,13 +100,23 @@ const DimSpan = styled.span`
   white-space: nowrap;
 `;
 
-export function ClassTile({ entry, onClick, variant = "block", className }: ClassTileProps) {
+export function ClassTile({
+  entry,
+  onClick,
+  variant = "block",
+  colorMode = "capacity",
+  className,
+}: ClassTileProps) {
   const blocked = entry.visibility === "blocked";
   const status = fillStatus(entry);
   const interactive = !!onClick && !blocked;
+  const useSubjectTheme = colorMode === "subject" && !blocked;
+  const subjectTheme = useSubjectTheme ? subjectThemeForId(entry.subjectId) : null;
   const ariaLabel = blocked
     ? `Blocked — ${minutesToTime(entry.startMinutes)} to ${minutesToTime(entry.endMinutes)}`
-    : `${entry.title} — ${FILL_LABEL[status]} (${entry.enrolled}/${entry.effectiveCap})`;
+    : useSubjectTheme
+      ? `${entry.title} — ${entry.subtitle ?? "Class"} (${entry.enrolled}/${entry.effectiveCap})`
+      : `${entry.title} — ${FILL_LABEL[status]} (${entry.enrolled}/${entry.effectiveCap})`;
 
   return (
     <TileBase
@@ -90,6 +127,11 @@ export function ClassTile({ entry, onClick, variant = "block", className }: Clas
       $blocked={blocked}
       $variant={variant}
       $interactive={interactive}
+      $useSubjectTheme={useSubjectTheme}
+      $subjectBg={subjectTheme?.bg}
+      $subjectBgHover={subjectTheme?.bgHover}
+      $subjectBorder={subjectTheme?.border}
+      $subjectText={subjectTheme?.text}
       aria-label={ariaLabel}
       className={className}
     >
@@ -102,9 +144,11 @@ export function ClassTile({ entry, onClick, variant = "block", className }: Clas
           <DimSpan>
             {blocked
               ? "Reserved time"
-              : status === "full"
-                ? "Full"
-                : `${entry.enrolled}/${entry.effectiveCap} enrolled`}
+              : useSubjectTheme
+                ? `${entry.enrolled}/${entry.effectiveCap} enrolled`
+                : status === "full"
+                  ? "Full"
+                  : `${entry.enrolled}/${entry.effectiveCap} enrolled`}
           </DimSpan>
         </>
       ) : (

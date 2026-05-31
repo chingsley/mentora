@@ -199,6 +199,10 @@ const FloatField = styled.div<{ $floating?: boolean; }>`
     font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   }
 
+  & > input[data-concealed="true"] {
+    -webkit-text-security: disc;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     & > input,
     & > select,
@@ -235,7 +239,7 @@ export const AuthCallout = styled.p`
   color: ${AUTH_THEME.text};
 `;
 
-export const AuthCheckRow = styled.label`
+export const AuthCheckRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -244,11 +248,9 @@ export const AuthCheckRow = styled.label`
   font-size: ${FONTS.SIZE["2XS"]};
   line-height: 1.35;
   color: ${AUTH_THEME.textMuted};
-  cursor: pointer;
-  user-select: none;
   text-align: left;
 
-  input {
+  input[type="checkbox"] {
     width: 18px;
     height: 18px;
     margin: 0;
@@ -256,7 +258,39 @@ export const AuthCheckRow = styled.label`
     accent-color: ${AUTH_THEME.cta};
     cursor: pointer;
   }
+
+  label {
+    cursor: pointer;
+    user-select: none;
+  }
 `;
+
+export interface AuthPasswordVisibilityCheckboxProps {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  children: React.ReactNode;
+}
+
+/** Checkbox and label are siblings — one activation path, no double-toggle. */
+export function AuthPasswordVisibilityCheckbox({
+  checked,
+  onCheckedChange,
+  children,
+}: AuthPasswordVisibilityCheckboxProps) {
+  const checkboxId = React.useId();
+
+  return (
+    <AuthCheckRow>
+      <input
+        id={checkboxId}
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onCheckedChange(event.target.checked)}
+      />
+      <label htmlFor={checkboxId}>{children}</label>
+    </AuthCheckRow>
+  );
+}
 
 export const AuthAuxiliaryRow = styled.div`
   display: flex;
@@ -486,6 +520,62 @@ export function AuthTextField({
         </FieldMessage>
       ) : null}
     </FieldRow>
+  );
+}
+
+function useCssTextSecurityMask(): boolean {
+  return React.useSyncExternalStore(
+    () => () => {},
+    () => {
+      if (typeof CSS === "undefined" || typeof CSS.supports !== "function") {
+        return false;
+      }
+      return (
+        CSS.supports("-webkit-text-security", "disc") ||
+        CSS.supports("text-security", "disc")
+      );
+    },
+    () => false,
+  );
+}
+
+export type AuthPasswordFieldProps = Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type" | "defaultValue"
+> & {
+  label: string;
+  error?: string;
+  hint?: string;
+  visible: boolean;
+};
+
+/** Controlled password field; uses CSS masking in Chromium/WebKit, type toggle in Firefox. */
+export function AuthPasswordField({
+  visible,
+  value,
+  onChange,
+  ...rest
+}: AuthPasswordFieldProps) {
+  const canMaskWithCss = useCssTextSecurityMask();
+  const [internalValue, setInternalValue] = React.useState("");
+  const isControlled = value !== undefined;
+  const currentValue = isControlled ? String(value) : internalValue;
+  const concealWithCss = canMaskWithCss && !visible;
+  const inputType = canMaskWithCss || visible ? "text" : "password";
+
+  return (
+    <AuthTextField
+      {...rest}
+      type={inputType}
+      value={currentValue}
+      data-concealed={concealWithCss ? "true" : undefined}
+      onChange={(event) => {
+        if (!isControlled) {
+          setInternalValue(event.target.value);
+        }
+        onChange?.(event);
+      }}
+    />
   );
 }
 

@@ -1,6 +1,7 @@
-import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
+import type { DayOfWeek, OfferingPeriodType, OfferingRecurrenceKind } from "@prisma/client";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import { isStudentInvitedToOffering, offeringCapacity } from "@/lib/offeringCapacity";
+import { recurrenceFromDb } from "@/lib/offeringRecurrence";
 
 export interface TeacherOfferingCalendarSource {
   id: string;
@@ -14,6 +15,9 @@ export interface TeacherOfferingCalendarSource {
   subject: { name: string };
   enrollments: { id: string }[];
   invites: { studentProfileId: string }[];
+  recurrenceKind: OfferingRecurrenceKind;
+  recurrenceAnchorDate: Date | null;
+  recurrenceOrdinal: number | null;
 }
 
 export function buildTeacherOfferingCalendarEntry(args: {
@@ -57,6 +61,12 @@ export function buildTeacherOfferingCalendarEntry(args: {
     currentEnrolled: enrolled,
   });
 
+  const recurrence = recurrenceFromDb({
+    recurrenceKind: offering.recurrenceKind,
+    recurrenceAnchorDate: offering.recurrenceAnchorDate,
+    recurrenceOrdinal: offering.recurrenceOrdinal,
+  });
+
   return {
     id: offering.id,
     offeringId: offering.id,
@@ -70,5 +80,6 @@ export function buildTeacherOfferingCalendarEntry(args: {
     effectiveCap: cap.effectiveCap,
     visibility: "available",
     periodType: offering.periodType,
+    recurrence,
   };
 }

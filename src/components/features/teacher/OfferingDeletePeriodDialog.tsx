@@ -13,6 +13,7 @@ import { SPACING } from "@/constants/spacing.constants";
 export interface OfferingDeletePeriodTarget {
   offeringId: string;
   enrolled: number;
+  dayCount?: number;
 }
 
 export interface OfferingDeletePeriodDialogProps {
@@ -42,14 +43,18 @@ const ErrorText = styled.p`
   color: ${COLORS.DESTRUCTIVE};
 `;
 
-function deletePeriodMessage(enrolled: number): string {
+function deletePeriodMessage(enrolled: number, dayCount: number): string {
+  const scheduleNote =
+    dayCount > 1
+      ? ` This removes the class from all ${dayCount} scheduled days.`
+      : "";
   if (enrolled === 0) {
-    return "No students are enrolled. Deleting removes this period from your schedule.";
+    return `No students are enrolled. Deleting removes this period from your schedule.${scheduleNote}`;
   }
   if (enrolled === 1) {
-    return "1 student is currently enrolled. Deleting cancels their enrollment and removes this period.";
+    return `1 student is currently enrolled. Deleting cancels their enrollment and removes this period.${scheduleNote}`;
   }
-  return `${enrolled} students are currently enrolled. Deleting cancels their enrollments and removes this period.`;
+  return `${enrolled} students are currently enrolled. Deleting cancels their enrollments and removes this period.${scheduleNote}`;
 }
 
 export function OfferingDeletePeriodDialog({
@@ -98,7 +103,7 @@ export function OfferingDeletePeriodDialog({
       {target ? (
         <>
           <Body>
-            {deletePeriodMessage(target.enrolled)} This cannot be undone.
+            {deletePeriodMessage(target.enrolled, target.dayCount ?? 1)} This cannot be undone.
           </Body>
           {error ? <ErrorText>{error}</ErrorText> : null}
           <Actions>

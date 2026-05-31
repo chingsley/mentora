@@ -9,6 +9,14 @@ import { isTeacherCoursesPhaseComplete } from "@/lib/teacherCoursesCompleteness"
 import { assertAtLeastMinRate } from "@/lib/pricing";
 import { intervalsOverlapHalfOpen } from "@/lib/scheduleOverlap";
 import { minutesToTime } from "@/lib/time";
+import {
+  scheduleGroupIdForSlotCount,
+  sortOfferingDaySlots,
+} from "@/lib/offeringSchedule";
+import {
+  offeringRecurrenceSchema,
+  recurrenceToDb,
+} from "@/lib/offeringRecurrence";
 import { TEACHER_PROFILE_ADD_COURSE } from "@/constants/teacherProfileCourse.constants";
 import { getPolicy } from "./policies";
 
@@ -415,25 +423,101 @@ export async function setTeacherSubjects(
 
 // ---------- Offerings (schedule) ----------
 
-export const createOfferingSchema = z
-  .object({
-    subjectId: z.string().min(1),
-    title: z.string().min(3).max(120),
-    description: z.string().max(2000).optional(),
+const offeringPayloadBaseSchema = z.object({
+  subjectId: z.string().min(1),
+  title: z.string().min(3).max(120),
+  description: z.string().max(2000).optional(),
+  startMinutes: z.coerce.number().int().min(0).max(24 * 60 - 1),
+  endMinutes: z.coerce.number().int().min(1).max(24 * 60),
+  periodType: z.enum(["OPEN", "RESERVED"]).default("OPEN"),
+  teacherCap: z.coerce.number().int().min(1).max(1000).optional(),
+  invitedStudentProfileIds: z.array(z.string().min(1)).default([]),
+});
+
+type OfferingPeriodFields = {
+  startMinutes: number;
+  endMinutes: number;
+  periodType: "OPEN" | "RESERVED";
+  teacherCap?: number;
+  invitedStudentProfileIds: string[];
+};
+
+function withOfferingPeriodValidation<T extends z.ZodType<OfferingPeriodFields>>(schema: T) {
+  return schema
+    .refine((v) => v.endMinutes > v.startMinutes, {
+      message: "End time must be after start time",
+      path: ["endMinutes"],
+    })
+    .superRefine((v, ctx) => {
+      if (v.periodType === "OPEN") {
+        if (v.teacherCap == null) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Class cap is required for open periods",
+            path: ["teacherCap"],
+          });
+        }
+        return;
+      }
+      if (v.invitedStudentProfileIds.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Select at least one invited student",
+          path: ["invitedStudentProfileIds"],
+        });
+      }
+    });
+}
+
+export const createOfferingSchema = withOfferingPeriodValidation(
+  offeringPayloadBaseSchema.extend({
     dayOfWeek: z.nativeEnum(DayOfWeek),
-    startMinutes: z.coerce.number().int().min(0).max(24 * 60 - 1),
-    endMinutes: z.coerce.number().int().min(1).max(24 * 60),
-    periodType: z.enum(["OPEN", "RESERVED"]).default("OPEN"),
-    teacherCap: z.coerce.number().int().min(1).max(1000).optional(),
-    invitedStudentProfileIds: z.array(z.string().min(1)).default([]),
-  })
-  .refine((v) => v.endMinutes > v.startMinutes, {
-    message: "End time must be after start time",
-    path: ["endMinutes"],
-  })
-  .superRefine((v, ctx) => {
-    if (v.periodType === "OPEN") {
-      if (v.teacherCap == null) {
+    scheduleGroupId: z.string().min(1).nullable().optional(),
+  }),
+);
+
+export type CreateOfferingInput = z.infer<typeof createOfferingSchema>;
+
+const offeringDaySlotSchema = z.object({
+  dayOfWeek: z.nativeEnum(DayOfWeek),
+  startMinutes: z.coerce.number().int().min(0).max(24 * 60 - 1),
+  endMinutes: z.coerce.number().int().min(1).max(24 * 60),
+});
+
+const offeringScheduleFieldsSchema = z.object({
+  subjectId: z.string().min(1),
+  title: z.string().min(3).max(120),
+  description: z.string().max(2000).optional(),
+  periodType: z.enum(["OPEN", "RESERVED"]).default("OPEN"),
+  teacherCap: z.coerce.number().int().min(1).max(1000).optional(),
+  invitedStudentProfileIds: z.array(z.string().min(1)).default([]),
+  slots: z.array(offeringDaySlotSchema).min(1, "Add at least one weekly time slot"),
+  recurrence: offeringRecurrenceSchema,
+});
+
+export const offeringSchedulePayloadSchema = offeringScheduleFieldsSchema.superRefine(
+  (value, ctx) => {
+    const days = value.slots.map((slot) => slot.dayOfWeek);
+    if (new Set(days).size !== days.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Each day can only appear once",
+        path: ["slots"],
+      });
+    }
+
+    value.slots.forEach((slot, index) => {
+      if (slot.endMinutes <= slot.startMinutes) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End time must be after start time",
+          path: ["slots", index, "endMinutes"],
+        });
+      }
+    });
+
+    if (value.periodType === "OPEN") {
+      if (value.teacherCap == null) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Class cap is required for open periods",
@@ -442,16 +526,26 @@ export const createOfferingSchema = z
       }
       return;
     }
-    if (v.invitedStudentProfileIds.length === 0) {
+
+    if (value.invitedStudentProfileIds.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Select at least one invited student",
         path: ["invitedStudentProfileIds"],
       });
     }
-  });
 
-export type CreateOfferingInput = z.infer<typeof createOfferingSchema>;
+    if (value.recurrence.kind === "ONCE" && value.slots.length > 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "One-time events can only use a single time slot",
+        path: ["slots"],
+      });
+    }
+  },
+);
+
+export type OfferingSchedulePayload = z.infer<typeof offeringSchedulePayloadSchema>;
 
 export class OfferingScheduleConflictError extends Error {
   constructor(message: string) {
@@ -475,14 +569,14 @@ async function assertOfferingHasNoTimeConflict(
   dayOfWeek: DayOfWeek,
   startMinutes: number,
   endMinutes: number,
-  excludeOfferingId?: string,
+  excludeOfferingIds: string[] = [],
 ) {
   const siblings = await db.classOffering.findMany({
     where: {
       teacherProfileId,
       dayOfWeek,
       active: true,
-      ...(excludeOfferingId ? { id: { not: excludeOfferingId } } : {}),
+      ...(excludeOfferingIds.length > 0 ? { id: { notIn: excludeOfferingIds } } : {}),
     },
     include: { subject: { select: { name: true } } },
   });
@@ -572,6 +666,7 @@ export async function createOffering(teacherUserId: string, input: CreateOfferin
         endMinutes: input.endMinutes,
         periodType: input.periodType,
         teacherCap: cap,
+        scheduleGroupId: input.scheduleGroupId ?? null,
       },
     });
     if (!isOpen) {
@@ -620,7 +715,7 @@ export async function updateOffering(
     input.dayOfWeek,
     input.startMinutes,
     input.endMinutes,
-    offeringId,
+    [offeringId],
   );
 
   const updated = await db.$transaction(async (tx) => {
@@ -635,6 +730,7 @@ export async function updateOffering(
         endMinutes: input.endMinutes,
         periodType: input.periodType,
         teacherCap: cap,
+        scheduleGroupId: input.scheduleGroupId ?? null,
       },
     });
     if (isOpen) {
@@ -649,15 +745,210 @@ export async function updateOffering(
 }
 
 export async function deleteOffering(teacherUserId: string, offeringId: string) {
+  await deleteOfferingSchedule(teacherUserId, offeringId);
+}
+
+export async function createOfferingSchedule(
+  teacherUserId: string,
+  input: OfferingSchedulePayload,
+) {
+  const teacher = await requireTeacher(teacherUserId);
+  await assertSubjectBelongsToTeacher(teacher.id, input.subjectId);
+
+  const slots = sortOfferingDaySlots(input.slots);
+  const policy = await getPolicy();
+  const isOpen = input.periodType === "OPEN";
+  const cap = isOpen
+    ? clampTeacherCap(input.teacherCap!, policy.globalClassCap)
+    : null;
+
+  if (!isOpen) {
+    await assertInviteesAreStudents(input.invitedStudentProfileIds);
+  }
+
+  for (const slot of slots) {
+    await assertOfferingHasNoTimeConflict(
+      teacher.id,
+      slot.dayOfWeek,
+      slot.startMinutes,
+      slot.endMinutes,
+    );
+  }
+
+  const scheduleGroupId = scheduleGroupIdForSlotCount(slots.length);
+  const recurrenceData = recurrenceToDb({
+    kind: input.recurrence.kind,
+    anchorDate: input.recurrence.anchorDate ?? null,
+    ordinal: input.recurrence.ordinal ?? null,
+  });
+
+  await db.$transaction(async (tx) => {
+    for (const slot of slots) {
+      const created = await tx.classOffering.create({
+        data: {
+          teacherProfileId: teacher.id,
+          subjectId: input.subjectId,
+          title: input.title,
+          description: input.description,
+          dayOfWeek: slot.dayOfWeek,
+          startMinutes: slot.startMinutes,
+          endMinutes: slot.endMinutes,
+          periodType: input.periodType,
+          teacherCap: cap,
+          scheduleGroupId,
+          ...recurrenceData,
+        },
+      });
+      if (!isOpen) {
+        await tx.offeringInvite.createMany({
+          data: input.invitedStudentProfileIds.map((studentProfileId) => ({
+            offeringId: created.id,
+            studentProfileId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
+  });
+  await recomputeProfileCompleted(teacher.id);
+}
+
+export async function updateOfferingSchedule(
+  teacherUserId: string,
+  offeringId: string,
+  input: OfferingSchedulePayload,
+) {
+  const teacher = await requireTeacher(teacherUserId);
+  const anchor = await db.classOffering.findUnique({
+    where: { id: offeringId },
+    select: { id: true, teacherProfileId: true, scheduleGroupId: true, dayOfWeek: true },
+  });
+  if (!anchor || anchor.teacherProfileId !== teacher.id) {
+    throw new Error("Offering not found");
+  }
+
+  await assertSubjectBelongsToTeacher(teacher.id, input.subjectId);
+  const policy = await getPolicy();
+  const isOpen = input.periodType === "OPEN";
+  const cap = isOpen
+    ? clampTeacherCap(input.teacherCap!, policy.globalClassCap)
+    : null;
+
+  if (!isOpen) {
+    await assertInviteesAreStudents(input.invitedStudentProfileIds);
+  }
+
+  const siblings = anchor.scheduleGroupId
+    ? await db.classOffering.findMany({
+        where: { teacherProfileId: teacher.id, scheduleGroupId: anchor.scheduleGroupId },
+        select: { id: true, dayOfWeek: true },
+      })
+    : [{ id: anchor.id, dayOfWeek: anchor.dayOfWeek }];
+
+  const siblingIds = siblings.map((s) => s.id);
+  const slots = sortOfferingDaySlots(input.slots);
+  const slotByDay = new Map(slots.map((slot) => [slot.dayOfWeek, slot]));
+  const targetDays = slots.map((slot) => slot.dayOfWeek);
+  const nextGroupId = scheduleGroupIdForSlotCount(slots.length);
+
+  for (const slot of slots) {
+    await assertOfferingHasNoTimeConflict(
+      teacher.id,
+      slot.dayOfWeek,
+      slot.startMinutes,
+      slot.endMinutes,
+      siblingIds,
+    );
+  }
+
+  const siblingByDay = new Map(siblings.map((s) => [s.dayOfWeek, s]));
+  const toDelete = siblings.filter((s) => !targetDays.includes(s.dayOfWeek));
+  const toCreate = targetDays.filter((day) => !siblingByDay.has(day));
+  const toUpdate = targetDays.filter((day) => siblingByDay.has(day));
+
+  const sharedData = {
+    subjectId: input.subjectId,
+    title: input.title,
+    description: input.description,
+    periodType: input.periodType,
+    teacherCap: cap,
+    scheduleGroupId: nextGroupId,
+    ...recurrenceToDb({
+      kind: input.recurrence.kind,
+      anchorDate: input.recurrence.anchorDate ?? null,
+      ordinal: input.recurrence.ordinal ?? null,
+    }),
+  };
+
+  await db.$transaction(async (tx) => {
+    for (const dayOfWeek of toUpdate) {
+      const row = siblingByDay.get(dayOfWeek)!;
+      const slot = slotByDay.get(dayOfWeek)!;
+      await tx.classOffering.update({
+        where: { id: row.id },
+        data: {
+          ...sharedData,
+          dayOfWeek,
+          startMinutes: slot.startMinutes,
+          endMinutes: slot.endMinutes,
+        },
+      });
+      if (isOpen) {
+        await tx.offeringInvite.deleteMany({ where: { offeringId: row.id } });
+      } else {
+        await syncOfferingInvites(tx, row.id, input.invitedStudentProfileIds);
+      }
+    }
+
+    for (const dayOfWeek of toCreate) {
+      const slot = slotByDay.get(dayOfWeek)!;
+      const created = await tx.classOffering.create({
+        data: {
+          teacherProfileId: teacher.id,
+          ...sharedData,
+          dayOfWeek,
+          startMinutes: slot.startMinutes,
+          endMinutes: slot.endMinutes,
+        },
+      });
+      if (!isOpen) {
+        await tx.offeringInvite.createMany({
+          data: input.invitedStudentProfileIds.map((studentProfileId) => ({
+            offeringId: created.id,
+            studentProfileId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
+
+    for (const row of toDelete) {
+      await tx.classOffering.delete({ where: { id: row.id } });
+    }
+  });
+  await recomputeProfileCompleted(teacher.id);
+}
+
+export async function deleteOfferingSchedule(teacherUserId: string, offeringId: string) {
   const teacher = await requireTeacher(teacherUserId);
   const existing = await db.classOffering.findUnique({
     where: { id: offeringId },
-    select: { teacherProfileId: true },
+    select: { teacherProfileId: true, scheduleGroupId: true },
   });
   if (!existing || existing.teacherProfileId !== teacher.id) {
     throw new Error("Offering not found");
   }
-  await db.classOffering.delete({ where: { id: offeringId } });
+
+  if (existing.scheduleGroupId) {
+    await db.classOffering.deleteMany({
+      where: {
+        teacherProfileId: teacher.id,
+        scheduleGroupId: existing.scheduleGroupId,
+      },
+    });
+  } else {
+    await db.classOffering.delete({ where: { id: offeringId } });
+  }
   await recomputeProfileCompleted(teacher.id);
 }
 

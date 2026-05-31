@@ -72,6 +72,16 @@ enum OfferingPeriodType {
   RESERVED
 }
 
+enum OfferingRecurrenceKind {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY_NTH
+  MONTHLY_FIRST
+  MONTHLY_LAST
+  MONTHLY_FIRST_AND_LAST
+  ONCE
+}
+
 // ---------- Users ----------
 
 model User {
@@ -293,6 +303,13 @@ model ClassOffering {
   /// Required for OPEN periods; null for RESERVED (invite-only, no numeric cap).
   teacherCap       Int?
   active           Boolean            @default(true)
+  /// Links offerings that repeat at the same time on multiple weekdays.
+  scheduleGroupId  String?
+  recurrenceKind       OfferingRecurrenceKind @default(WEEKLY)
+  /// Anchor date for bi-weekly phase and one-off events (date-only, local).
+  recurrenceAnchorDate DateTime?              @db.Date
+  /// 1–4 for MONTHLY_NTH (e.g. 2 = second Monday of the month).
+  recurrenceOrdinal    Int?
   createdAt        DateTime           @default(now())
 
   teacherProfile TeacherProfile     @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
@@ -304,6 +321,7 @@ model ClassOffering {
 
   @@index([teacherProfileId, dayOfWeek])
   @@index([subjectId])
+  @@index([scheduleGroupId])
 }
 
 model OfferingInvite {

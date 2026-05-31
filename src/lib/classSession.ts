@@ -1,3 +1,9 @@
+import type { OfferingRecurrence } from "@/lib/offeringRecurrence";
+import {
+  DEFAULT_OFFERING_RECURRENCE,
+  offeringOccursOnDate,
+} from "@/lib/offeringRecurrence";
+
 export interface JoinParams {
   studentName: string;
   offeringId: string;
@@ -21,13 +27,12 @@ export interface LiveWindow {
   dayOfWeek: "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
   startMinutes: number;
   endMinutes: number;
+  recurrence?: OfferingRecurrence;
 }
 
-const WEEKDAY_TO_ENUM = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
-
 export function isClassLive(window: LiveWindow, now: Date = new Date()): boolean {
-  const currentDay = WEEKDAY_TO_ENUM[now.getDay()];
-  if (currentDay !== window.dayOfWeek) return false;
+  const recurrence = window.recurrence ?? DEFAULT_OFFERING_RECURRENCE;
+  if (!offeringOccursOnDate(recurrence, window.dayOfWeek, now)) return false;
   const minutes = now.getHours() * 60 + now.getMinutes();
   return minutes >= window.startMinutes && minutes <= window.endMinutes;
 }

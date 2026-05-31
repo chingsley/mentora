@@ -1,4 +1,4 @@
-import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
+import type { DayOfWeek, OfferingPeriodType, OfferingRecurrenceKind } from "@prisma/client";
 
 import type { TeacherProfileTabId } from "./teacherProfileTabIds";
 
@@ -22,6 +22,7 @@ export interface TeacherProfileScheduleOffering {
   description: string | null;
   subjectId: string;
   subjectName: string;
+  scheduleGroupId: string | null;
   dayOfWeek: DayOfWeek;
   startMinutes: number;
   endMinutes: number;
@@ -29,6 +30,9 @@ export interface TeacherProfileScheduleOffering {
   teacherCap: number;
   enrolled: number;
   invitedStudentProfileIds: string[];
+  recurrenceKind: OfferingRecurrenceKind;
+  recurrenceAnchorDate: Date | null;
+  recurrenceOrdinal: number | null;
 }
 
 export interface TeacherProfileInviteableStudent {

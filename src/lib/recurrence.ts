@@ -1,4 +1,6 @@
 import type { DayOfWeek } from "@prisma/client";
+import type { OfferingRecurrence } from "@/lib/offeringRecurrence";
+import { DEFAULT_OFFERING_RECURRENCE, nextOfferingOccurrence } from "@/lib/offeringRecurrence";
 
 const DAY_TO_INDEX: Record<DayOfWeek, number> = {
   SUN: 0,
@@ -18,7 +20,13 @@ export function nextOccurrence(
   dayOfWeek: DayOfWeek,
   startMinutes: number,
   from: Date = new Date(),
+  recurrence: OfferingRecurrence = DEFAULT_OFFERING_RECURRENCE,
 ): Date {
+  if (recurrence.kind !== "WEEKLY") {
+    const next = nextOfferingOccurrence(recurrence, dayOfWeek, startMinutes, from);
+    if (next) return next;
+  }
+
   const targetIndex = DAY_TO_INDEX[dayOfWeek];
   const fromCopy = new Date(from);
 

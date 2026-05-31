@@ -7,8 +7,9 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, minutesToTime } from "@/lib/time";
+import { calendarEntriesForDate } from "@/lib/offeringRecurrence";
 import { ClassTile } from "./ClassTile";
-import type { CalendarEntry } from "./types";
+import type { CalendarEntry, CalendarTileColorMode } from "./types";
 import { HOURS, SLOTS, SLOT_MINUTES, SLOT_PX, START_HOUR, clamp, tileGeometry } from "./timeGrid";
 
 const WEEKDAY_TO_ENUM: DayOfWeek[] = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
@@ -16,6 +17,7 @@ const WEEKDAY_TO_ENUM: DayOfWeek[] = ["SUN", "MON", "TUE", "WED", "THU", "FRI", 
 export interface DayGridProps {
   entries: CalendarEntry[];
   date: Date;
+  tileColorMode?: CalendarTileColorMode;
   onEntryClick?: (entry: CalendarEntry) => void;
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
 }
@@ -91,15 +93,18 @@ const Tile = styled.div`
   }
 `;
 
-export function DayGrid({ entries, date, onEntryClick, onEmptySlotClick }: DayGridProps) {
+export function DayGrid({
+  entries,
+  date,
+  tileColorMode = "capacity",
+  onEntryClick,
+  onEmptySlotClick,
+}: DayGridProps) {
   const day = WEEKDAY_TO_ENUM[date.getDay()]!;
   const list = React.useMemo(
     () =>
-      entries
-        .filter((e) => e.dayOfWeek === day)
-        .slice()
-        .sort((a, b) => a.startMinutes - b.startMinutes),
-    [entries, day],
+      calendarEntriesForDate(entries, date).sort((a, b) => a.startMinutes - b.startMinutes),
+    [entries, date],
   );
 
   function onColumnClick(e: React.MouseEvent<HTMLDivElement>) {
@@ -144,7 +149,7 @@ export function DayGrid({ entries, date, onEntryClick, onEmptySlotClick }: DayGr
             const { top, height } = tileGeometry(entry.startMinutes, entry.endMinutes);
             return (
               <Tile key={entry.id} style={{ top, height }}>
-                <ClassTile entry={entry} onClick={onEntryClick} />
+                <ClassTile entry={entry} onClick={onEntryClick} colorMode={tileColorMode} />
               </Tile>
             );
           })}

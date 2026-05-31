@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
 import { offeringCapacity } from "@/lib/offeringCapacity";
+import { recurrenceFromDb } from "@/lib/offeringRecurrence";
 import { listStudentEnrollments } from "@/server/enrollments";
 import { getPolicy } from "@/server/policies";
 import type { CalendarEntry } from "@/components/features/calendar/types";
@@ -47,6 +48,11 @@ export default async function MyClassesPage() {
       endMinutes: o.endMinutes,
       enrolled: o.enrollments.length,
       effectiveCap: capacity.effectiveCap,
+      recurrence: recurrenceFromDb({
+        recurrenceKind: o.recurrenceKind,
+        recurrenceAnchorDate: o.recurrenceAnchorDate,
+        recurrenceOrdinal: o.recurrenceOrdinal,
+      }),
     };
 
     const detail: ClassDetail = {
@@ -72,6 +78,11 @@ export default async function MyClassesPage() {
         createdAt: t.createdAt,
         studentName: t.studentProfile.user.name,
       })),
+      recurrence: recurrenceFromDb({
+        recurrenceKind: o.recurrenceKind,
+        recurrenceAnchorDate: o.recurrenceAnchorDate,
+        recurrenceOrdinal: o.recurrenceOrdinal,
+      }),
     };
 
     return {

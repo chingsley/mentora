@@ -1,1 +1,0 @@
--- No-op: sort order is added in 20260531170000_teacher_subject_sort_order.

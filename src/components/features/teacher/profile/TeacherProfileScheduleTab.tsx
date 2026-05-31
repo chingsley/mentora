@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { WeeklyScheduleCalendar } from "@/components/features/teacher/WeeklyScheduleCalendar";
+import { TeacherOfferingCalendar } from "@/components/features/teacher/TeacherOfferingCalendar";
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
@@ -51,10 +51,12 @@ export function TeacherProfileScheduleTab({
     <Wrap>
       <Card>
         <CardHeader>
-          <CardTitle>Weekly schedule</CardTitle>
+          <CardTitle>Schedule</CardTitle>
           <CardDescription>
-            Click an empty slot to add a class period, or click a block to edit. Times cannot overlap between
-            subjects on the same day — you will see an error if a new slot conflicts with another.
+            Switch between day, week, and month views. Use the arrows to move forward or back, or
+            jump to today. Click an empty slot to add a class period, or click a block to edit.
+            Times cannot overlap between subjects on the same day — you will see an error if a new
+            slot conflicts with another.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -63,11 +65,13 @@ export function TeacherProfileScheduleTab({
               Pick your subjects in the Courses & rates tab first, then add class periods here.
             </InfoBlock>
           ) : (
-            <WeeklyScheduleCalendar
+            <TeacherOfferingCalendar
               offerings={scheduleOfferings}
               subjects={dialogSubjects}
               inviteableStudents={inviteableStudents}
               globalCap={globalCap}
+              tileColorMode="subject"
+              emptyStateMessage="No class periods yet. Pick day or week view and click an empty slot to add one."
             />
           )}
         </CardContent>

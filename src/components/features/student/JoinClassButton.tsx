@@ -8,7 +8,12 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { isClassLive, joinClassSession } from "@/lib/classSession";
-import { DAY_LABEL, minutesToTime } from "@/lib/time";
+import type { OfferingRecurrence } from "@/lib/offeringRecurrence";
+import {
+  DEFAULT_OFFERING_RECURRENCE,
+  formatRecurrenceLabel,
+} from "@/lib/offeringRecurrence";
+import { minutesToTime } from "@/lib/time";
 import { joinAsStudentAction } from "@/app/(app)/actions/joinClass";
 
 const Stack = styled.div`
@@ -29,6 +34,7 @@ export interface JoinClassButtonProps {
   dayOfWeek: DayOfWeek;
   startMinutes: number;
   endMinutes: number;
+  recurrence?: OfferingRecurrence;
 }
 
 export function JoinClassButton({
@@ -38,6 +44,7 @@ export function JoinClassButton({
   dayOfWeek,
   startMinutes,
   endMinutes,
+  recurrence = DEFAULT_OFFERING_RECURRENCE,
 }: JoinClassButtonProps) {
   const [, setTick] = React.useState(0);
   const [joining, setJoining] = React.useState(false);
@@ -49,7 +56,7 @@ export function JoinClassButton({
     return () => clearInterval(id);
   }, []);
 
-  const live = isClassLive({ dayOfWeek, startMinutes, endMinutes });
+  const live = isClassLive({ dayOfWeek, startMinutes, endMinutes, recurrence });
 
   async function handleJoin() {
     setJoining(true);
@@ -80,7 +87,7 @@ export function JoinClassButton({
 
   return (
     <Button type="button" variant="secondary" disabled>
-      Opens {DAY_LABEL[dayOfWeek]} at {minutesToTime(startMinutes)}
+      Opens {formatRecurrenceLabel(recurrence, dayOfWeek)} at {minutesToTime(startMinutes)}
     </Button>
   );
 }

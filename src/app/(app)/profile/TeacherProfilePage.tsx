@@ -79,11 +79,15 @@ interface TeacherProfileForPage {
     title: string;
     description: string | null;
     subjectId: string;
+    scheduleGroupId: string | null;
     dayOfWeek: DayOfWeek;
     startMinutes: number;
     endMinutes: number;
     periodType: OfferingPeriodType;
     teacherCap: number | null;
+    recurrenceKind: import("@prisma/client").OfferingRecurrenceKind;
+    recurrenceAnchorDate: Date | null;
+    recurrenceOrdinal: number | null;
     enrollments: { id: string; }[];
     invites: { studentProfileId: string; }[];
     subject: { name: string; };
@@ -153,6 +157,7 @@ export async function TeacherProfilePage({
     description: o.description,
     subjectId: o.subjectId,
     subjectName: o.subject.name,
+    scheduleGroupId: o.scheduleGroupId ?? null,
     dayOfWeek: o.dayOfWeek,
     startMinutes: o.startMinutes,
     endMinutes: o.endMinutes,
@@ -160,6 +165,9 @@ export async function TeacherProfilePage({
     teacherCap: o.teacherCap ?? policy.globalClassCap,
     enrolled: o.enrollments.length,
     invitedStudentProfileIds: o.invites.map((i) => i.studentProfileId),
+    recurrenceKind: o.recurrenceKind,
+    recurrenceAnchorDate: o.recurrenceAnchorDate,
+    recurrenceOrdinal: o.recurrenceOrdinal,
   }));
 
   const inviteableStudents = inviteableStudentRows.map((s) => ({
