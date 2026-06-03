@@ -53,6 +53,11 @@ enum AttendanceSource {
   TEACHER
 }
 
+enum ClassSessionStatus {
+  LIVE
+  ENDED
+}
+
 enum ReportReason {
   HARASSMENT
   NO_SHOW
@@ -320,6 +325,7 @@ model ClassOffering {
   invites        OfferingInvite[]
   testimonials   ClassTestimonial[]
   assignments    Assignment[]
+  sessions       ClassSession[]
 
   @@index([teacherProfileId, dayOfWeek])
   @@index([subjectId])
@@ -368,6 +374,24 @@ model ClassTestimonial {
 
   @@unique([offeringId, studentProfileId])
   @@index([offeringId])
+}
+
+// ---------- Live class sessions (video calls) ----------
+
+model ClassSession {
+  id              String             @id @default(cuid())
+  offeringId      String
+  /// Unguessable room slug used by the video provider (Jitsi).
+  roomName        String             @unique
+  status          ClassSessionStatus @default(LIVE)
+  /// User id of the teacher who started the session.
+  startedByUserId String
+  startedAt       DateTime           @default(now())
+  endedAt         DateTime?
+
+  offering ClassOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  @@index([offeringId, status])
 }
 
 // ---------- Platform policy (singleton) ----------

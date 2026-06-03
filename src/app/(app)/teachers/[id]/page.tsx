@@ -140,7 +140,6 @@ export default async function TeacherPage({ params }: Props) {
       detailsByOfferingId={detailsByOfferingId}
       enrollmentByOfferingId={myEnrollments}
       viewerRole={session.user.role}
-      viewerName={session.user.name ?? null}
       testimonials={testimonials.map((t) => ({
         id: t.id,
         studentName: t.studentProfile.user.name,

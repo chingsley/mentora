@@ -17,7 +17,6 @@ export interface TeacherPublicCalendarProps {
   detailsByOfferingId: Record<string, ClassDetail>;
   enrollmentByOfferingId: Record<string, string>;
   viewerRole: Role;
-  viewerName: string | null;
 }
 
 export function TeacherPublicCalendar({
@@ -25,7 +24,6 @@ export function TeacherPublicCalendar({
   detailsByOfferingId,
   enrollmentByOfferingId,
   viewerRole,
-  viewerName,
 }: TeacherPublicCalendarProps) {
   const router = useRouter();
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -95,7 +93,6 @@ export function TeacherPublicCalendar({
         onClose={onClose}
         detail={detail}
         viewerRole={viewerRole}
-        viewerName={viewerName}
         enrollmentId={enrollmentId}
         isBusy={isPending}
         message={message}

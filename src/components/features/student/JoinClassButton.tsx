@@ -1,36 +1,21 @@
 "use client";
 
 import type { DayOfWeek } from "@prisma/client";
+import { useRouter } from "next/navigation";
 import * as React from "react";
-import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
-import { COLORS } from "@/constants/colors.constants";
-import { FONTS } from "@/constants/fonts.constants";
-import { SPACING } from "@/constants/spacing.constants";
-import { isClassLive, joinClassSession } from "@/lib/classSession";
+import { isClassLive } from "@/lib/classSession";
 import type { OfferingRecurrence } from "@/lib/offeringRecurrence";
 import {
   DEFAULT_OFFERING_RECURRENCE,
   formatRecurrenceLabel,
 } from "@/lib/offeringRecurrence";
 import { minutesToTime } from "@/lib/time";
-import { joinAsStudentAction } from "@/app/(app)/actions/joinClass";
 
-const Stack = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.ONE};
-`;
-
-const ErrorText = styled.p`
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.DESTRUCTIVE};
-`;
+const LIVE_REFRESH_MS = 30_000;
 
 export interface JoinClassButtonProps {
   offeringId: string;
-  offeringTitle: string;
-  studentName: string;
   dayOfWeek: DayOfWeek;
   startMinutes: number;
   endMinutes: number;
@@ -39,49 +24,26 @@ export interface JoinClassButtonProps {
 
 export function JoinClassButton({
   offeringId,
-  offeringTitle,
-  studentName,
   dayOfWeek,
   startMinutes,
   endMinutes,
   recurrence = DEFAULT_OFFERING_RECURRENCE,
 }: JoinClassButtonProps) {
+  const router = useRouter();
   const [, setTick] = React.useState(0);
-  const [joining, setJoining] = React.useState(false);
-  const [joined, setJoined] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const id = setInterval(() => setTick((t) => (t + 1) % 1_000_000), 30_000);
+    const id = setInterval(() => setTick((t) => (t + 1) % 1_000_000), LIVE_REFRESH_MS);
     return () => clearInterval(id);
   }, []);
 
   const live = isClassLive({ dayOfWeek, startMinutes, endMinutes, recurrence });
 
-  async function handleJoin() {
-    setJoining(true);
-    setError(null);
-    try {
-      await joinClassSession({ offeringId, offeringTitle, studentName });
-      const res = await joinAsStudentAction({ offeringId });
-      if (!res.ok) {
-        setError(res.error ?? "Could not join");
-      } else {
-        setJoined(true);
-      }
-    } finally {
-      setJoining(false);
-    }
-  }
-
   if (live) {
     return (
-      <Stack>
-        <Button type="button" onClick={handleJoin} isLoading={joining} disabled={joined}>
-          {joined ? "Joined" : "Join class session"}
-        </Button>
-        {error ? <ErrorText>{error}</ErrorText> : null}
-      </Stack>
+      <Button type="button" onClick={() => router.push(`/classroom/${offeringId}`)}>
+        Join live class
+      </Button>
     );
   }
 

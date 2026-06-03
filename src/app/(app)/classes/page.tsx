@@ -118,7 +118,7 @@ export default async function MyClassesPage() {
           </CardContent>
         </Card>
       ) : (
-        <StudentClassesClient rows={rows} viewerName={session.user.name ?? null} />
+        <StudentClassesClient rows={rows} />
       )}
     </PageWrap>
   );

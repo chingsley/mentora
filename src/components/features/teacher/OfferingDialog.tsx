@@ -30,6 +30,8 @@ import {
   updateOfferingAction,
   type ActionResult,
 } from "@/app/(app)/profile/actions";
+import { startClassAction } from "@/app/(app)/classroom/[offeringId]/actions";
+import { isClassLive } from "@/lib/classSession";
 import { OfferingDaySlotsEditor } from "./OfferingDaySlotsEditor";
 import {
   OfferingStudentInviteField,
@@ -195,6 +197,8 @@ export function OfferingDialog({
     defaultOfferingScheduleEditorValue(),
   );
   const [deleteTarget, setDeleteTarget] = React.useState<OfferingDeletePeriodTarget | null>(null);
+  const [startingClass, setStartingClass] = React.useState(false);
+  const [startClassError, setStartClassError] = React.useState<string | null>(null);
   const isEdit = Boolean(initial?.id);
 
   const handleClose = React.useCallback(() => {
@@ -204,6 +208,8 @@ export function OfferingDialog({
     setTeacherCap("");
     setInvitedIds([]);
     setSchedule(defaultOfferingScheduleEditorValue());
+    setStartClassError(null);
+    setStartingClass(false);
     onClose();
   }, [onClose]);
 
@@ -254,6 +260,31 @@ export function OfferingDialog({
   }
 
   if (!initial) return null;
+
+  const live =
+    isEdit && initial.id
+      ? isClassLive({
+          dayOfWeek: initial.dayOfWeek,
+          startMinutes: initial.startMinutes,
+          endMinutes: initial.endMinutes,
+          recurrence: initial.recurrence,
+        })
+      : false;
+
+  function handleStartClass() {
+    if (!initial?.id) return;
+    const offeringId = initial.id;
+    setStartingClass(true);
+    setStartClassError(null);
+    void startClassAction(offeringId).then((res) => {
+      if (res.ok) {
+        router.push(`/classroom/${offeringId}`);
+      } else {
+        setStartClassError(res.error ?? "Could not start the class.");
+        setStartingClass(false);
+      }
+    });
+  }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -395,6 +426,7 @@ export function OfferingDialog({
           {result && !result.ok && !result.fieldErrors ? (
             <FormError>{result.error}</FormError>
           ) : null}
+          {startClassError ? <FormError>{startClassError}</FormError> : null}
           <Footer>
             <div>
               {isEdit ? (
@@ -409,6 +441,16 @@ export function OfferingDialog({
               ) : null}
             </div>
             <FooterActions>
+              {isEdit && live ? (
+                <Button
+                  type="button"
+                  onClick={handleStartClass}
+                  isLoading={startingClass}
+                  disabled={isPending}
+                >
+                  Start class
+                </Button>
+              ) : null}
               <Button type="button" variant="ghost" onClick={handleClose}>
                 Cancel
               </Button>

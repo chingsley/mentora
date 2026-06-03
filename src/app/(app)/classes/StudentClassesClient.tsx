@@ -31,7 +31,6 @@ export interface StudentClassRow {
 
 export interface StudentClassesClientProps {
   rows: StudentClassRow[];
-  viewerName: string | null;
 }
 
 const Wrap = styled.div`
@@ -153,7 +152,7 @@ const SecondaryLink = styled(Link)`
   }
 `;
 
-export function StudentClassesClient({ rows, viewerName }: StudentClassesClientProps) {
+export function StudentClassesClient({ rows }: StudentClassesClientProps) {
   const router = useRouter();
   const [tab, setTab] = React.useState<TabKey>("timetable");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -241,8 +240,6 @@ export function StudentClassesClient({ rows, viewerName }: StudentClassesClientP
               <ItemActions>
                 <JoinClassButton
                   offeringId={r.entry.offeringId}
-                  offeringTitle={r.entry.title}
-                  studentName={viewerName ?? "Student"}
                   dayOfWeek={r.entry.dayOfWeek}
                   startMinutes={r.entry.startMinutes}
                   endMinutes={r.entry.endMinutes}
@@ -280,7 +277,6 @@ export function StudentClassesClient({ rows, viewerName }: StudentClassesClientP
         onClose={onClose}
         detail={detail}
         viewerRole="STUDENT"
-        viewerName={viewerName}
         enrollmentId={enrollmentId}
         isBusy={isPending}
         message={message}

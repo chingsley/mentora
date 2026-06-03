@@ -335,7 +335,6 @@ export interface TeacherDetailViewProps {
   detailsByOfferingId: Record<string, ClassDetail>;
   enrollmentByOfferingId: Record<string, string>;
   viewerRole: Role;
-  viewerName: string | null;
   testimonials: TeacherTestimonial[];
 }
 
@@ -355,7 +354,6 @@ export function TeacherDetailView({
   detailsByOfferingId,
   enrollmentByOfferingId,
   viewerRole,
-  viewerName,
   testimonials,
 }: TeacherDetailViewProps) {
   return (
@@ -450,7 +448,6 @@ export function TeacherDetailView({
               detailsByOfferingId={detailsByOfferingId}
               enrollmentByOfferingId={enrollmentByOfferingId}
               viewerRole={viewerRole}
-              viewerName={viewerName}
             />
           )}
         </CardContent>

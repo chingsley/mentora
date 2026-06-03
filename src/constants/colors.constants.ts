@@ -52,6 +52,8 @@ export const COLORS = {
 
   // Semantic
   DESTRUCTIVE: "#ef4444",
+  /** Light destructive wash (e.g. "live" status pill background) — red-600 @ 10% */
+  DESTRUCTIVE_TINT_10: "rgba(220, 38, 38, 0.10)",
   /** Hover border for danger / destructive controls — red-200 */
   DESTRUCTIVE_BORDER_HOVER: "#fecaca",
   /** Hover background for danger / destructive controls (very light red wash) */

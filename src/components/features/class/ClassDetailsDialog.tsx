@@ -10,7 +10,7 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import { DAY_LABEL, formatPrice, minutesToTime } from "@/lib/time";
+import { formatPrice, minutesToTime } from "@/lib/time";
 import { DEFAULT_OFFERING_RECURRENCE, formatRecurrenceLabel } from "@/lib/offeringRecurrence";
 import { FILL_LABEL, FILL_THEME, fillStatus } from "@/components/features/calendar/types";
 import { JoinClassButton } from "@/components/features/student/JoinClassButton";
@@ -46,7 +46,6 @@ export interface ClassDetailsDialogProps {
   onClose: () => void;
   detail: ClassDetail | null;
   viewerRole: Role;
-  viewerName: string | null;
   enrollmentId: string | null;
   isBusy?: boolean;
   message?: { tone: "success" | "error"; text: string } | null;
@@ -222,7 +221,6 @@ export function ClassDetailsDialog({
   onClose,
   detail,
   viewerRole,
-  viewerName,
   enrollmentId,
   isBusy,
   message,
@@ -344,8 +342,6 @@ export function ClassDetailsDialog({
           <>
             <JoinClassButton
               offeringId={detail.offeringId}
-              offeringTitle={detail.title}
-              studentName={viewerName ?? "Student"}
               dayOfWeek={detail.dayOfWeek}
               startMinutes={detail.startMinutes}
               endMinutes={detail.endMinutes}

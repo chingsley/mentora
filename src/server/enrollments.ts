@@ -1,9 +1,15 @@
 import "server-only";
+import type { EnrollmentStatus } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { EnrollmentFullError } from "@/lib/capacity";
 import { isStudentInvitedToOffering, offeringCapacity } from "@/lib/offeringCapacity";
 import { getPolicy } from "./policies";
+
+function enrollFailureReason(status: EnrollmentStatus | undefined): string {
+  if (status === "ACTIVE") return "Already enrolled";
+  if (status === "COMPLETED") return "This class has already been completed for your account.";
+  return "Could not enroll in this class.";
+}
 
 export const enrollSchema = z.object({
   offeringIds: z.array(z.string().cuid()).min(1).max(20),
@@ -54,27 +60,52 @@ export async function enrollStudent(studentUserId: string, input: EnrollInput) {
         continue;
       }
 
-      try {
-        await tx.enrollment.create({
-          data: {
+      const existingEnrollment = await tx.enrollment.findUnique({
+        where: {
+          studentProfileId_offeringId: {
             studentProfileId: student.id,
             offeringId,
-            status: "ACTIVE",
           },
+        },
+        select: { id: true, status: true },
+      });
+
+      if (existingEnrollment?.status === "ACTIVE") {
+        results.push({ offeringId, enrolled: false, reason: "Already enrolled" });
+        continue;
+      }
+
+      if (existingEnrollment?.status === "DROPPED") {
+        await tx.enrollment.update({
+          where: { id: existingEnrollment.id },
+          data: { status: "ACTIVE", droppedAt: null },
         });
         results.push({ offeringId, enrolled: true });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown error";
-        if (message.includes("Unique constraint")) {
-          results.push({ offeringId, enrolled: false, reason: "Already enrolled" });
-        } else {
-          throw err;
-        }
+        continue;
       }
+
+      if (existingEnrollment) {
+        results.push({
+          offeringId,
+          enrolled: false,
+          reason: enrollFailureReason(existingEnrollment.status),
+        });
+        continue;
+      }
+
+      await tx.enrollment.create({
+        data: {
+          studentProfileId: student.id,
+          offeringId,
+          status: "ACTIVE",
+        },
+      });
+      results.push({ offeringId, enrolled: true });
     }
 
     if (results.every((r) => !r.enrolled)) {
-      throw new EnrollmentFullError();
+      const first = results[0];
+      throw new Error(first?.reason ?? "Could not enroll in this class.");
     }
 
     return results;

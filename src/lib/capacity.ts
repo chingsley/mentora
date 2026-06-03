@@ -44,10 +44,3 @@ export function clampTeacherCap(teacherCap: number, globalClassCap: number): num
   if (teacherCap < 1) return 1;
   return Math.min(teacherCap, globalClassCap);
 }
-
-export class EnrollmentFullError extends Error {
-  constructor() {
-    super("This class period is full");
-    this.name = "EnrollmentFullError";
-  }
-}
