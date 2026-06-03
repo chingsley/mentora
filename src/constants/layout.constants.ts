@@ -25,8 +25,21 @@ export const LAYOUT = {
   },
   Z: {
     STICKY: 200,
+    /** Route transition progress bar (`NavigationProgress`). */
+    NAVIGATION_PROGRESS: 250,
     MODAL: 1000,
     TOAST: 1100,
+  },
+  /** Shared `PageLoader` geometry and motion (App Router `loading.tsx`). */
+  PAGE_LOADER: {
+    SPINNER_SIZE: "3.75rem",
+    MIN_HEIGHT: "min(70vh, 35rem)",
+    GLOW_INSET: "4rem",
+    GLOW_BLUR: "3rem",
+    SHIMMER_TRACK_WIDTH: "6rem",
+    SHIMMER_TRACK_HEIGHT: SPACING.ONE,
+    SPIN_DURATION: "0.95s",
+    SHIMMER_DURATION: "1.4s",
   },
   SIDEBAR_WIDTH: "16rem", // 256px — rail width at `LAYOUT.MEDIA.LG` when expanded (`AppShellClient` sidebar)
   SIDEBAR_WIDTH_COLLAPSED: "4rem", // 64px — rail width at `LAYOUT.MEDIA.LG` when collapsed

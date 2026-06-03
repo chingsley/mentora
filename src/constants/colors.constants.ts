@@ -37,6 +37,10 @@ export const COLORS = {
   // Neutrals
   MUTED: "#e5e7eb",
   MUTED_FOREGROUND: "#64748b",
+  /** Bottom stop for full-viewport page loader gradient (muted @ 35%). */
+  PAGE_LOADER_GRADIENT_END: "rgba(229, 231, 235, 0.35)",
+  /** Spinner track ring on page loader (muted-foreground @ 20%). */
+  PAGE_LOADER_TRACK_BORDER: "rgba(100, 116, 139, 0.20)",
   BORDER: "#e2e8f0",
   RING: "#172033",
   /** Hover background for neutral surfaces (e.g. secondary button hover) — slate-50 */

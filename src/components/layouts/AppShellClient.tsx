@@ -12,6 +12,7 @@ import { SPACING } from "@/constants/spacing.constants";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { APP_NAV } from "./appNavConfig";
 import { AppSidebarChrome } from "./AppSidebarChrome";
+import { NavigationProgress } from "./NavigationProgress";
 import type { WardOption } from "./WardSelector";
 
 const STORAGE_KEY = "mentora-sidebar-collapsed";
@@ -240,6 +241,7 @@ export function AppShellClient({ user, wards, children }: AppShellClientProps) {
 
   return (
     <Root>
+      <NavigationProgress />
       <Sidebar
         id="app-mobile-sidebar"
         $open={mobileOpen}
