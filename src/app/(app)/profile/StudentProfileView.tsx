@@ -10,6 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { PageWrap } from "@/components/ui/primitives";
 import { ProfilePhotoForm } from "@/components/features/teacher/ProfilePhotoForm";
 import { StudentBioForm } from "@/components/features/student/StudentBioForm";
 import { StudentInterestsForm } from "@/components/features/student/StudentInterestsForm";
@@ -17,12 +19,6 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-
-const Wrap = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.SIX};
-`;
 
 const HeroCard = styled(Card)`
   overflow: hidden;
@@ -224,7 +220,13 @@ export function StudentProfileView({
   allSubjects,
 }: StudentProfileViewProps) {
   return (
-    <Wrap>
+    <PageWrap>
+      <AppPageHeader
+        title="My profile"
+        subtitle="Update your photo, bio, and subject interests."
+        profileImage={imageUrl}
+        profileDisplayName={fullName}
+      />
       <HeroCard>
         <HeroRow>
           <Avatar>
@@ -317,6 +319,6 @@ export function StudentProfileView({
           />
         </CardContent>
       </Card>
-    </Wrap>
+    </PageWrap>
   );
 }

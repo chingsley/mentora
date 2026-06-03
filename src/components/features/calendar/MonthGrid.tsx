@@ -10,7 +10,7 @@ import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, DAY_ORDER } from "@/lib/time";
 import { calendarEntriesForDate } from "@/lib/offeringRecurrence";
 import { ClassTile } from "./ClassTile";
-import type { CalendarEntry, CalendarTileColorMode } from "./types";
+import type { CalendarEntry, CalendarEntryClickHandler, CalendarOccurrenceLookup, CalendarTileColorMode } from "./types";
 import { isToday } from "./timeGrid";
 import { startOfISOWeek } from "./WeekGrid";
 
@@ -18,7 +18,8 @@ export interface MonthGridProps {
   entries: CalendarEntry[];
   anchorDate: Date;
   tileColorMode?: CalendarTileColorMode;
-  onEntryClick?: (entry: CalendarEntry) => void;
+  occurrenceLookup?: CalendarOccurrenceLookup;
+  onEntryClick?: CalendarEntryClickHandler;
   onDayClick?: (date: Date) => void;
 }
 
@@ -124,6 +125,7 @@ export function MonthGrid({
   entries,
   anchorDate,
   tileColorMode = "capacity",
+  occurrenceLookup,
   onEntryClick,
   onDayClick,
 }: MonthGridProps) {
@@ -185,6 +187,8 @@ export function MonthGrid({
                     key={`${entry.id}-${date.toISOString()}`}
                     entry={entry}
                     onClick={onEntryClick}
+                    clickDate={date}
+                    sessionMarker={occurrenceLookup?.getMarker(entry, date) ?? null}
                     variant="month-bar"
                     colorMode={tileColorMode}
                   />

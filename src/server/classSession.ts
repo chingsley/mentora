@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { isClassLive } from "@/lib/classSession";
 import { recurrenceFromDb } from "@/lib/offeringRecurrence";
 import { generateRoomName } from "@/lib/videoRoom";
-import { recordAutoJoin, resolveCurrentSessionDate } from "./attendance";
+import { recordAutoJoin, resolveCurrentSessionDate, finalizeSessionAttendance } from "./attendance";
+import { keyForOccurrence } from "@/lib/sessionOccurrenceKey";
 
 export interface JoinClassSessionArgs {
   enrollmentId: string;
@@ -266,7 +267,16 @@ export async function startClassSession(
 export async function endClassSession(teacherUserId: string, offeringId: string) {
   const offering = await db.classOffering.findUnique({
     where: { id: offeringId },
-    select: { teacherProfile: { select: { userId: true } } },
+    select: {
+      dayOfWeek: true,
+      startMinutes: true,
+      endMinutes: true,
+      recurrenceKind: true,
+      recurrenceAnchorDate: true,
+      recurrenceOrdinal: true,
+      recurrenceInterval: true,
+      teacherProfile: { select: { userId: true } },
+    },
   });
   if (!offering) throw new ClassSessionError("Class not found");
   if (offering.teacherProfile.userId !== teacherUserId) {
@@ -276,6 +286,20 @@ export async function endClassSession(teacherUserId: string, offeringId: string)
     where: { offeringId, status: "LIVE" },
     data: { status: "ENDED", endedAt: new Date() },
   });
+
+  const window = offeringLiveWindow(offering);
+  const sessionDate = resolveCurrentSessionDate({
+    dayOfWeek: window.dayOfWeek,
+    startMinutes: window.startMinutes,
+    recurrence: window.recurrence,
+  });
+  if (sessionDate) {
+    await finalizeSessionAttendance({
+      offeringId,
+      sessionDate: keyForOccurrence(sessionDate),
+      endMinutes: offering.endMinutes,
+    });
+  }
 }
 
 /**

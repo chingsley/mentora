@@ -14,7 +14,7 @@ export function WardTimetable({ entries, studentId }: WardTimetableProps) {
   return (
     <CalendarShell
       entries={entries}
-      onEntryClick={(entry) => {
+      onEntryClick={(entry, _meta) => {
         router.push(`/guardian/w/${studentId}/classes/${entry.offeringId}`);
       }}
     />

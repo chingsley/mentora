@@ -10,7 +10,7 @@ import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL, DAY_ORDER } from "@/lib/time";
 import { calendarEntriesForDate } from "@/lib/offeringRecurrence";
 import { ClassTile } from "./ClassTile";
-import type { CalendarEntry, CalendarTileColorMode } from "./types";
+import type { CalendarEntry, CalendarEntryClickHandler, CalendarOccurrenceLookup, CalendarTileColorMode } from "./types";
 import { TimeGridLayout } from "./TimeGridLayout";
 import { TIME_GUTTER_WIDTH, isToday, tileGeometry } from "./timeGrid";
 
@@ -18,7 +18,8 @@ export interface WeekGridProps {
   entries: CalendarEntry[];
   anchorDate: Date;
   tileColorMode?: CalendarTileColorMode;
-  onEntryClick?: (entry: CalendarEntry) => void;
+  occurrenceLookup?: CalendarOccurrenceLookup;
+  onEntryClick?: CalendarEntryClickHandler;
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
 }
 
@@ -141,6 +142,7 @@ export function WeekGrid({
   entries,
   anchorDate,
   tileColorMode = "capacity",
+  occurrenceLookup,
   onEntryClick,
   onEmptySlotClick,
 }: WeekGridProps) {
@@ -200,11 +202,18 @@ export function WeekGrid({
           }
           renderColumn={(column) => {
             const dayEntries = entriesByDay.get(column.dayOfWeek) ?? [];
+            const columnDate = column.date;
             return dayEntries.map((entry) => {
               const { top, height } = tileGeometry(entry.startMinutes, entry.endMinutes);
               return (
                 <Tile key={entry.id} style={{ top, height }}>
-                  <ClassTile entry={entry} onClick={onEntryClick} colorMode={tileColorMode} />
+                  <ClassTile
+                    entry={entry}
+                    onClick={onEntryClick}
+                    clickDate={columnDate}
+                    sessionMarker={occurrenceLookup?.getMarker(entry, columnDate) ?? null}
+                    colorMode={tileColorMode}
+                  />
                 </Tile>
               );
             });
@@ -233,6 +242,8 @@ export function WeekGrid({
                       <ClassTile
                         entry={entry}
                         onClick={onEntryClick}
+                        clickDate={date}
+                        sessionMarker={occurrenceLookup?.getMarker(entry, date) ?? null}
                         variant="month-bar"
                         colorMode={tileColorMode}
                       />

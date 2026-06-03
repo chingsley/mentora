@@ -156,15 +156,6 @@ export async function listEnrollmentsByStudentProfileId(studentProfileId: string
           },
           enrollments: { where: { status: "ACTIVE" }, select: { id: true } },
           invites: { select: { studentProfileId: true } },
-          testimonials: {
-            orderBy: { createdAt: "desc" },
-            take: 10,
-            include: {
-              studentProfile: {
-                include: { user: { select: { name: true } } },
-              },
-            },
-          },
         },
       },
     },

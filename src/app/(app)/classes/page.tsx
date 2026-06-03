@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { Muted, PageWrap } from "@/components/ui/primitives";
 import { offeringCapacity } from "@/lib/offeringCapacity";
-import { recurrenceFromDb } from "@/lib/offeringRecurrence";
+import { DEFAULT_OFFERING_RECURRENCE, recurrenceFromDb } from "@/lib/offeringRecurrence";
 import { listStudentEnrollments } from "@/server/enrollments";
+import { finalizeOfferingPastSessions } from "@/server/attendance";
+import { listStudentOccurrenceMap } from "@/server/sessionOccurrence";
 import { getPolicy } from "@/server/policies";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import type { ClassDetail } from "@/components/features/class/ClassDetailsDialog";
@@ -71,13 +74,6 @@ export default async function MyClassesPage() {
         : null,
       rules: o.rules,
       description: o.description,
-      testimonials: o.testimonials.map((t) => ({
-        id: t.id,
-        rating: t.rating,
-        body: t.body,
-        createdAt: t.createdAt,
-        studentName: t.studentProfile.user.name,
-      })),
       recurrence: recurrenceFromDb({
         recurrenceKind: o.recurrenceKind,
         recurrenceAnchorDate: o.recurrenceAnchorDate,
@@ -93,15 +89,54 @@ export default async function MyClassesPage() {
     };
   });
 
+  const offeringsToFinalize = new Map<
+    string,
+    {
+      offeringId: string;
+      endMinutes: number;
+      dayOfWeek: (typeof rows)[number]["entry"]["dayOfWeek"];
+      startMinutes: number;
+      recurrence: ReturnType<typeof recurrenceFromDb>;
+    }
+  >();
+  for (const row of rows) {
+    if (!offeringsToFinalize.has(row.entry.offeringId)) {
+      offeringsToFinalize.set(row.entry.offeringId, {
+        offeringId: row.entry.offeringId,
+        endMinutes: row.entry.endMinutes,
+        dayOfWeek: row.entry.dayOfWeek,
+        startMinutes: row.entry.startMinutes,
+        recurrence: row.entry.recurrence ?? DEFAULT_OFFERING_RECURRENCE,
+      });
+    }
+  }
+  await Promise.all(
+    [...offeringsToFinalize.values()].map((o) =>
+      finalizeOfferingPastSessions({
+        offeringId: o.offeringId,
+        endMinutes: o.endMinutes,
+        dayOfWeek: o.dayOfWeek,
+        startMinutes: o.startMinutes,
+        recurrence: o.recurrence,
+      }),
+    ),
+  );
+
+  const occurrenceMap = await listStudentOccurrenceMap({
+    enrollments: rows.map((r) => ({
+      enrollmentId: r.enrollmentId,
+      offeringId: r.entry.offeringId,
+      startMinutes: r.entry.startMinutes,
+      endMinutes: r.entry.endMinutes,
+    })),
+  });
+
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>My classes</PageTitle>
-        <Muted>
-          Your weekly timetable — tap a class for details, to drop, or to join
-          when it&apos;s live.
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title="My classes"
+        subtitle="Your weekly timetable — tap a class for details, to drop, or to join when it's live."
+      />
 
       <NotificationPermissionBanner />
 
@@ -118,7 +153,11 @@ export default async function MyClassesPage() {
           </CardContent>
         </Card>
       ) : (
-        <StudentClassesClient rows={rows} />
+        <StudentClassesClient
+          rows={rows}
+          occurrenceMap={occurrenceMap}
+          studentDisplayName={session.user.name ?? "You"}
+        />
       )}
     </PageWrap>
   );

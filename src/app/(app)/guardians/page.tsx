@@ -8,7 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { Muted, PageWrap } from "@/components/ui/primitives";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -50,13 +51,10 @@ export default async function GuardiansPage() {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>Guardians</PageTitle>
-        <Muted>
-          Invite a parent or guardian via email. They&apos;ll get a link to sign
-          up and view your records in read-only mode.
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title="Guardians"
+        subtitle="Invite a parent or guardian via email. They'll get a link to sign up and view your records in read-only mode."
+      />
 
       <Card>
         <CardHeader>

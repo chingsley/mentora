@@ -11,6 +11,7 @@ import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { APP_NAV } from "./appNavConfig";
+import { AppShellProvider } from "./AppShellContext";
 import { AppSidebarChrome } from "./AppSidebarChrome";
 import { NavigationProgress } from "./NavigationProgress";
 import type { WardOption } from "./WardSelector";
@@ -286,7 +287,9 @@ export function AppShellClient({ user, wards, children }: AppShellClientProps) {
           <Spacer aria-hidden />
         </MobileHeader>
 
-        <Main>{children}</Main>
+        <Main>
+          <AppShellProvider user={user}>{children}</AppShellProvider>
+        </Main>
       </Body>
     </Root>
   );

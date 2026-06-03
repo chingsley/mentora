@@ -10,7 +10,13 @@ import {
   ClassDetailsDialog,
   type ClassDetail,
 } from "@/components/features/class/ClassDetailsDialog";
-import type { CalendarEntry } from "@/components/features/calendar/types";
+import type { SessionOccurrenceSnapshot } from "@/lib/sessionOccurrenceKey";
+import { buildCalendarOccurrenceLookup, getOccurrenceSnapshot } from "@/lib/calendarOccurrenceLookup";
+import type { CalendarEntry, CalendarOccurrenceLookup } from "@/components/features/calendar/types";
+import {
+  SESSION_MARKER_LABEL,
+  SESSION_MARKER_THEME,
+} from "@/constants/sessionOutcome.constants";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
@@ -31,6 +37,8 @@ export interface StudentClassRow {
 
 export interface StudentClassesClientProps {
   rows: StudentClassRow[];
+  occurrenceMap: Record<string, SessionOccurrenceSnapshot>;
+  studentDisplayName: string;
 }
 
 const Wrap = styled.div`
@@ -152,10 +160,36 @@ const SecondaryLink = styled(Link)`
   }
 `;
 
-export function StudentClassesClient({ rows }: StudentClassesClientProps) {
+const Legend = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${SPACING.THREE};
+  font-size: ${FONTS.SIZE.META};
+  color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+const LegendItem = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${SPACING.ONE};
+`;
+
+const LegendDot = styled.span<{ $color: string }>`
+  width: ${SPACING.TWO};
+  height: ${SPACING.TWO};
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  background-color: ${(p) => p.$color};
+`;
+
+export function StudentClassesClient({
+  rows,
+  occurrenceMap,
+  studentDisplayName,
+}: StudentClassesClientProps) {
   const router = useRouter();
   const [tab, setTab] = React.useState<TabKey>("timetable");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
   const [isPending, startTransition] = React.useTransition();
   const [message, setMessage] = React.useState<
     { tone: "success" | "error"; text: string } | null
@@ -173,11 +207,22 @@ export function StudentClassesClient({ rows }: StudentClassesClientProps) {
     return map;
   }, [rows]);
 
+  const occurrenceLookup: CalendarOccurrenceLookup = React.useMemo(
+    () => buildCalendarOccurrenceLookup(occurrenceMap),
+    [occurrenceMap],
+  );
+
   const detail = selectedId ? detailsByOfferingId[selectedId] ?? null : null;
   const enrollmentId = selectedId ? enrollmentByOfferingId[selectedId] ?? null : null;
+  const selectedEntry = selectedId ? entries.find((e) => e.offeringId === selectedId) ?? null : null;
+  const sessionSnapshot =
+    selectedEntry && selectedDate
+      ? getOccurrenceSnapshot(occurrenceMap, selectedEntry, selectedDate)
+      : null;
 
   function onClose() {
     setSelectedId(null);
+    setSelectedDate(null);
     setMessage(null);
   }
 
@@ -215,13 +260,31 @@ export function StudentClassesClient({ rows }: StudentClassesClientProps) {
       </TabList>
 
       {tab === "timetable" ? (
-        <CalendarShell
-          entries={entries}
-          onEntryClick={(e) => {
-            setSelectedId(e.offeringId);
-            setMessage(null);
-          }}
-        />
+        <>
+          <Legend aria-label="Past session markers">
+            <LegendItem>
+              <LegendDot $color={SESSION_MARKER_THEME.attended.accent} aria-hidden />
+              {SESSION_MARKER_LABEL.attended}
+            </LegendItem>
+            <LegendItem>
+              <LegendDot $color={SESSION_MARKER_THEME.absent.accent} aria-hidden />
+              {SESSION_MARKER_LABEL.absent}
+            </LegendItem>
+            <LegendItem>
+              <LegendDot $color={SESSION_MARKER_THEME.not_held.accent} aria-hidden />
+              {SESSION_MARKER_LABEL.not_held}
+            </LegendItem>
+          </Legend>
+          <CalendarShell
+            entries={entries}
+            occurrenceLookup={occurrenceLookup}
+            onEntryClick={(e, meta) => {
+              setSelectedId(e.offeringId);
+              setSelectedDate(meta.date);
+              setMessage(null);
+            }}
+          />
+        </>
       ) : (
         <ListUl>
           {rows.map((r) => (
@@ -250,6 +313,7 @@ export function StudentClassesClient({ rows }: StudentClassesClientProps) {
                   variant="secondary"
                   onClick={() => {
                     setSelectedId(r.entry.offeringId);
+                    setSelectedDate(null);
                     setMessage(null);
                   }}
                 >
@@ -278,6 +342,8 @@ export function StudentClassesClient({ rows }: StudentClassesClientProps) {
         detail={detail}
         viewerRole="STUDENT"
         enrollmentId={enrollmentId}
+        sessionSnapshot={sessionSnapshot}
+        studentDisplayName={studentDisplayName}
         isBusy={isPending}
         message={message}
         onDrop={handleDrop}

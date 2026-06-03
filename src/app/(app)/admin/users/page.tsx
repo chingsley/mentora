@@ -8,7 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { PageWrap } from "@/components/ui/primitives";
 import { UsersTable } from "./UsersTable";
 
 export const metadata: Metadata = { title: "Users" };
@@ -23,13 +24,10 @@ export default async function AdminUsersPage() {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>Users</PageTitle>
-        <Muted>
-          Showing the {users.length} most recent account
-          {users.length === 1 ? "" : "s"}.
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title="Users"
+        subtitle={`Showing the ${users.length} most recent account${users.length === 1 ? "" : "s"}.`}
+      />
 
       <Card>
         <CardHeader>

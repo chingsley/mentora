@@ -12,16 +12,18 @@ import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { formatPrice, minutesToTime } from "@/lib/time";
 import { DEFAULT_OFFERING_RECURRENCE, formatRecurrenceLabel } from "@/lib/offeringRecurrence";
-import { FILL_LABEL, FILL_THEME, fillStatus } from "@/components/features/calendar/types";
+import { fillStatus } from "@/components/features/calendar/types";
+import { isPastSessionEnd, type SessionOccurrenceSnapshot } from "@/lib/sessionOccurrenceKey";
+import {
+  CommentSubheading,
+  CommentSubsection,
+  CommentSubsectionDivider,
+  CommentsSubsections,
+  SessionStudentCommentPanel,
+  SessionTeacherCommentPanel,
+} from "./SessionCommentsPanel";
+import { SessionStatusPanel } from "./SessionStatusPanel";
 import { JoinClassButton } from "@/components/features/student/JoinClassButton";
-
-export interface ClassDetailTestimonial {
-  id: string;
-  rating: number;
-  body: string;
-  createdAt: string | Date;
-  studentName: string;
-}
 
 export interface ClassDetail {
   offeringId: string;
@@ -37,7 +39,6 @@ export interface ClassDetail {
   hourlyRate: { amount: number; currency: string } | null;
   rules: string;
   description?: string | null;
-  testimonials: ClassDetailTestimonial[];
   recurrence?: OfferingRecurrence;
 }
 
@@ -49,6 +50,8 @@ export interface ClassDetailsDialogProps {
   enrollmentId: string | null;
   isBusy?: boolean;
   message?: { tone: "success" | "error"; text: string } | null;
+  sessionSnapshot?: SessionOccurrenceSnapshot | null;
+  studentDisplayName?: string;
   onEnrol?: (offeringId: string) => void | Promise<void>;
   onDrop?: (enrollmentId: string) => void | Promise<void>;
 }
@@ -72,14 +75,9 @@ const Title = styled.h2`
   color: ${COLORS.HEADER};
 `;
 
-const StatusPill = styled.span<{ $status: keyof typeof FILL_THEME }>`
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  border: 1px solid ${(p) => FILL_THEME[p.$status].border};
-  background-color: ${(p) => FILL_THEME[p.$status].bg};
-  color: ${(p) => FILL_THEME[p.$status].text};
-  padding: 0.125rem ${SPACING.TWO};
-  font-size: ${FONTS.SIZE.META};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+const ClassTypeLine = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.MUTED_FOREGROUND};
 `;
 
 const Subtitle = styled.p`
@@ -123,6 +121,13 @@ const Section = styled.section`
   margin-top: ${SPACING.FOUR};
 `;
 
+const DividedSection = styled.section`
+  margin-top: ${SPACING.TEN};
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FOUR};
+`;
+
 const SectionHeading = styled.h3`
   margin-bottom: ${SPACING.ONE};
   font-size: ${FONTS.SIZE.SM};
@@ -132,6 +137,12 @@ const SectionHeading = styled.h3`
 
 const SectionHeadingTight = styled(SectionHeading)`
   margin-bottom: ${SPACING.TWO};
+`;
+
+const DividedSectionHeading = styled(SectionHeadingTight)`
+  margin-bottom: 0;
+  padding-bottom: ${SPACING.TWO};
+  border-bottom: 1px solid ${COLORS.BORDER};
 `;
 
 const Description = styled.p`
@@ -151,46 +162,6 @@ const RulesList = styled.ul`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.ONE};
-  font-size: ${FONTS.SIZE.SM};
-  color: rgba(2, 8, 23, 0.8);
-`;
-
-const TestimonialList = styled.ul`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.THREE};
-`;
-
-const TestimonialCard = styled.li`
-  border-radius: ${LAYOUT.RADIUS.LG};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.BACKGROUND};
-  padding: ${SPACING.THREE};
-`;
-
-const TestimonialHead = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const TestimonialName = styled.p`
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-`;
-
-const TestimonialStars = styled.span`
-  font-size: ${FONTS.SIZE.XS};
-  color: #b45309;
-`;
-
-const StarsMuted = styled.span`
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const TestimonialBody = styled.p`
-  margin-top: ${SPACING.ONE};
   font-size: ${FONTS.SIZE.SM};
   color: rgba(2, 8, 23, 0.8);
 `;
@@ -224,6 +195,8 @@ export function ClassDetailsDialog({
   enrollmentId,
   isBusy,
   message,
+  sessionSnapshot,
+  studentDisplayName,
   onEnrol,
   onDrop,
 }: ClassDetailsDialogProps) {
@@ -253,17 +226,21 @@ export function ClassDetailsDialog({
   const isEnrolled = Boolean(enrollmentId);
   const isReserved = detail.periodType === "RESERVED";
   const canEnrol = isStudent && !isEnrolled && status !== "full";
+  const isPastHeldSession = Boolean(
+    sessionSnapshot &&
+      isPastSessionEnd(new Date(sessionSnapshot.sessionDateIso), detail.endMinutes) &&
+      sessionSnapshot.outcome !== "NOT_HELD",
+  );
+  const showLeaveClass = isStudent && isEnrolled && !isPastHeldSession;
 
   return (
     <Dialog open={open} onClose={onClose} size="lg">
       <Header>
         <TitleRow>
           <Title>{detail.title}</Title>
-          <StatusPill $status={status}>{FILL_LABEL[status]}</StatusPill>
         </TitleRow>
-        <Subtitle>
-          {detail.subjectName} · with {detail.teacherName}
-        </Subtitle>
+        <ClassTypeLine>Class Type: {formatClassType(detail.periodType)}</ClassTypeLine>
+        <Subtitle>Teacher: {detail.teacherName}</Subtitle>
       </Header>
 
       <StatGrid>
@@ -297,8 +274,8 @@ export function ClassDetailsDialog({
         </Section>
       ) : null}
 
-      <Section>
-        <SectionHeadingTight>Rules &amp; expectations</SectionHeadingTight>
+      <DividedSection>
+        <DividedSectionHeading>Rules &amp; expectations</DividedSectionHeading>
         {ruleLines.length === 0 ? (
           <Empty>The teacher hasn&apos;t posted specific rules for this class yet.</Empty>
         ) : (
@@ -308,29 +285,39 @@ export function ClassDetailsDialog({
             ))}
           </RulesList>
         )}
-      </Section>
+      </DividedSection>
 
-      <Section>
-        <SectionHeadingTight>What previous students said</SectionHeadingTight>
-        {detail.testimonials.length === 0 ? (
-          <Empty>No testimonials yet. Be the first to share feedback.</Empty>
-        ) : (
-          <TestimonialList>
-            {detail.testimonials.slice(0, 5).map((t) => (
-              <TestimonialCard key={t.id}>
-                <TestimonialHead>
-                  <TestimonialName>{t.studentName}</TestimonialName>
-                  <TestimonialStars aria-label={`${t.rating} out of 5`}>
-                    {"★".repeat(t.rating)}
-                    <StarsMuted>{"★".repeat(5 - t.rating)}</StarsMuted>
-                  </TestimonialStars>
-                </TestimonialHead>
-                <TestimonialBody>{t.body}</TestimonialBody>
-              </TestimonialCard>
-            ))}
-          </TestimonialList>
-        )}
-      </Section>
+      {sessionSnapshot && enrollmentId && isStudent ? (
+        <>
+          <DividedSection>
+            <DividedSectionHeading>Attendance</DividedSectionHeading>
+            <SessionStatusPanel snapshot={sessionSnapshot} />
+          </DividedSection>
+          <DividedSection>
+            <DividedSectionHeading>Comments</DividedSectionHeading>
+            <CommentsSubsections>
+              <CommentSubsection>
+                <CommentSubheading>Teacher comment</CommentSubheading>
+                <SessionTeacherCommentPanel
+                  teacherNote={sessionSnapshot.teacherNote}
+                  teacherDisplayName={detail.teacherName}
+                  teacherNoteUpdatedAtIso={sessionSnapshot.teacherNoteUpdatedAtIso}
+                />
+              </CommentSubsection>
+              <CommentSubsectionDivider aria-hidden />
+              <CommentSubsection>
+                <CommentSubheading>Student comment</CommentSubheading>
+                <SessionStudentCommentPanel
+                  snapshot={sessionSnapshot}
+                  enrollmentId={enrollmentId}
+                  studentDisplayName={studentDisplayName}
+                  canAddComment
+                />
+              </CommentSubsection>
+            </CommentsSubsections>
+          </DividedSection>
+        </>
+      ) : null}
 
       {message ? <Message $tone={message.tone}>{message.text}</Message> : null}
 
@@ -338,7 +325,7 @@ export function ClassDetailsDialog({
         <Button type="button" variant="ghost" onClick={onClose}>
           Close
         </Button>
-        {isStudent && isEnrolled ? (
+        {showLeaveClass ? (
           <>
             <JoinClassButton
               offeringId={detail.offeringId}
@@ -387,6 +374,10 @@ function Stat({
       <StatValue $emphasised={emphasised}>{value}</StatValue>
     </StatBox>
   );
+}
+
+function formatClassType(periodType?: OfferingPeriodType): string {
+  return periodType === "RESERVED" ? "Reserved (invite only)" : "Open";
 }
 
 function formatDuration(minutes: number): string {

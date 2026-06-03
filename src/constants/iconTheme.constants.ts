@@ -27,6 +27,7 @@ export const ICON_BOX_TYPE = {
   SECONDARY: {
     background: BRAND_WASH_8,
     color: MAJE_BRAND,
+    border: ICON_SECONDARY_BORDER,
   },
 } as const;
 

@@ -2,14 +2,8 @@ import type { Metadata } from "next";
 import type { DayOfWeek } from "@prisma/client";
 import { requireSession } from "@/lib/auth";
 import { TeacherCard } from "@/components/features/TeacherCard";
-import {
-  Grid,
-  Muted,
-  PageHeader,
-  PageTitle,
-  PageWrap,
-  Section,
-} from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { Grid, Muted, PageWrap, Section } from "@/components/ui/primitives";
 import { parseMajorToSmallest } from "@/lib/money";
 import { listSubjects, recommendTeachers, searchTeachers } from "@/server/teachers";
 import { listRegions } from "@/server/policies";
@@ -84,12 +78,10 @@ export default async function TeachersPage({ searchParams }: Props) {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>Find a teacher</PageTitle>
-        <Muted>
-          Search by name, teacher ID, or subject. Filter by day, price, region, and rating.
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title="Find a teacher"
+        subtitle="Search by name, teacher ID, or subject. Filter by day, price, region, and rating."
+      />
 
       <TeachersFilters
         q={q}

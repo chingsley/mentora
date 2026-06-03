@@ -45,6 +45,12 @@ const OptionsRow = styled.div`
   gap: ${SPACING.THREE};
 `;
 
+const recurringButtonActiveStyles = css`
+  border-color: ${COLORS.ACTION_PRIMARY_BORDER_25};
+  background-color: ${COLORS.ACTION_PRIMARY_TINT_10};
+  color: ${COLORS.ACTION_PRIMARY};
+`;
+
 const RecurringButton = styled.button<{ $active: boolean }>`
   display: inline-flex;
   align-items: center;
@@ -56,28 +62,29 @@ const RecurringButton = styled.button<{ $active: boolean }>`
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
   line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  background-color: ${COLORS.FOREGROUND};
+  color: ${COLORS.MUTED_FOREGROUND};
   cursor: pointer;
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
     color 0.15s ease;
 
-  ${(p) =>
-    p.$active
-      ? css`
-          border-color: ${COLORS.HEADER_BORDER_25};
-          background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
-          color: ${COLORS.HEADER};
-        `
-      : css`
-          background-color: ${COLORS.FOREGROUND};
-          color: ${COLORS.MUTED_FOREGROUND};
+  ${(p) => p.$active && recurringButtonActiveStyles}
 
-          &:hover:not(:disabled) {
-            background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
-            border-color: ${COLORS.SURFACE_NEUTRAL_BORDER_HOVER};
-          }
-        `}
+  &:hover:not(:disabled) {
+    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+    border-color: ${COLORS.SURFACE_NEUTRAL_BORDER_HOVER};
+  }
+
+  ${(p) =>
+    p.$active &&
+    css`
+      &:hover:not(:disabled) {
+        background-color: ${COLORS.ACTION_PRIMARY_TINT_16};
+        border-color: ${COLORS.ACTION_PRIMARY_BORDER_25};
+      }
+    `}
 
   &:disabled {
     opacity: 0.6;
@@ -244,6 +251,10 @@ export function OfferingDaySlotsEditor({
     });
   }
 
+  function toggleRecurring() {
+    patch({ isRecurring: !schedule.isRecurring });
+  }
+
   function clearRecurrence() {
     patch({ isRecurring: false, untilDate: "" });
   }
@@ -290,12 +301,12 @@ export function OfferingDaySlotsEditor({
           $active={schedule.isRecurring}
           disabled={disabled}
           aria-pressed={schedule.isRecurring}
-          onClick={() => patch({ isRecurring: !schedule.isRecurring })}
+          onClick={toggleRecurring}
         >
           <Repeat
             size={ICON_SIZE.SM}
             strokeWidth={ICON_STROKE.NORMAL}
-            color={schedule.isRecurring ? COLORS.HEADER : COLORS.MUTED_FOREGROUND}
+            color={schedule.isRecurring ? COLORS.ACTION_PRIMARY : COLORS.MUTED_FOREGROUND}
           />
           Recurring
         </RecurringButton>

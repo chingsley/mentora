@@ -8,7 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import { PrimaryLink } from "@/components/ui/Link";
-import { Muted, PageHeader, PageTitle, PageWrap, Strong } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { Muted, PageWrap } from "@/components/ui/primitives";
 import { TeacherScheduleClient } from "./TeacherScheduleClient";
 import { TodayAttendance, type TodayAttendanceSession } from "./TodayAttendance";
 import { AssignmentsList } from "./AssignmentsList";
@@ -34,11 +35,19 @@ export default async function TeacherSchedulePage() {
     endMinutes: s.endMinutes,
     sessionDate: s.sessionDate.toISOString(),
     inJoinWindow: s.inJoinWindow,
+    sessionOutcome: s.sessionOutcome,
+    notHeldReason: s.notHeldReason,
+    teacherNote: s.teacherNote,
+    studentNote: s.studentNote,
     students: s.students.map((stu) => ({
       enrollmentId: stu.enrollmentId,
       studentName: stu.studentName,
       status: stu.status,
       source: stu.source,
+      teacherNote: stu.teacherNote,
+      studentNote: stu.studentNote,
+      joinedAt: stu.joinedAt?.toISOString() ?? null,
+      changeLog: stu.changeLog,
     })),
   }));
   if (!data) {
@@ -79,13 +88,11 @@ export default async function TeacherSchedulePage() {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>My weekly schedule</PageTitle>
-        <Muted>
-          Click an empty slot to add a class period. Admin cap:{" "}
-          <Strong>{policy.globalClassCap}</Strong>.
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title="My weekly schedule"
+        subtitle={`Click an empty slot to add a class period. Admin cap: ${policy.globalClassCap}.`}
+        profileImage={profile.user.image ?? null}
+      />
 
       {subjects.length === 0 ? (
         <Card>
@@ -117,8 +124,9 @@ export default async function TeacherSchedulePage() {
             <CardHeader>
               <CardTitle>Today&apos;s attendance</CardTitle>
               <CardDescription>
-                Override or mark attendance for today&apos;s sessions. Auto-join
-                entries from students are preserved unless you change them.
+                Override or review attendance for today&apos;s sessions. System
+                marks present on join and absent after class ends; teacher
+                overrides require a comment and are logged.
               </CardDescription>
             </CardHeader>
             <CardContent>

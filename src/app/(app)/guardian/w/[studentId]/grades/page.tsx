@@ -7,7 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { PageWrap } from "@/components/ui/primitives";
 import { db } from "@/lib/db";
 import { listAssignmentsForGuardianWard } from "@/server/assignments";
 import { GradeAssignment, List } from "./GradeAssignment";
@@ -44,13 +45,10 @@ export default async function WardGradesPage({ params }: PageProps) {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>{student.user.name}&apos;s grades</PageTitle>
-        <Muted>
-          Read-only view of assignments, submissions, grades, and teacher
-          feedback.
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title={`${student.user.name}'s grades`}
+        subtitle="Read-only view of assignments, submissions, grades, and teacher feedback."
+      />
 
       {assignments.length === 0 ? (
         <Card>

@@ -9,7 +9,7 @@ import { SPACING } from "@/constants/spacing.constants";
 import { DAY_LABEL } from "@/lib/time";
 import { calendarEntriesForDate } from "@/lib/offeringRecurrence";
 import { ClassTile } from "./ClassTile";
-import type { CalendarEntry, CalendarTileColorMode } from "./types";
+import type { CalendarEntry, CalendarEntryClickHandler, CalendarOccurrenceLookup, CalendarTileColorMode } from "./types";
 import { TimeGridLayout } from "./TimeGridLayout";
 import { tileGeometry } from "./timeGrid";
 
@@ -17,7 +17,8 @@ export interface DayGridProps {
   entries: CalendarEntry[];
   date: Date;
   tileColorMode?: CalendarTileColorMode;
-  onEntryClick?: (entry: CalendarEntry) => void;
+  occurrenceLookup?: CalendarOccurrenceLookup;
+  onEntryClick?: CalendarEntryClickHandler;
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
 }
 
@@ -77,6 +78,7 @@ export function DayGrid({
   entries,
   date,
   tileColorMode = "capacity",
+  occurrenceLookup,
   onEntryClick,
   onEmptySlotClick,
 }: DayGridProps) {
@@ -111,7 +113,13 @@ export function DayGrid({
             const { top, height } = tileGeometry(entry.startMinutes, entry.endMinutes);
             return (
               <Tile key={entry.id} style={{ top, height }}>
-                <ClassTile entry={entry} onClick={onEntryClick} colorMode={tileColorMode} />
+                <ClassTile
+                  entry={entry}
+                  onClick={onEntryClick}
+                  clickDate={date}
+                  sessionMarker={occurrenceLookup?.getMarker(entry, date) ?? null}
+                  colorMode={tileColorMode}
+                />
               </Tile>
             );
           })}

@@ -7,7 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { PageWrap } from "@/components/ui/primitives";
 import {
   listReportsForAdmin,
   REPORT_REASON_LABELS,
@@ -22,12 +23,10 @@ export default async function AdminReportsPage() {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>Teacher reports</PageTitle>
-        <Muted>
-          Reports from students and guardians. Visible to admins only.
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title="Teacher reports"
+        subtitle="Reports from students and guardians. Visible to admins only."
+      />
 
       <Card>
         <CardHeader>

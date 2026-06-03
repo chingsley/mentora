@@ -13,13 +13,14 @@ import { Button } from "@/components/ui/Button";
 import { DayGrid } from "./DayGrid";
 import { MonthGrid } from "./MonthGrid";
 import { WeekGrid, startOfISOWeek } from "./WeekGrid";
-import type { CalendarEntry, CalendarTileColorMode, CalendarView } from "./types";
+import type { CalendarEntry, CalendarEntryClickHandler, CalendarOccurrenceLookup, CalendarTileColorMode, CalendarView } from "./types";
 
 export interface CalendarShellProps {
   entries: CalendarEntry[];
   initialView?: CalendarView;
   tileColorMode?: CalendarTileColorMode;
-  onEntryClick?: (entry: CalendarEntry) => void;
+  occurrenceLookup?: CalendarOccurrenceLookup;
+  onEntryClick?: CalendarEntryClickHandler;
   onEmptySlotClick?: (info: { dayOfWeek: DayOfWeek; minutes: number; date: Date }) => void;
   emptyState?: React.ReactNode;
 }
@@ -155,6 +156,7 @@ export function CalendarShell({
   entries,
   initialView = "week",
   tileColorMode = "capacity",
+  occurrenceLookup,
   onEntryClick,
   onEmptySlotClick,
   emptyState,
@@ -253,6 +255,7 @@ export function CalendarShell({
           entries={entries}
           date={anchor}
           tileColorMode={tileColorMode}
+          occurrenceLookup={occurrenceLookup}
           onEntryClick={onEntryClick}
           onEmptySlotClick={onEmptySlotClick}
         />
@@ -261,6 +264,7 @@ export function CalendarShell({
           entries={entries}
           anchorDate={anchor}
           tileColorMode={tileColorMode}
+          occurrenceLookup={occurrenceLookup}
           onEntryClick={onEntryClick}
           onEmptySlotClick={onEmptySlotClick}
         />
@@ -269,6 +273,7 @@ export function CalendarShell({
           entries={entries}
           anchorDate={anchor}
           tileColorMode={tileColorMode}
+          occurrenceLookup={occurrenceLookup}
           onEntryClick={onEntryClick}
           onDayClick={(date) => {
             setAnchor(date);

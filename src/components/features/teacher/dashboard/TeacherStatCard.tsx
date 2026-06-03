@@ -10,7 +10,6 @@ import {
   ICON_SIZE,
   ICON_STROKE,
   ICON_THEME,
-  type IconBoxTypeKey,
 } from "@/constants/iconTheme.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import type { TeacherDashboardStat } from "@/types/teacherDashboard";
@@ -27,7 +26,7 @@ const Top = styled.div`
   gap: ${SPACING.THREE};
 `;
 
-const IconTile = styled.div<{ $variant: IconBoxTypeKey; }>`
+const IconTile = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,10 +34,8 @@ const IconTile = styled.div<{ $variant: IconBoxTypeKey; }>`
   height: ${ICON_THEME.METRIC_ICON_BOX_SIZE};
   border-radius: ${ICON_THEME.METRIC_ICON_BOX_RADIUS};
   flex-shrink: 0;
-  background: ${(p) => ICON_BOX_TYPE[p.$variant].background};
-  color: ${(p) => ICON_BOX_TYPE[p.$variant].color};
-  box-shadow: ${(p) =>
-    p.$variant === "PRIMARY" ? ICON_THEME.METRIC_ICON_BOX_SHADOW : "none"};
+  background: ${ICON_BOX_TYPE.SECONDARY.background};
+  color: ${ICON_BOX_TYPE.SECONDARY.color};
 `;
 
 const Label = styled.p`
@@ -77,10 +74,9 @@ const Footer = styled.div`
 export interface TeacherStatCardProps {
   stat: TeacherDashboardStat;
   icon: LucideIcon;
-  iconBoxType: IconBoxTypeKey;
 }
 
-export function TeacherStatCard({ stat, icon: Icon, iconBoxType }: TeacherStatCardProps) {
+export function TeacherStatCard({ stat, icon: Icon }: TeacherStatCardProps) {
   return (
     <Shell>
       <Top>
@@ -95,7 +91,7 @@ export function TeacherStatCard({ stat, icon: Icon, iconBoxType }: TeacherStatCa
             </Footer>
           ) : null}
         </div>
-        <IconTile $variant={iconBoxType} aria-hidden>
+        <IconTile aria-hidden>
           <Icon size={ICON_SIZE.LG} strokeWidth={ICON_STROKE.MEDIUM} />
         </IconTile>
       </Top>

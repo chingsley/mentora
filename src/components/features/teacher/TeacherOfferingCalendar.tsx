@@ -10,7 +10,9 @@ import {
   type OfferingDialogSubject,
   type OfferingDialogValue,
 } from "@/components/features/teacher/OfferingDialog";
+import { TeacherSessionAttendanceDialog } from "@/components/features/teacher/TeacherSessionAttendanceDialog";
 import type { OfferingInviteableStudent } from "@/components/features/teacher/OfferingStudentInviteField";
+import { canTakeSessionAttendance } from "@/lib/sessionAttendance";
 import { buildOfferingDialogInitial } from "@/lib/offeringSchedule";
 import { offeringCapacity } from "@/lib/offeringCapacity";
 import { recurrenceFromDb } from "@/lib/offeringRecurrence";
@@ -95,6 +97,10 @@ export function TeacherOfferingCalendar({
   tileColorMode = "subject",
 }: TeacherOfferingCalendarProps) {
   const [dialog, setDialog] = React.useState<OfferingDialogValue | null>(null);
+  const [attendanceTarget, setAttendanceTarget] = React.useState<{
+    offering: TeacherOfferingCalendarOffering;
+    date: Date;
+  } | null>(null);
 
   const entries: CalendarEntry[] = offerings.map((o) => ({
     id: o.id,
@@ -122,10 +128,19 @@ export function TeacherOfferingCalendar({
     [offerings],
   );
 
-  function onEntryClick(entry: CalendarEntry) {
+  function onEntryClick(entry: CalendarEntry, meta: { date: Date }) {
     const original = offerings.find((o) => o.id === entry.offeringId);
     if (!original) return;
-    setDialog(buildOfferingDialogInitial(toDialogOfferingRow(original), dialogRows));
+    if (canTakeSessionAttendance(meta.date, original.startMinutes)) {
+      setAttendanceTarget({ offering: original, date: meta.date });
+      return;
+    }
+    openEditSchedule(original);
+  }
+
+  function openEditSchedule(offering: TeacherOfferingCalendarOffering) {
+    setAttendanceTarget(null);
+    setDialog(buildOfferingDialogInitial(toDialogOfferingRow(offering), dialogRows));
   }
 
   function onEmptySlotClick(info: { dayOfWeek: DayOfWeek; minutes: number }) {
@@ -151,6 +166,13 @@ export function TeacherOfferingCalendar({
         inviteableStudents={inviteableStudents}
         globalCap={globalCap}
         initial={dialog}
+      />
+      <TeacherSessionAttendanceDialog
+        open={attendanceTarget !== null}
+        onClose={() => setAttendanceTarget(null)}
+        offering={attendanceTarget?.offering ?? null}
+        sessionDate={attendanceTarget?.date ?? null}
+        onEditSchedule={openEditSchedule}
       />
     </>
   );

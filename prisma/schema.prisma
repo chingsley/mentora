@@ -51,11 +51,26 @@ enum AttendanceStatus {
 enum AttendanceSource {
   AUTO_JOIN
   TEACHER
+  STUDENT
+  SYSTEM
 }
 
 enum ClassSessionStatus {
   LIVE
   ENDED
+}
+
+enum SessionOutcome {
+  HELD
+  NOT_HELD
+}
+
+enum SessionNotHeldReason {
+  TEACHER_CANCELED
+  TEACHER_UNAVAILABLE
+  STUDENT_REQUEST
+  TECHNICAL_ISSUE
+  OTHER
 }
 
 enum ReportReason {
@@ -107,6 +122,8 @@ model User {
   teacherProfile  TeacherProfile?
   studentProfile  StudentProfile?
   guardianProfile GuardianProfile?
+
+  attendanceChangeLogs AttendanceChangeLog[]
 
   // Auth.js relations
   accounts Account[]
@@ -325,7 +342,8 @@ model ClassOffering {
   invites        OfferingInvite[]
   testimonials   ClassTestimonial[]
   assignments    Assignment[]
-  sessions       ClassSession[]
+  sessions           ClassSession[]
+  sessionOccurrences SessionOccurrence[]
 
   @@index([teacherProfileId, dayOfWeek])
   @@index([subjectId])
@@ -406,6 +424,26 @@ model PlatformPolicy {
 
 // ---------- Attendance ----------
 
+model SessionOccurrence {
+  id              String                @id @default(cuid())
+  offeringId      String
+  sessionDate     DateTime
+  outcome         SessionOutcome        @default(HELD)
+  notHeldReason   SessionNotHeldReason?
+  teacherNote           String?   @db.Text
+  studentNote           String?   @db.Text
+  teacherNoteUpdatedAt  DateTime?
+  studentNoteUpdatedAt  DateTime?
+  markedByUserId        String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  offering ClassOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  @@unique([offeringId, sessionDate])
+  @@index([offeringId])
+}
+
 model Attendance {
   id             String           @id @default(cuid())
   enrollmentId   String
@@ -414,13 +452,34 @@ model Attendance {
   source         AttendanceSource
   joinedAt       DateTime?
   markedByUserId String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  teacherNote           String?   @db.Text
+  studentNote           String?   @db.Text
+  teacherNoteUpdatedAt  DateTime?
+  studentNoteUpdatedAt  DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  enrollment Enrollment            @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  changeLogs AttendanceChangeLog[]
 
   @@unique([enrollmentId, sessionDate])
   @@index([enrollmentId])
+}
+
+model AttendanceChangeLog {
+  id              String            @id @default(cuid())
+  attendanceId    String
+  previousStatus  AttendanceStatus?
+  newStatus       AttendanceStatus
+  source          AttendanceSource
+  changedByUserId String?
+  comment         String            @db.Text
+  createdAt       DateTime          @default(now())
+
+  attendance Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  changedBy  User?      @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([attendanceId, createdAt])
 }
 
 // ---------- Assignments ----------

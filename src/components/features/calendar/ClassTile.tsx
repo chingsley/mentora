@@ -1,13 +1,18 @@
 "use client";
 
 import { OfferingPeriodType } from "@prisma/client";
-import styled from "styled-components";
-import { Lock, Repeat } from "lucide-react";
+import styled, { css } from "styled-components";
+import { Ban, Check, Clock, Lock, Minus, Repeat, UserX } from "lucide-react";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { COLORS } from "@/constants/colors.constants";
 import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
+import {
+  SESSION_MARKER_LABEL,
+  SESSION_MARKER_THEME,
+  type SessionMarkerKind,
+} from "@/constants/sessionOutcome.constants";
 import { minutesToTime } from "@/lib/time";
 import { subjectThemeForId } from "@/lib/subjectPalette";
 import {
@@ -16,13 +21,16 @@ import {
   FILL_THEME,
   fillStatus,
   type CalendarEntry,
+  type CalendarEntryClickHandler,
   type CalendarTileColorMode,
   type FillStatus,
 } from "./types";
 
 export interface ClassTileProps {
   entry: CalendarEntry;
-  onClick?: (entry: CalendarEntry) => void;
+  onClick?: CalendarEntryClickHandler;
+  clickDate?: Date;
+  sessionMarker?: SessionMarkerKind | null;
   variant?: "block" | "pill" | "month-bar";
   colorMode?: CalendarTileColorMode;
   className?: string;
@@ -38,7 +46,9 @@ const TileBase = styled.button<{
   $subjectBorder?: string;
   $subjectText?: string;
   $useSubjectTheme: boolean;
+  $sessionMarker?: SessionMarkerKind | null;
 }>`
+  position: relative;
   display: ${(p) => (p.$variant === "block" ? "flex" : "inline-flex")};
   flex-direction: ${(p) => (p.$variant === "block" ? "column" : "row")};
   align-items: ${(p) => (p.$variant === "month-bar" ? "center" : p.$variant === "block" ? "stretch" : "center")};
@@ -100,6 +110,12 @@ const TileBase = styled.button<{
   &:disabled {
     cursor: default;
   }
+
+  ${(p) =>
+    p.$sessionMarker === "not_held" &&
+    css`
+      opacity: 0.72;
+    `}
 `;
 
 const MonthBarAccent = styled.span`
@@ -161,9 +177,49 @@ const DimSpan = styled.span`
   white-space: nowrap;
 `;
 
+const MarkerBadge = styled.span<{ $kind: SessionMarkerKind }>`
+  position: absolute;
+  top: ${SPACING.ONE};
+  right: ${SPACING.ONE};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(${SPACING.THREE} + ${SPACING.HALF});
+  height: calc(${SPACING.THREE} + ${SPACING.HALF});
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  background-color: ${COLORS.FOREGROUND};
+  color: ${(p) => SESSION_MARKER_THEME[p.$kind].accent};
+  box-shadow: ${LAYOUT.SHADOW.SM};
+`;
+
+const StrikethroughTitle = styled.span`
+  text-decoration: line-through;
+  text-decoration-color: ${COLORS.MUTED_FOREGROUND};
+`;
+
+function MarkerIcon({ kind }: { kind: SessionMarkerKind }) {
+  const props = { size: ICON_SIZE.XS, strokeWidth: ICON_STROKE.MEDIUM };
+  switch (kind) {
+    case "attended":
+      return <Check {...props} aria-hidden />;
+    case "late":
+      return <Clock {...props} aria-hidden />;
+    case "absent":
+      return <UserX {...props} aria-hidden />;
+    case "excused":
+      return <Ban {...props} aria-hidden />;
+    case "not_held":
+      return <Minus {...props} aria-hidden />;
+    default:
+      return null;
+  }
+}
+
 export function ClassTile({
   entry,
   onClick,
+  clickDate,
+  sessionMarker = null,
   variant = "block",
   colorMode = "capacity",
   className,
@@ -186,16 +242,30 @@ export function ClassTile({
   const metaLine = isReserved ? `Invite only · ${enrollmentLine}` : enrollmentLine;
   const ariaLabel = blocked
     ? `${entry.title} — ${minutesToTime(entry.startMinutes)} to ${minutesToTime(entry.endMinutes)}`
-    : isReserved
+    : sessionMarker
+      ? `${entry.title} — ${SESSION_MARKER_LABEL[sessionMarker]}`
+      : isReserved
       ? `${entry.title} — Invite only (${entry.enrolled}/${entry.effectiveCap})`
       : useSubjectTheme
         ? `${entry.title} — ${entry.subtitle ?? "Class"} (${entry.enrolled}/${entry.effectiveCap})`
         : `${entry.title} — ${FILL_LABEL[status]} (${entry.enrolled}/${entry.effectiveCap})`;
 
+  function handleClick() {
+    if (!onClick || !interactive) return;
+    onClick(entry, { date: clickDate ?? new Date() });
+  }
+
+  const titleContent =
+    sessionMarker === "not_held" ? (
+      <StrikethroughTitle>{entry.title}</StrikethroughTitle>
+    ) : (
+      entry.title
+    );
+
   return (
     <TileBase
       type="button"
-      onClick={interactive ? () => onClick(entry) : undefined}
+      onClick={interactive ? handleClick : undefined}
       disabled={!interactive}
       $status={status}
       $blocked={blocked}
@@ -206,9 +276,15 @@ export function ClassTile({
       $subjectBgHover={subjectTheme?.bgHover}
       $subjectBorder={subjectTheme?.border}
       $subjectText={subjectTheme?.text}
+      $sessionMarker={sessionMarker}
       aria-label={ariaLabel}
       className={className}
     >
+      {sessionMarker ? (
+        <MarkerBadge $kind={sessionMarker} title={SESSION_MARKER_LABEL[sessionMarker]}>
+          <MarkerIcon kind={sessionMarker} />
+        </MarkerBadge>
+      ) : null}
       {variant === "block" ? (
         <>
           <TitleRow>
@@ -217,12 +293,14 @@ export function ClassTile({
                 <Lock size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.MEDIUM} />
               </ReservedIconWrap>
             ) : null}
-            <TitleSpan>{entry.title}</TitleSpan>
+            <TitleSpan>{titleContent}</TitleSpan>
           </TitleRow>
           <DimSpan>
             {minutesToTime(entry.startMinutes)}–{minutesToTime(entry.endMinutes)}
           </DimSpan>
-          <DimSpan>{metaLine}</DimSpan>
+          <DimSpan>
+            {sessionMarker ? SESSION_MARKER_LABEL[sessionMarker] : metaLine}
+          </DimSpan>
         </>
       ) : variant === "month-bar" ? (
         <>
@@ -234,7 +312,11 @@ export function ClassTile({
               </ReservedIconWrap>
             ) : null}
             <MonthBarLabel>
-              {minutesToTime(entry.startMinutes)} {entry.title}
+              {minutesToTime(entry.startMinutes)} {sessionMarker === "not_held" ? (
+                <StrikethroughTitle>{entry.title}</StrikethroughTitle>
+              ) : (
+                entry.title
+              )}
             </MonthBarLabel>
           </MonthBarText>
           {showsRecurrenceIcon ? (

@@ -10,7 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import { TextLink } from "@/components/ui/Link";
-import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { Muted, PageWrap } from "@/components/ui/primitives";
 import {
   getAssignmentForStudent,
   getAssignmentForTeacher,
@@ -72,12 +73,10 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
 
     return (
       <PageWrap>
-        <PageHeader>
-          <PageTitle>{assignment.title}</PageTitle>
-          <Muted>
-            {offering.subject.name} · Due {formatDate(assignment.dueAt)}
-          </Muted>
-        </PageHeader>
+        <AppPageHeader
+          title={assignment.title}
+          subtitle={`${offering.subject.name} · Due ${formatDate(assignment.dueAt)}`}
+        />
 
         <Card>
           <CardHeader>
@@ -141,12 +140,10 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
 
     return (
       <PageWrap>
-        <PageHeader>
-          <PageTitle>{assignment.title}</PageTitle>
-          <Muted>
-            {assignment.offering.subject.name} · Due {formatDate(assignment.dueAt)}
-          </Muted>
-        </PageHeader>
+        <AppPageHeader
+          title={assignment.title}
+          subtitle={`${assignment.offering.subject.name} · Due ${formatDate(assignment.dueAt)}`}
+        />
 
         <Card>
           <CardHeader>

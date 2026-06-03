@@ -13,6 +13,8 @@ export interface DialogProps {
   open: boolean;
   onClose: () => void;
   title?: string;
+  /** Rendered directly under the title, before dialog body content. */
+  titleBelow?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   size?: DialogSize;
@@ -56,14 +58,26 @@ const Panel = styled.div<{ $size: DialogSize }>`
   box-shadow: ${LAYOUT.SHADOW.XL};
 `;
 
-const PanelTitle = styled.h2`
-  margin-bottom: ${SPACING.THREE};
+const PanelTitle = styled.h2<{ $hasTitleBelow: boolean }>`
+  margin-bottom: ${(p) => (p.$hasTitleBelow ? SPACING.ONE : SPACING.THREE)};
   font-size: ${FONTS.SIZE.LG};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
 `;
 
-export function Dialog({ open, onClose, title, children, className, size = "md" }: DialogProps) {
+const TitleBelow = styled.div`
+  margin-bottom: ${SPACING.THREE};
+`;
+
+export function Dialog({
+  open,
+  onClose,
+  title,
+  titleBelow,
+  children,
+  className,
+  size = "md",
+}: DialogProps) {
   React.useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -79,7 +93,8 @@ export function Dialog({ open, onClose, title, children, className, size = "md" 
     <Backdrop role="dialog" aria-modal="true" aria-label={title}>
       <BackdropButton aria-label="Close dialog" onClick={onClose} />
       <Panel className={className} $size={size}>
-        {title ? <PanelTitle>{title}</PanelTitle> : null}
+        {title ? <PanelTitle $hasTitleBelow={!!titleBelow}>{title}</PanelTitle> : null}
+        {titleBelow ? <TitleBelow>{titleBelow}</TitleBelow> : null}
         {children}
       </Panel>
     </Backdrop>

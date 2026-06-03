@@ -606,6 +606,211 @@ async function seedAssignments(
 }
 
 // ---------------------------------------------------------------------------
+// Removable demo: teacher5 "test meeting" past session with 10 students
+// Delete this block (and the call in main) when no longer needed.
+// ---------------------------------------------------------------------------
+
+const TEACHER5_PAST_CLASS_DEMO = {
+  teacherEmail: "teacher5@mentora.local",
+  offeringTitle: "test meeting",
+  dayOfWeek: "WED" as DayOfWeek,
+  startMinutes: 7 * 60 + 30,
+  endMinutes: 11 * 60 + 30,
+  /** Calendar date for the past occurrence (local date). */
+  sessionCalendarDate: "2026-06-03",
+  studentEmails: Array.from(
+    { length: 10 },
+    (_, i) => `student${i + 1}@mentora.local`,
+  ),
+} as const;
+
+function demoSessionDate(calendarDateIso: string, startMinutes: number): Date {
+  const d = new Date(`${calendarDateIso}T00:00:00`);
+  d.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
+  d.setSeconds(0, 0);
+  return d;
+}
+
+async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
+  const cfg = TEACHER5_PAST_CLASS_DEMO;
+  const sessionDate = demoSessionDate(cfg.sessionCalendarDate, cfg.startMinutes);
+
+  const teacher = await db.user.findUnique({
+    where: { email: cfg.teacherEmail },
+    include: {
+      teacherProfile: {
+        include: { subjects: { take: 1, select: { subjectId: true } } },
+      },
+    },
+  });
+  if (!teacher?.teacherProfile) {
+    console.warn(`[demo] Skip: ${cfg.teacherEmail} not found`);
+    return;
+  }
+
+  const subjectId = teacher.teacherProfile.subjects[0]?.subjectId;
+  if (!subjectId) {
+    console.warn("[demo] Skip: teacher5 has no subjects");
+    return;
+  }
+
+  let offering = await db.classOffering.findFirst({
+    where: {
+      teacherProfileId: teacher.teacherProfile.id,
+      title: cfg.offeringTitle,
+    },
+  });
+
+  if (!offering) {
+    offering = await db.classOffering.create({
+      data: {
+        teacherProfileId: teacher.teacherProfile.id,
+        subjectId,
+        title: cfg.offeringTitle,
+        dayOfWeek: cfg.dayOfWeek,
+        startMinutes: cfg.startMinutes,
+        endMinutes: cfg.endMinutes,
+        teacherCap: CONFIG.TEACHER_CAP,
+        periodType: "OPEN",
+        rules: DEMO_RULES,
+      },
+    });
+  } else {
+    offering = await db.classOffering.update({
+      where: { id: offering.id },
+      data: {
+        dayOfWeek: cfg.dayOfWeek,
+        startMinutes: cfg.startMinutes,
+        endMinutes: cfg.endMinutes,
+        teacherCap: CONFIG.TEACHER_CAP,
+        periodType: "OPEN",
+        active: true,
+      },
+    });
+  }
+
+  const students = await db.user.findMany({
+    where: { email: { in: [...cfg.studentEmails] }, role: "STUDENT" },
+    include: { studentProfile: true },
+    orderBy: { email: "asc" },
+  });
+
+  const targetProfileIds = students
+    .map((s) => s.studentProfile?.id)
+    .filter((id): id is string => Boolean(id));
+
+  if (targetProfileIds.length === 0) {
+    console.warn("[demo] Skip: no target students found");
+    return;
+  }
+
+  await db.enrollment.updateMany({
+    where: {
+      offeringId: offering.id,
+      studentProfileId: { notIn: targetProfileIds },
+    },
+    data: { status: "DROPPED" },
+  });
+
+  const enrollments: Array<{ id: string; studentProfileId: string }> = [];
+  for (const email of cfg.studentEmails) {
+    const student = students.find((s) => s.email === email);
+    const profileId = student?.studentProfile?.id;
+    if (!profileId) continue;
+
+    const enrollment = await db.enrollment.upsert({
+      where: {
+        studentProfileId_offeringId: {
+          studentProfileId: profileId,
+          offeringId: offering.id,
+        },
+      },
+      create: {
+        studentProfileId: profileId,
+        offeringId: offering.id,
+        status: "ACTIVE",
+      },
+      update: { status: "ACTIVE" },
+      select: { id: true, studentProfileId: true },
+    });
+    enrollments.push(enrollment);
+
+    await db.studentInterest.upsert({
+      where: {
+        studentProfileId_subjectId: {
+          studentProfileId: profileId,
+          subjectId,
+        },
+      },
+      create: { studentProfileId: profileId, subjectId },
+      update: {},
+    });
+  }
+
+  await db.sessionOccurrence.upsert({
+    where: {
+      offeringId_sessionDate: {
+        offeringId: offering.id,
+        sessionDate,
+      },
+    },
+    create: {
+      offeringId: offering.id,
+      sessionDate,
+      outcome: "HELD",
+    },
+    update: { outcome: "HELD" },
+  });
+
+  await db.attendance.deleteMany({
+    where: {
+      sessionDate,
+      enrollment: { offeringId: offering.id },
+    },
+  });
+
+  const demoStatuses: Array<{
+    status: "PRESENT" | "LATE" | "ABSENT" | "EXCUSED";
+    source: "AUTO_JOIN" | "TEACHER";
+    joined: boolean;
+  }> = [
+    { status: "PRESENT", source: "AUTO_JOIN", joined: true },
+    { status: "LATE", source: "AUTO_JOIN", joined: true },
+    { status: "PRESENT", source: "AUTO_JOIN", joined: true },
+    { status: "ABSENT", source: "SYSTEM", joined: false },
+    { status: "EXCUSED", source: "TEACHER", joined: false },
+    { status: "PRESENT", source: "AUTO_JOIN", joined: true },
+    { status: "ABSENT", source: "SYSTEM", joined: false },
+    { status: "LATE", source: "AUTO_JOIN", joined: true },
+    { status: "EXCUSED", source: "TEACHER", joined: false },
+    { status: "PRESENT", source: "AUTO_JOIN", joined: true },
+  ];
+
+  for (let i = 0; i < enrollments.length; i += 1) {
+    const enrollment = enrollments[i]!;
+    const spec = demoStatuses[i] ?? { status: "ABSENT", source: "SYSTEM", joined: false };
+    const joinedAt = spec.joined
+      ? new Date(sessionDate.getTime() + (i + 1) * 60_000)
+      : null;
+
+    await db.attendance.create({
+      data: {
+        enrollmentId: enrollment.id,
+        sessionDate,
+        status: spec.status,
+        source: spec.source,
+        joinedAt,
+        teacherNote: spec.source === "TEACHER" ? "Seed demo attendance" : null,
+      },
+    });
+  }
+
+  console.log(
+    `[demo] ${cfg.offeringTitle}: ${enrollments.length} enrolled, past session ${cfg.sessionCalendarDate} ${minutesToTime(cfg.startMinutes)}–${minutesToTime(cfg.endMinutes)}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -642,6 +847,9 @@ async function main(): Promise<void> {
 
   console.log(`Seeding ${CONFIG.NUM_ASSIGNMENTS} assignments (one per student) + grades...`);
   await seedAssignments(teachers, students, enrollmentsByStudent);
+
+  console.log("Seeding teacher5 past class attendance demo...");
+  await seedTeacher5PastClassAttendanceDemo();
 
   console.log("Seed complete.");
   console.log(

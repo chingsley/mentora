@@ -9,11 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { Muted, PageWrap } from "@/components/ui/primitives";
 import { listAssignmentsForOffering } from "@/server/assignments";
 import { NewAssignmentForm } from "./NewAssignmentForm";
 import { AssignmentList } from "./AssignmentList";
-import { AssignmentsHeading } from "./AssignmentsHeading";
 
 export const metadata: Metadata = { title: "Assignments" };
 
@@ -55,14 +55,10 @@ export default async function OfferingAssignmentsPage({ params }: PageProps) {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <AssignmentsHeading subjectName={offering.subject.name}>
-          <PageTitle>Assignments</PageTitle>
-        </AssignmentsHeading>
-        <Muted>
-          {offering.title} · taught by {offering.teacherProfile.user.name}
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title="Assignments"
+        subtitle={`${offering.subject.name} · ${offering.title} · taught by ${offering.teacherProfile.user.name}`}
+      />
 
       {isTeacher ? (
         <Card>

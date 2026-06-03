@@ -1,6 +1,7 @@
 import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
 import type { OfferingRecurrence } from "@/lib/offeringRecurrence";
 import { COLORS } from "@/constants/colors.constants";
+import type { SessionMarkerKind } from "@/constants/sessionOutcome.constants";
 
 export type CalendarView = "day" | "week" | "month";
 
@@ -23,6 +24,21 @@ export interface CalendarEntry {
   visibility?: CalendarEntryVisibility;
   periodType?: OfferingPeriodType;
   recurrence?: OfferingRecurrence;
+}
+
+export interface CalendarEntryClickMeta {
+  date: Date;
+}
+
+export type CalendarEntryClickHandler = (
+  entry: CalendarEntry,
+  meta: CalendarEntryClickMeta,
+) => void;
+
+export interface CalendarOccurrenceLookup {
+  /** Map key: `${offeringId}:${sessionDateIso}` */
+  map: Record<string, import("@/lib/sessionOccurrenceKey").SessionOccurrenceSnapshot>;
+  getMarker: (entry: CalendarEntry, date: Date) => SessionMarkerKind | null;
 }
 
 export type FillStatus = "open" | "almost" | "full";

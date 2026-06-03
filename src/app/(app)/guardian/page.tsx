@@ -7,7 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { PageWrap } from "@/components/ui/primitives";
 import { listGuardianWards } from "@/server/guardians";
 import { WardGrid, WardLink } from "./WardLink";
 
@@ -29,10 +30,10 @@ export default async function GuardianIndexPage() {
   if (wards.length === 0) {
     return (
       <PageWrap>
-        <PageHeader>
-          <PageTitle>My wards</PageTitle>
-          <Muted>Ask a student to invite you with a 9-character invite code.</Muted>
-        </PageHeader>
+        <AppPageHeader
+          title="My wards"
+          subtitle="Ask a student to invite you with a 9-character invite code."
+        />
         <Card>
           <CardHeader>
             <CardTitle>No linked students yet</CardTitle>
@@ -48,12 +49,10 @@ export default async function GuardianIndexPage() {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>My wards</PageTitle>
-        <Muted>
-          Pick a student to view their timetable, attendance, teachers, and grades.
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title="My wards"
+        subtitle="Pick a student to view their timetable, attendance, teachers, and grades."
+      />
       <WardGrid>
         {wards.map((w) => (
           <WardLink

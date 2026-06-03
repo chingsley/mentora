@@ -6,9 +6,7 @@ import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import type { TeacherDashboardPayload } from "@/types/teacherDashboard";
 import { TeacherClassesTableCard } from "./TeacherClassesTableCard";
-import { TeacherDashboardHeader } from "./TeacherDashboardHeader";
 import { TeacherRecentMessagesCard } from "./TeacherRecentMessagesCard";
-import type { IconBoxTypeKey } from "@/constants/iconTheme.constants";
 import { TeacherStatCard } from "./TeacherStatCard";
 import { TeacherUpcomingSessionsCard } from "./TeacherUpcomingSessionsCard";
 
@@ -19,7 +17,7 @@ const Root = styled.div`
 `;
 
 const StatGrid = styled.div`
-  margin-top: ${SPACING.TWELVE};
+  margin-top: 0;
   display: grid;
   gap: ${SPACING.FOUR};
   grid-template-columns: 1fr;
@@ -68,20 +66,14 @@ export interface TeacherDashboardViewProps {
 export function TeacherDashboardView({ data }: TeacherDashboardViewProps) {
   return (
     <Root>
-      <TeacherDashboardHeader teacherName={data.teacherName} teacherImage={data.teacherImage} />
-
       <StatGrid>
-        {data.stats.map((stat, index) => {
-          const iconBoxType: IconBoxTypeKey = index % 2 === 0 ? "PRIMARY" : "SECONDARY";
-          return (
-            <TeacherStatCard
-              key={stat.label}
-              stat={stat}
-              icon={STAT_ICONS[index] ?? ClipboardList}
-              iconBoxType={iconBoxType}
-            />
-          );
-        })}
+        {data.stats.map((stat, index) => (
+          <TeacherStatCard
+            key={stat.label}
+            stat={stat}
+            icon={STAT_ICONS[index] ?? ClipboardList}
+          />
+        ))}
       </StatGrid>
 
       <MidGrid>

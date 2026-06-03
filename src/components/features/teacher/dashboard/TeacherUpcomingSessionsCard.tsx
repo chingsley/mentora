@@ -10,7 +10,6 @@ import {
   ICON_SIZE,
   ICON_STROKE,
   ICON_THEME,
-  type IconBoxTypeKey,
 } from "@/constants/iconTheme.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
@@ -51,7 +50,7 @@ const Item = styled.li`
   }
 `;
 
-const DateBlock = styled.div<{ $variant: IconBoxTypeKey; }>`
+const DateBlock = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -60,11 +59,8 @@ const DateBlock = styled.div<{ $variant: IconBoxTypeKey; }>`
   height: ${ICON_THEME.METRIC_ICON_BOX_SIZE};
   border-radius: ${ICON_THEME.METRIC_ICON_BOX_RADIUS};
   flex-shrink: 0;
-  background: ${(p) => ICON_BOX_TYPE[p.$variant].background};
-  color: ${(p) => ICON_BOX_TYPE[p.$variant].color};
-  border: ${(p) => (p.$variant === "SECONDARY" ? ICON_THEME.ACTION_LINK_BORDER : "none")};
-  box-shadow: ${(p) =>
-    p.$variant === "PRIMARY" ? ICON_THEME.METRIC_ICON_BOX_SHADOW : "none"};
+  background: ${ICON_BOX_TYPE.SECONDARY.background};
+  color: ${ICON_BOX_TYPE.SECONDARY.color};
 `;
 
 const Mo = styled.span`
@@ -107,7 +103,6 @@ const Cam = styled(Link)`
   height: ${ICON_THEME.ACTION_LINK_SIZE};
   border-radius: ${LAYOUT.RADIUS.MD};
   background: ${ICON_THEME.ACTION_LINK_BACKGROUND};
-  border: ${ICON_THEME.ACTION_LINK_BORDER};
   color: ${ICON_THEME.ACTION_LINK_FOREGROUND};
   flex-shrink: 0;
 
@@ -162,9 +157,9 @@ export function TeacherUpcomingSessionsCard({
           <Empty>No upcoming periods on your calendar.</Empty>
         ) : (
           <List>
-            {preview.map((s, index) => (
+            {preview.map((s) => (
               <Item key={s.id}>
-                <DateBlock $variant={index === 0 ? "PRIMARY" : "SECONDARY"} aria-hidden>
+                <DateBlock aria-hidden>
                   <Mo>{s.monthShort}</Mo>
                   <Day>{s.day}</Day>
                 </DateBlock>

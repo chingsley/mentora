@@ -57,22 +57,6 @@ export default async function TeacherPage({ params }: Props) {
       : null;
   }
 
-  const testimonialsByOffering = new Map<
-    string,
-    ClassDetail["testimonials"]
-  >();
-  for (const t of testimonials) {
-    const arr = testimonialsByOffering.get(t.offering.id) ?? [];
-    arr.push({
-      id: t.id,
-      rating: t.rating,
-      body: t.body,
-      createdAt: t.createdAt,
-      studentName: t.studentProfile.user.name,
-    });
-    testimonialsByOffering.set(t.offering.id, arr);
-  }
-
   const entries: CalendarEntry[] = [];
   const detailsByOfferingId: Record<string, ClassDetail> = {};
 
@@ -106,7 +90,6 @@ export default async function TeacherPage({ params }: Props) {
       hourlyRate: findRate(o.subjectId),
       rules: o.rules,
       description: o.description,
-      testimonials: testimonialsByOffering.get(o.id) ?? [],
     };
   }
 

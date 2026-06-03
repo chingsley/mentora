@@ -13,6 +13,7 @@ import { SPACING } from "@/constants/spacing.constants";
 
 const Wrap = styled.header`
   display: flex;
+  width: 100%;
   flex-direction: column;
   gap: ${SPACING.FOUR};
   margin-bottom: ${SPACING.SIX};
@@ -131,12 +132,11 @@ const IconButton = styled.button`
   width: ${ICON_THEME.METRIC_ICON_BOX_SIZE};
   height: ${ICON_THEME.METRIC_ICON_BOX_SIZE};
   border-radius: ${LAYOUT.RADIUS.LG};
+  border: none;
   background: ${ICON_BOX_TYPE.SECONDARY.background};
   color: ${ICON_BOX_TYPE.SECONDARY.color};
   cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+  transition: background-color 0.15s ease;
 
   &:hover {
     background: ${ICON_THEME.ACTION_LINK_BACKGROUND_HOVER};

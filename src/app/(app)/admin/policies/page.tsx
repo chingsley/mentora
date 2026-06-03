@@ -7,7 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Muted, PageHeader, PageTitle, PageWrap } from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { PageWrap } from "@/components/ui/primitives";
 import { getPolicy, listRegions } from "@/server/policies";
 import { minorUnitExponent, smallestToMajor } from "@/lib/money";
 import { formatPrice } from "@/lib/time";
@@ -23,12 +24,10 @@ export default async function AdminPoliciesPage() {
 
   return (
     <PageWrap>
-      <PageHeader>
-        <PageTitle>Platform policies</PageTitle>
-        <Muted>
-          Global controls that apply to every teacher and student on Mentora.
-        </Muted>
-      </PageHeader>
+      <AppPageHeader
+        title="Platform policies"
+        subtitle="Global controls that apply to every teacher and student on Mentora."
+      />
 
       <Card>
         <CardHeader>

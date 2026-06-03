@@ -35,7 +35,7 @@ export function TeacherPublicCalendar({
   const detail = selectedId ? detailsByOfferingId[selectedId] ?? null : null;
   const enrollmentId = selectedId ? enrollmentByOfferingId[selectedId] ?? null : null;
 
-  function onEntryClick(entry: CalendarEntry) {
+  function onEntryClick(entry: CalendarEntry, _meta: { date: Date }) {
     if (entry.visibility === "blocked") return;
     setSelectedId(entry.offeringId);
     setMessage(null);

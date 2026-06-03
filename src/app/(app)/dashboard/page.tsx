@@ -10,15 +10,8 @@ import {
 import { StudentDashboardView } from "@/components/features/student/dashboard/StudentDashboardView";
 import { TeacherDashboardView } from "@/components/features/teacher/dashboard/TeacherDashboardView";
 import { PrimaryLink, TextLink } from "@/components/ui/Link";
-import {
-  Grid,
-  Muted,
-  PageHeader,
-  PageTitle,
-  PageWrap,
-  Stack,
-  Strong,
-} from "@/components/ui/primitives";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { Grid, Muted, PageWrap, Stack } from "@/components/ui/primitives";
 import { getStudentDashboardPayload } from "@/server/dashboardStudent";
 import { getTeacherDashboardPayload } from "@/server/dashboardTeacher";
 import { listLinkedStudents } from "@/server/guardians";
@@ -35,12 +28,10 @@ export default async function DashboardPage() {
   return (
     <PageWrap>
       {role !== "TEACHER" && role !== "STUDENT" ? (
-        <PageHeader>
-          <PageTitle>Welcome{name ? `, ${name.split(" ")[0]}` : ""}</PageTitle>
-          <Muted>
-            You&apos;re signed in as <Strong>{role.toLowerCase()}</Strong>.
-          </Muted>
-        </PageHeader>
+        <AppPageHeader
+          title={`Welcome${name ? `, ${name.split(" ")[0]}` : ""}`}
+          subtitle={`You're signed in as ${role.toLowerCase()}.`}
+        />
       ) : null}
 
       {role === "STUDENT" ? <StudentDash userId={userId} /> : null}
@@ -70,7 +61,21 @@ async function StudentDash({ userId }: { userId: string }) {
       </Grid>
     );
   }
-  return <StudentDashboardView data={data} />;
+  const subtitle =
+    data.classes.length > 0
+      ? `You have ${data.classes.length} active class${data.classes.length === 1 ? "" : "es"} on your roster.`
+      : "Browse teachers to enroll in your first class.";
+
+  return (
+    <>
+      <AppPageHeader
+        title="Student Dashboard"
+        subtitle={subtitle}
+        profileImage={data.studentImage}
+      />
+      <StudentDashboardView data={data} />
+    </>
+  );
 }
 
 async function TeacherDash({ userId }: { userId: string }) {
@@ -92,7 +97,16 @@ async function TeacherDash({ userId }: { userId: string }) {
       </Grid>
     );
   }
-  return <TeacherDashboardView data={data} />;
+  return (
+    <>
+      <AppPageHeader
+        title="Teacher Dashboard"
+        subtitle="Your classes, schedule, and student activity at a glance."
+        profileImage={data.teacherImage}
+      />
+      <TeacherDashboardView data={data} />
+    </>
+  );
 }
 
 async function GuardianDash({ userId }: { userId: string }) {

@@ -9,7 +9,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { Suspense } from "react";
 import styled from "styled-components";
-import { TeacherDashboardHeader } from "@/components/features/teacher/dashboard/TeacherDashboardHeader";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
 import { formatTeacherProfileSubtitleName } from "@/lib/formatTeacherProfileSubtitleName";
 import { TeacherProfileBioTab } from "./TeacherProfileBioTab";
 import { TeacherProfileCoursesTab } from "./TeacherProfileCoursesTab";
@@ -179,13 +179,12 @@ export function TeacherProfileTabsClient({
 }: TeacherProfileTabsProps & { initialTab?: string | null; }) {
   return (
     <Shell>
-      <TeacherDashboardHeader
-        teacherName={props.fullName}
-        teacherImage={props.imageUrl}
+      <AppPageHeader
         title="Teacher Profile"
         subtitle={formatTeacherProfileSubtitleName(props.fullName)}
+        profileImage={props.imageUrl}
+        profileDisplayName={props.fullName}
         searchPlaceholder="Search students, classes, messages..."
-        showProfileLink={false}
       />
       <Suspense fallback={<TabsFallback />}>
         <TeacherProfileTabsInner initialTab={initialTab} {...props} />

@@ -1,5 +1,5 @@
-export const START_HOUR = 6;
-export const END_HOUR = 23;
+export const START_HOUR = 0;
+export const END_HOUR = 24;
 export const HOUR_PX = 48;
 export const VISIBLE_HOURS = 8;
 export const VIEWPORT_HEIGHT_PX = VISIBLE_HOURS * HOUR_PX;
