@@ -29,6 +29,12 @@ const HeroCard = styled(Card)`
   overflow: hidden;
 `;
 
+const HeroInner = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FIVE};
+`;
+
 const HeroRow = styled.div`
   display: flex;
   flex-direction: column;
@@ -145,27 +151,6 @@ const SubjectPill = styled.span`
   color: rgba(2, 8, 23, 0.8);
 `;
 
-const ThreeCol = styled.div`
-  display: grid;
-  gap: ${SPACING.SIX};
-
-  ${LAYOUT.MEDIA.LG} {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-`;
-
-const ScheduleCard = styled(Card)`
-  ${LAYOUT.MEDIA.LG} {
-    grid-column: span 2;
-  }
-`;
-
-const SideStack = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.FOUR};
-`;
-
 const InfoBlock = styled.p`
   border-radius: ${LAYOUT.RADIUS.MD};
   background-color: ${COLORS.BACKGROUND};
@@ -174,35 +159,92 @@ const InfoBlock = styled.p`
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
-const Bio = styled.p`
-  white-space: pre-wrap;
-  font-size: ${FONTS.SIZE.SM};
-  color: rgba(2, 8, 23, 0.8);
+const HeroDivider = styled.hr`
+  margin: 0;
+  border: none;
+  border-top: 1px solid ${COLORS.BORDER_SUBTLE_LIGHT};
 `;
 
-const RatesList = styled.ul`
+const AboutSection = styled.section`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.TWO};
+  max-width: 42rem;
+`;
+
+const AboutLabel = styled.h2`
+  margin: 0;
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: ${COLORS.SIDEBAR_MUTED};
+`;
+
+const AboutText = styled.p`
+  margin: 0;
+  white-space: pre-wrap;
   font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.NORMAL};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  color: ${COLORS.SIDEBAR_MUTED};
+`;
+
+const RatesGrid = styled.ul`
+  display: grid;
+  gap: ${SPACING.THREE};
   list-style: none;
   margin: 0;
   padding: 0;
+  grid-template-columns: 1fr;
+
+  ${LAYOUT.MEDIA.SM} {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  ${LAYOUT.MEDIA.LG} {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 `;
 
-const RateRow = styled.li`
+const RateItem = styled.li`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${COLORS.BORDER_SUBTLE_LIGHT};
+  padding: ${SPACING.FOUR};
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: ${COLORS.BORDER};
+    box-shadow: ${LAYOUT.SHADOW.SM};
+  }
 `;
 
-const RateLabel = styled.span`
-  color: rgba(2, 8, 23, 0.8);
-`;
-
-const RateValue = styled.span`
+const RateSubject = styled.span`
+  font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
   color: ${COLORS.HEADER};
+`;
+
+const RateRegion = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  color: ${COLORS.SIDEBAR_MUTED};
+`;
+
+const RatePrice = styled.span`
+  margin-top: ${SPACING.ONE};
+  font-size: ${FONTS.SIZE.LG};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
+  letter-spacing: -0.01em;
+`;
+
+const RatePriceUnit = styled.span`
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.NORMAL};
+  color: ${COLORS.SIDEBAR_MUTED};
 `;
 
 const Muted = styled.p`
@@ -287,7 +329,7 @@ export interface TeacherDetailViewProps {
   headline: string;
   bio: string;
   priceSummary: string;
-  subjects: { id: string; name: string }[];
+  subjects: { id: string; name: string; }[];
   rates: TeacherRateRow[];
   entries: CalendarEntry[];
   detailsByOfferingId: Record<string, ClassDetail>;
@@ -319,101 +361,100 @@ export function TeacherDetailView({
   return (
     <Wrap>
       <HeroCard>
-        <HeroRow>
-          <Avatar>
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
-                alt={`${name} profile photo`}
-                fill
-                sizes="112px"
-                style={{ objectFit: "cover" }}
-                unoptimized
-              />
-            ) : (
-              <AvatarFallback>{initials}</AvatarFallback>
-            )}
-          </Avatar>
-          <HeroBody>
-            <TitleRow>
-              <Name>{name}</Name>
-              <DisplayId>{displayId}</DisplayId>
-              <RatingPill>
-                <span aria-hidden>★</span>
-                {rating.toFixed(1)}
-                <RatingCount>({ratingsCount})</RatingCount>
-              </RatingPill>
-            </TitleRow>
-            <Headline>{headline || "Tutor on Mentora"}</Headline>
-            <PriceLine>{priceSummary}</PriceLine>
-            <SubjectPills>
-              {subjects.map((s) => (
-                <SubjectPill key={s.id}>{s.name}</SubjectPill>
-              ))}
-            </SubjectPills>
-          </HeroBody>
-        </HeroRow>
+        <HeroInner>
+          <HeroRow>
+            <Avatar>
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt={`${name} profile photo`}
+                  fill
+                  sizes="112px"
+                  style={{ objectFit: "cover" }}
+                  unoptimized
+                />
+              ) : (
+                <AvatarFallback>{initials}</AvatarFallback>
+              )}
+            </Avatar>
+            <HeroBody>
+              <TitleRow>
+                <Name>{name}</Name>
+                <DisplayId>{displayId}</DisplayId>
+                <RatingPill>
+                  <span aria-hidden>★</span>
+                  {rating.toFixed(1)}
+                  <RatingCount>({ratingsCount})</RatingCount>
+                </RatingPill>
+              </TitleRow>
+              <Headline>{headline || "Tutor on Mentora"}</Headline>
+              <PriceLine>{priceSummary}</PriceLine>
+              <SubjectPills>
+                {subjects.map((s) => (
+                  <SubjectPill key={s.id}>{s.name}</SubjectPill>
+                ))}
+              </SubjectPills>
+            </HeroBody>
+          </HeroRow>
+
+          <HeroDivider />
+
+          <AboutSection aria-labelledby="teacher-about-heading">
+            <AboutLabel id="teacher-about-heading">About</AboutLabel>
+            <AboutText>{bio || "This teacher hasn't written a bio yet."}</AboutText>
+          </AboutSection>
+        </HeroInner>
       </HeroCard>
 
-      <ThreeCol>
-        <ScheduleCard>
-          <CardHeader>
-            <CardTitle>Weekly schedule</CardTitle>
-            <CardDescription>
-              Tap a class to see capacity, rules and testimonies. Green tiles
-              are open, amber are almost full, red are full.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {entries.length === 0 ? (
-              <InfoBlock>
-                This teacher hasn&apos;t published any class periods yet.
-              </InfoBlock>
-            ) : (
-              <TeacherPublicCalendar
-                entries={entries}
-                detailsByOfferingId={detailsByOfferingId}
-                enrollmentByOfferingId={enrollmentByOfferingId}
-                viewerRole={viewerRole}
-                viewerName={viewerName}
-              />
-            )}
-          </CardContent>
-        </ScheduleCard>
+      <Card>
+        <CardHeader>
+          <CardTitle>Rates</CardTitle>
+          <CardDescription>Hourly rates by subject and region.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {rates.length === 0 ? (
+            <Muted>No rates set yet.</Muted>
+          ) : (
+            <RatesGrid>
+              {rates.map((r) => (
+                <RateItem key={r.id}>
+                  <RateSubject>{r.subjectName}</RateSubject>
+                  <RateRegion>{r.regionName}</RateRegion>
+                  <RatePrice>
+                    {r.hourlyDisplay}
+                    <RatePriceUnit> /hr</RatePriceUnit>
+                  </RatePrice>
+                </RateItem>
+              ))}
+            </RatesGrid>
+          )}
+        </CardContent>
+      </Card>
 
-        <SideStack>
-          <Card>
-            <CardHeader>
-              <CardTitle>About</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Bio>{bio || "This teacher hasn't written a bio yet."}</Bio>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Rates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {rates.length === 0 ? (
-                <Muted>No rates set yet.</Muted>
-              ) : (
-                <RatesList>
-                  {rates.map((r) => (
-                    <RateRow key={r.id}>
-                      <RateLabel>
-                        {r.subjectName} &middot; {r.regionName}
-                      </RateLabel>
-                      <RateValue>{r.hourlyDisplay}/hr</RateValue>
-                    </RateRow>
-                  ))}
-                </RatesList>
-              )}
-            </CardContent>
-          </Card>
-        </SideStack>
-      </ThreeCol>
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly schedule</CardTitle>
+          <CardDescription>
+            Tap a class to see capacity, rules and testimonies. Green tiles
+            are open, amber are almost full, red are full.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {entries.length === 0 ? (
+            <InfoBlock>
+              This teacher hasn&apos;t published any class periods yet.
+            </InfoBlock>
+          ) : (
+            <TeacherPublicCalendar
+              entries={entries}
+              detailsByOfferingId={detailsByOfferingId}
+              enrollmentByOfferingId={enrollmentByOfferingId}
+              viewerRole={viewerRole}
+              viewerName={viewerName}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

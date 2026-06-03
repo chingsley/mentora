@@ -22,9 +22,7 @@ import {
   DashboardLink,
   TeacherDashboardCardHeader,
 } from "./TeacherDashboardCard";
-import { drawBorder } from "@/utils/dev.utils";
-
-/** Preview row count for dashboard card; full list is on /schedule. */
+/** Preview row count for dashboard card; full list is on the schedule/classes page. */
 const UPCOMING_SESSIONS_PREVIEW_LIMIT = 3;
 
 const List = styled.ul`
@@ -42,8 +40,6 @@ const Item = styled.li`
   gap: ${SPACING.THREE};
   margin-top: ${SPACING.THREE};
   margin-bottom: ${SPACING.THREE};
-  // border-bottom: 1px solid ${DASHBOARD.BORDER_SUBTLE};
-  // border: ${drawBorder("red", true)};
 
   &:first-child {
     padding-top: 0;
@@ -66,7 +62,7 @@ const DateBlock = styled.div<{ $variant: IconBoxTypeKey; }>`
   flex-shrink: 0;
   background: ${(p) => ICON_BOX_TYPE[p.$variant].background};
   color: ${(p) => ICON_BOX_TYPE[p.$variant].color};
-  border: ${(p) => ICON_BOX_TYPE[p.$variant].border};
+  border: ${(p) => (p.$variant === "SECONDARY" ? ICON_THEME.ACTION_LINK_BORDER : "none")};
   box-shadow: ${(p) =>
     p.$variant === "PRIMARY" ? ICON_THEME.METRIC_ICON_BOX_SHADOW : "none"};
 `;
@@ -134,18 +130,30 @@ const Empty = styled.p`
 
 export interface TeacherUpcomingSessionsCardProps {
   sessions: TeacherDashboardUpcomingSession[];
+  title?: string;
+  viewAllHref?: string;
+  viewAllLabel?: string;
+  sessionLinkHref?: string;
+  sessionLinkAriaLabel?: string;
 }
 
-export function TeacherUpcomingSessionsCard({ sessions }: TeacherUpcomingSessionsCardProps) {
+export function TeacherUpcomingSessionsCard({
+  sessions,
+  title = "Upcoming sessions",
+  viewAllHref = "/schedule",
+  viewAllLabel = "View full schedule →",
+  sessionLinkHref = "/schedule",
+  sessionLinkAriaLabel = "Open schedule",
+}: TeacherUpcomingSessionsCardProps) {
   const preview = sessions.slice(0, UPCOMING_SESSIONS_PREVIEW_LIMIT);
 
   return (
     <DashboardCard $flush>
       <TeacherDashboardCardHeader
-        title="Upcoming sessions"
+        title={title}
         action={
           <DashboardLink>
-            <AppHyperLink href="/schedule">View full schedule →</AppHyperLink>
+            <AppHyperLink href={viewAllHref}>{viewAllLabel}</AppHyperLink>
           </DashboardLink>
         }
       />
@@ -164,7 +172,7 @@ export function TeacherUpcomingSessionsCard({ sessions }: TeacherUpcomingSession
                   <Subject>{s.subjectName}</Subject>
                   <Time>{s.timeRange}</Time>
                 </Body>
-                <Cam href="/schedule" aria-label="Open schedule">
+                <Cam href={sessionLinkHref} aria-label={sessionLinkAriaLabel}>
                   <Video size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
                 </Cam>
               </Item>

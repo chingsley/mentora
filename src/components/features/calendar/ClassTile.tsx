@@ -1,7 +1,8 @@
 "use client";
 
+import { OfferingPeriodType } from "@prisma/client";
 import styled from "styled-components";
-import { Repeat } from "lucide-react";
+import { Lock, Repeat } from "lucide-react";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -49,13 +50,13 @@ const TileBase = styled.button<{
   border-radius: ${(p) => (p.$variant === "month-bar" ? LAYOUT.RADIUS.SM : LAYOUT.RADIUS.MD)};
   border: 1px solid
     ${(p) =>
-      p.$blocked
-        ? BLOCKED_THEME.border
-        : p.$variant === "month-bar"
-          ? COLORS.TRANSPARENT
-          : p.$useSubjectTheme
-            ? p.$subjectBorder
-            : FILL_THEME[p.$status].border};
+    p.$blocked
+      ? BLOCKED_THEME.border
+      : p.$variant === "month-bar"
+        ? COLORS.TRANSPARENT
+        : p.$useSubjectTheme
+          ? p.$subjectBorder
+          : FILL_THEME[p.$status].border};
   padding: ${(p) =>
     p.$variant === "block"
       ? `${SPACING.ONE} ${SPACING.TWO}`
@@ -87,13 +88,13 @@ const TileBase = styled.button<{
 
   &:hover:not(:disabled) {
     background-color: ${(p) =>
-      p.$blocked
-        ? BLOCKED_THEME.bgHover
-        : p.$variant === "month-bar"
-          ? COLORS.CALENDAR_EVENT_BG_HOVER
-          : p.$useSubjectTheme
-            ? p.$subjectBgHover
-            : FILL_THEME[p.$status].bgHover};
+    p.$blocked
+      ? BLOCKED_THEME.bgHover
+      : p.$variant === "month-bar"
+        ? COLORS.CALENDAR_EVENT_BG_HOVER
+        : p.$useSubjectTheme
+          ? p.$subjectBgHover
+          : FILL_THEME[p.$status].bgHover};
   }
 
   &:disabled {
@@ -109,12 +110,35 @@ const MonthBarAccent = styled.span`
   background-color: ${COLORS.CALENDAR_EVENT_ACCENT};
 `;
 
+const TitleRow = styled.span`
+  display: flex;
+  align-items: center;
+  gap: ${SPACING.ONE};
+  min-width: 0;
+`;
+
+const ReservedIconWrap = styled.span`
+  flex-shrink: 0;
+  display: inline-flex;
+  color: ${COLORS.CALENDAR_RESERVED_ICON};
+`;
+
 const MonthBarText = styled.span`
+  display: inline-flex;
   flex: 1 1 auto;
+  align-items: center;
+  gap: ${SPACING.ONE};
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: ${FONTS.WEIGHT.MEDIUM};
+`;
+
+const MonthBarLabel = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const RecurrenceIconWrap = styled.span`
@@ -145,16 +169,28 @@ export function ClassTile({
   className,
 }: ClassTileProps) {
   const blocked = entry.visibility === "blocked";
+  const isReserved =
+    !blocked && entry.periodType === OfferingPeriodType.RESERVED;
   const status = fillStatus(entry);
   const interactive = !!onClick && !blocked;
   const useSubjectTheme = colorMode === "subject" && !blocked;
   const subjectTheme = useSubjectTheme ? subjectThemeForId(entry.subjectId) : null;
   const showsRecurrenceIcon = !entry.recurrence || entry.recurrence.kind !== "ONCE";
-  const ariaLabel = blocked
-    ? `Blocked — ${minutesToTime(entry.startMinutes)} to ${minutesToTime(entry.endMinutes)}`
+  const enrollmentLine = blocked
+    ? "Reserved time"
     : useSubjectTheme
-      ? `${entry.title} — ${entry.subtitle ?? "Class"} (${entry.enrolled}/${entry.effectiveCap})`
-      : `${entry.title} — ${FILL_LABEL[status]} (${entry.enrolled}/${entry.effectiveCap})`;
+      ? `${entry.enrolled}/${entry.effectiveCap} enrolled`
+      : status === "full"
+        ? "Full"
+        : `${entry.enrolled}/${entry.effectiveCap} enrolled`;
+  const metaLine = isReserved ? `Invite only · ${enrollmentLine}` : enrollmentLine;
+  const ariaLabel = blocked
+    ? `${entry.title} — ${minutesToTime(entry.startMinutes)} to ${minutesToTime(entry.endMinutes)}`
+    : isReserved
+      ? `${entry.title} — Invite only (${entry.enrolled}/${entry.effectiveCap})`
+      : useSubjectTheme
+        ? `${entry.title} — ${entry.subtitle ?? "Class"} (${entry.enrolled}/${entry.effectiveCap})`
+        : `${entry.title} — ${FILL_LABEL[status]} (${entry.enrolled}/${entry.effectiveCap})`;
 
   return (
     <TileBase
@@ -175,25 +211,31 @@ export function ClassTile({
     >
       {variant === "block" ? (
         <>
-          <TitleSpan>{blocked ? "Blocked" : entry.title}</TitleSpan>
+          <TitleRow>
+            {isReserved ? (
+              <ReservedIconWrap aria-hidden>
+                <Lock size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.MEDIUM} />
+              </ReservedIconWrap>
+            ) : null}
+            <TitleSpan>{entry.title}</TitleSpan>
+          </TitleRow>
           <DimSpan>
             {minutesToTime(entry.startMinutes)}–{minutesToTime(entry.endMinutes)}
           </DimSpan>
-          <DimSpan>
-            {blocked
-              ? "Reserved time"
-              : useSubjectTheme
-                ? `${entry.enrolled}/${entry.effectiveCap} enrolled`
-                : status === "full"
-                  ? "Full"
-                  : `${entry.enrolled}/${entry.effectiveCap} enrolled`}
-          </DimSpan>
+          <DimSpan>{metaLine}</DimSpan>
         </>
       ) : variant === "month-bar" ? (
         <>
           <MonthBarAccent aria-hidden />
           <MonthBarText>
-            {minutesToTime(entry.startMinutes)} {blocked ? "Blocked" : entry.title}
+            {isReserved ? (
+              <ReservedIconWrap aria-hidden>
+                <Lock size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.MEDIUM} />
+              </ReservedIconWrap>
+            ) : null}
+            <MonthBarLabel>
+              {minutesToTime(entry.startMinutes)} {entry.title}
+            </MonthBarLabel>
           </MonthBarText>
           {showsRecurrenceIcon ? (
             <RecurrenceIconWrap aria-hidden>

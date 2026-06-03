@@ -231,6 +231,8 @@ export interface TeacherDashboardHeaderProps {
   searchPlaceholder?: string;
   /** When false, hides the profile shortcut (e.g. on `/profile` where it is redundant). Default true. */
   showProfileLink?: boolean;
+  /** Role line under the profile name (default: Teacher). */
+  profileRole?: string;
 }
 
 export function TeacherDashboardHeader({
@@ -241,6 +243,7 @@ export function TeacherDashboardHeader({
   subtitle,
   searchPlaceholder = "Search students, classes, schedule…",
   showProfileLink = true,
+  profileRole = "Teacher",
 }: TeacherDashboardHeaderProps) {
   const initials = teacherName
     .split(/\s+/)
@@ -286,7 +289,7 @@ export function TeacherDashboardHeader({
               </Avatar>
               <ProfileText>
                 <ProfileName>{teacherName}</ProfileName>
-                <ProfileRole>Teacher</ProfileRole>
+                <ProfileRole>{profileRole}</ProfileRole>
               </ProfileText>
               <ChevronDown size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden color={ICON_THEME.INLINE_SUBTLE} />
             </ProfileLink>

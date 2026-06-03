@@ -618,11 +618,33 @@ async function assertInviteesAreStudents(studentProfileIds: string[]) {
   }
 }
 
+/** Ends ACTIVE enrollments for students no longer on the invite list (reserved periods). */
+async function dropEnrollmentsForRemovedInvitees(
+  tx: Prisma.TransactionClient,
+  offeringId: string,
+  invitedStudentProfileIds: string[],
+) {
+  await tx.enrollment.updateMany({
+    where: {
+      offeringId,
+      status: "ACTIVE",
+      ...(invitedStudentProfileIds.length > 0
+        ? { studentProfileId: { notIn: invitedStudentProfileIds } }
+        : {}),
+    },
+    data: {
+      status: "DROPPED",
+      droppedAt: new Date(),
+    },
+  });
+}
+
 async function syncOfferingInvites(
   tx: Prisma.TransactionClient,
   offeringId: string,
   studentProfileIds: string[],
 ) {
+  await dropEnrollmentsForRemovedInvitees(tx, offeringId, studentProfileIds);
   await tx.offeringInvite.deleteMany({ where: { offeringId } });
   if (studentProfileIds.length === 0) return;
   await tx.offeringInvite.createMany({

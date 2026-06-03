@@ -114,6 +114,7 @@ export function TeacherOfferingCalendar({
       currentEnrolled: o.enrolled,
     }).effectiveCap,
     recurrence: offeringRecurrence(o),
+    periodType: o.periodType,
   }));
 
   const dialogRows = React.useMemo(

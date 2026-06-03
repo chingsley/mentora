@@ -98,6 +98,9 @@ export const COLORS = {
   CALENDAR_EVENT_TEXT: "#1e3a8a",
   CALENDAR_OUT_OF_MONTH_BG: "rgba(248, 248, 248, 0.85)",
 
+  /** Teacher calendar: invite-only (reserved) class lock icon */
+  CALENDAR_RESERVED_ICON: "rgba(95, 111, 149, 0.85)",
+
   // App shell sidebar — aligned with Maje portal (`.maje-teacher-db .sidebar`: `--surface`, `--ink`, `--muted`)
   SIDEBAR_MUTED: "#4d566b",
   SIDEBAR_ACCENT: "#5a6888",

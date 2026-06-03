@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+import { StudentDashboardView } from "@/components/features/student/dashboard/StudentDashboardView";
 import { TeacherDashboardView } from "@/components/features/teacher/dashboard/TeacherDashboardView";
 import { PrimaryLink, TextLink } from "@/components/ui/Link";
 import {
@@ -18,7 +19,7 @@ import {
   Stack,
   Strong,
 } from "@/components/ui/primitives";
-import { listStudentEnrollments } from "@/server/enrollments";
+import { getStudentDashboardPayload } from "@/server/dashboardStudent";
 import { getTeacherDashboardPayload } from "@/server/dashboardTeacher";
 import { listLinkedStudents } from "@/server/guardians";
 import { getPolicy } from "@/server/policies";
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
 
   return (
     <PageWrap>
-      {role !== "TEACHER" ? (
+      {role !== "TEACHER" && role !== "STUDENT" ? (
         <PageHeader>
           <PageTitle>Welcome{name ? `, ${name.split(" ")[0]}` : ""}</PageTitle>
           <Muted>
@@ -51,38 +52,25 @@ export default async function DashboardPage() {
 }
 
 async function StudentDash({ userId }: { userId: string }) {
-  const enrollments = await listStudentEnrollments(userId);
-  return (
-    <Stack $gap="FOUR">
-      <NotificationPermissionBanner />
+  const data = await getStudentDashboardPayload(userId);
+  if (!data) {
+    return (
       <Grid $gap="FOUR" $mdCols={2}>
         <Card>
           <CardHeader>
-            <CardTitle>Find a teacher</CardTitle>
+            <CardTitle>Student dashboard</CardTitle>
             <CardDescription>
-              Search by subject, price, and region to find the right fit.
+              We couldn&apos;t load your student profile. Try completing onboarding again.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <PrimaryLink href="/teachers">Browse teachers</PrimaryLink>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Your active classes</CardTitle>
-            <CardDescription>
-              You are enrolled in {enrollments.length} period
-              {enrollments.length === 1 ? "" : "s"}.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TextLink href="/classes">View my classes →</TextLink>
+            <PrimaryLink href="/profile">Go to profile</PrimaryLink>
           </CardContent>
         </Card>
       </Grid>
-    </Stack>
-  );
+    );
+  }
+  return <StudentDashboardView data={data} />;
 }
 
 async function TeacherDash({ userId }: { userId: string }) {

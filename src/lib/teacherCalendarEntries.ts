@@ -40,7 +40,7 @@ export function buildTeacherOfferingCalendarEntry(args: {
     return {
       id: `blocked-${offering.id}`,
       offeringId: offering.id,
-      title: "Blocked",
+      title: "Reserved",
       subtitle: "Reserved time",
       subjectId: offering.subjectId,
       dayOfWeek: offering.dayOfWeek,
