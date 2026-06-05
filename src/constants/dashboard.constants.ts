@@ -7,7 +7,8 @@ import { FONTS } from "@/constants/fonts.constants";
 import { BOX_SHADOW_CARD, LAYOUT } from "@/constants/layout.constants";
 
 export const DASHBOARD = {
-  PAGE_BACKGROUND: "#f8f9fb",
+  /** Alias of `COLORS.APP_MAIN_BACKGROUND` for dashboard table chrome. */
+  PAGE_BACKGROUND: COLORS.APP_MAIN_BACKGROUND,
   CARD_BACKGROUND: "#ffffff",
   /** Shell border for `DashboardCard` and stat tiles */
   CARD_BORDER: "#e1e7ef",

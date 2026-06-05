@@ -4,6 +4,8 @@ export type AppNavIconKey =
   | "dashboard"
   | "teachers"
   | "classes"
+  | "billing"
+  | "earnings"
   | "schedule"
   | "guardians"
   | "policies"
@@ -28,6 +30,8 @@ export const APP_NAV: readonly AppNavItem[] = [
   },
   { href: "/teachers", label: "Find teachers", roles: ["STUDENT"], icon: "teachers" },
   { href: "/classes", label: "My classes", roles: ["STUDENT"], icon: "classes" },
+  { href: "/billing", label: "My billing", roles: ["STUDENT"], icon: "billing" },
+  { href: "/earnings", label: "My earnings", roles: ["TEACHER"], icon: "earnings" },
   { href: "/profile", label: "My profile", roles: ["TEACHER", "STUDENT"], icon: "profile" },
   { href: "/schedule", label: "My schedule", roles: ["TEACHER"], icon: "schedule" },
   { href: "/guardians", label: "Guardians", roles: ["STUDENT"], icon: "guardians" },

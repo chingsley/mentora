@@ -1,6 +1,7 @@
 /**
  * Layout dimensions and breakpoints. Sizes in rem so they scale with root font-size.
  */
+import { COLORS } from "./colors.constants";
 import { SPACING } from "./spacing.constants";
 
 /** Shared card chrome shadow (teacher dashboard + profile card surfaces). */
@@ -41,14 +42,6 @@ export const LAYOUT = {
     SPIN_DURATION: "0.95s",
     SHIMMER_DURATION: "1.4s",
   },
-  SIDEBAR_WIDTH: "16rem", // 256px — rail width at `LAYOUT.MEDIA.LG` when expanded (`AppShellClient` sidebar)
-  SIDEBAR_WIDTH_COLLAPSED: "4rem", // 64px — rail width at `LAYOUT.MEDIA.LG` when collapsed
-  /**
-   * Padding inside `AppSidebarChrome` footer (and the same inset used to full-bleed
-   * `SidebarAccountMenu` flyouts to the sidebar rail). Adjust **only** this token to
-   * change footer gutter + matching menu width together.
-   */
-  SIDEBAR_FOOTER_INSET_INLINE: SPACING.TWO,
   /**
    * Page chrome inset applied once on `<Main>` in AppShellClient. Every
    * authenticated route inherits this, so individual page components must
@@ -67,6 +60,37 @@ export const LAYOUT = {
     INLINE: "clamp(2rem, 4vw, 1rem)",
     /** Vertical padding: 24px → ~4vw → 40px. */
     BLOCK: "clamp(1.5rem, 4vw, 0.5rem)",
+  },
+  /**
+   * App shell chrome. Shell surfaces are applied once in `AppShellClient`:
+   * - `<Sidebar>` — `SIDEBAR.BACKGROUND`, `SIDEBAR.TEXT`, `SIDEBAR.BORDER`
+   * - `<Main>` — `MAIN_BACKGROUND`
+   * Inner sidebar pieces (`AppSidebarChrome`, account menu, ward selector) consume
+   * `APP_SHELL.SIDEBAR` tokens — never hardcode sidebar colors elsewhere.
+   */
+  APP_SHELL: {
+    MAIN_BACKGROUND: COLORS.APP_MAIN_BACKGROUND,
+    SIDEBAR: {
+      BACKGROUND: COLORS.APP_SIDEBAR_BACKGROUND,
+      TEXT: COLORS.APP_SIDEBAR_TEXT,
+      BORDER: COLORS.APP_SIDEBAR_BORDER,
+      MUTED: COLORS.SIDEBAR_MUTED,
+      ACCENT: COLORS.SIDEBAR_ACCENT,
+      BRAND: COLORS.SIDEBAR_BRAND,
+      HOVER: COLORS.SIDEBAR_HOVER,
+      ACTIVE_BG: COLORS.SIDEBAR_ACTIVE_BG,
+      ROLE: COLORS.SIDEBAR_ROLE,
+      AVATAR_BG: COLORS.SIDEBAR_AVATAR_BG,
+      NAV_BORDER_HOVER: COLORS.SIDEBAR_NAV_BORDER_HOVER,
+      FOCUS_RING: COLORS.SIDEBAR_FOCUS_RING,
+      NAV_ITEM_ACTIVE_BACKGROUND: COLORS.APP_SIDEBAR_BACKGROUND,
+      WIDTH: "16rem",
+      WIDTH_COLLAPSED: "4rem",
+      MOBILE_MAX_WIDTH: "18rem",
+      /** Mobile drawer elevation on `<Sidebar>` (matches `LAYOUT.SHADOW.MD`). */
+      MOBILE_SHADOW: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)",
+      FOOTER_INSET_INLINE: SPACING.TWO,
+    },
   },
   /** Minimum inline size before horizontal scroll on dense data tables (248px). */
   TABLE_MIN_WIDTH: "15.5rem",

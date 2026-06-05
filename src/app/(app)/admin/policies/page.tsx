@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import { AppPageHeader } from "@/components/layouts/AppPageHeader";
-import { PageWrap } from "@/components/ui/primitives";
+import { Muted, PageWrap } from "@/components/ui/primitives";
 import { getPolicy, listRegions } from "@/server/policies";
 import { minorUnitExponent, smallestToMajor } from "@/lib/money";
 import { formatPrice } from "@/lib/time";

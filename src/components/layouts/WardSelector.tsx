@@ -4,10 +4,11 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import styled from "styled-components";
 import { ChevronDown } from "lucide-react";
-import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+
+const S = LAYOUT.APP_SHELL.SIDEBAR;
 
 export interface WardOption {
   studentProfileId: string;
@@ -21,7 +22,7 @@ export interface WardSelectorProps {
 }
 
 const CollapsedWrap = styled.div`
-  border-top: 1px solid ${COLORS.BORDER};
+  border-top: 1px solid ${S.BORDER};
   padding: ${SPACING.TWO} 0;
 `;
 
@@ -38,15 +39,15 @@ const Avatar = styled.div<{ $size: "sm" | "md" }>`
   height: ${(p) => (p.$size === "sm" ? "1.5rem" : "2.25rem")};
   flex-shrink: 0;
   border-radius: 9999px;
-  background-color: ${COLORS.SIDEBAR_AVATAR_BG};
-  color: ${COLORS.HEADER};
+  background-color: ${S.AVATAR_BG};
+  color: ${S.TEXT};
   text-transform: uppercase;
   font-size: ${(p) => (p.$size === "sm" ? "0.6875rem" : FONTS.SIZE.XS)};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
 `;
 
 const ExpandedWrap = styled.div`
-  border-top: 1px solid ${COLORS.BORDER};
+  border-top: 1px solid ${S.BORDER};
   padding: ${SPACING.THREE};
 `;
 
@@ -55,7 +56,7 @@ const Eyebrow = styled.p`
   font-size: ${FONTS.SIZE.MICRO};
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: ${COLORS.SIDEBAR_ROLE};
+  color: ${S.ROLE};
 `;
 
 const Trigger = styled.button`
@@ -65,8 +66,8 @@ const Trigger = styled.button`
   width: 100%;
   padding: ${SPACING.TWO};
   border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: ${COLORS.SIDEBAR_HOVER};
-  color: ${COLORS.HEADER};
+  background-color: ${S.HOVER};
+  color: ${S.TEXT};
   font-size: ${FONTS.SIZE.SM};
   text-align: left;
   outline: none;
@@ -75,11 +76,11 @@ const Trigger = styled.button`
     color 0.15s ease;
 
   &:hover {
-    background-color: ${COLORS.SIDEBAR_ACTIVE_BG};
+    background-color: ${S.ACTIVE_BG};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
+    box-shadow: 0 0 0 2px ${S.FOCUS_RING};
   }
 `;
 
@@ -95,7 +96,7 @@ const TriggerCaret = styled(ChevronDown)`
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  color: ${COLORS.SIDEBAR_MUTED};
+  color: ${S.MUTED};
 `;
 
 const List = styled.ul`
@@ -107,8 +108,8 @@ const List = styled.ul`
   max-height: 16rem;
   overflow-y: auto;
   border-radius: ${LAYOUT.RADIUS.MD};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
+  border: 1px solid ${S.BORDER};
+  background-color: ${S.BACKGROUND};
   box-shadow: ${LAYOUT.SHADOW.SM};
 `;
 
@@ -122,17 +123,17 @@ const Option = styled.button<{ $selected: boolean }>`
   text-align: left;
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${(p) => (p.$selected ? FONTS.WEIGHT.MEDIUM : FONTS.WEIGHT.NORMAL)};
-  color: ${(p) => (p.$selected ? COLORS.HEADER : COLORS.SIDEBAR_MUTED)};
-  background-color: ${(p) => (p.$selected ? COLORS.SIDEBAR_ACTIVE_BG : "transparent")};
+  color: ${(p) => (p.$selected ? S.TEXT : S.MUTED)};
+  background-color: ${(p) => (p.$selected ? S.ACTIVE_BG : "transparent")};
   outline: none;
 
   &:hover {
-    background-color: ${COLORS.SIDEBAR_HOVER};
-    color: ${COLORS.HEADER};
+    background-color: ${S.HOVER};
+    color: ${S.TEXT};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
+    box-shadow: 0 0 0 2px ${S.FOCUS_RING};
   }
 `;
 

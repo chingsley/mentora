@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
 import styled from "styled-components";
-import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+
+const S = LAYOUT.APP_SHELL.SIDEBAR;
 import type { AppNavItem } from "./appNavConfig";
 import { AppNavIcon } from "./AppNavIcon";
 import { SidebarAccountMenu } from "./SidebarAccountMenu";
@@ -26,7 +27,7 @@ const Brand = styled.div<{ $collapsed: boolean; }>`
   flex-direction: column;
   align-items: stretch;
   padding: ${(p) => (p.$collapsed ? `${SPACING.FOUR} ${SPACING.TWO}` : `${SPACING.FOUR}`)};
-  border-bottom: 1px solid ${COLORS.BORDER};
+  border-bottom: 1px solid ${S.BORDER};
 `;
 
 const BrandTop = styled.div`
@@ -55,7 +56,7 @@ const BrandCollapseToggle = styled.button`
   border: none;
   border-radius: ${LAYOUT.RADIUS.MD};
   background: transparent;
-  color: ${COLORS.SIDEBAR_MUTED};
+  color: ${S.MUTED};
   cursor: pointer;
   outline: none;
   transition:
@@ -63,12 +64,12 @@ const BrandCollapseToggle = styled.button`
     color 0.15s ease;
 
   &:hover {
-    background-color: ${COLORS.SIDEBAR_HOVER};
-    color: ${COLORS.HEADER};
+    background-color: ${S.HOVER};
+    color: ${S.TEXT};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
+    box-shadow: 0 0 0 2px ${S.FOCUS_RING};
   }
 `;
 
@@ -82,15 +83,15 @@ const BrandLink = styled(Link) <{ $collapsed: boolean; }>`
       : `font-size: ${FONTS.SIZE.SM};`}
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   letter-spacing: -0.01em;
-  color: ${COLORS.HEADER};
+  color: ${S.TEXT};
   outline: none;
 
   &:hover {
-    color: ${COLORS.SIDEBAR_BRAND};
+    color: ${S.BRAND};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
+    box-shadow: 0 0 0 2px ${S.FOCUS_RING};
   }
 `;
 
@@ -119,10 +120,10 @@ const NavItemLink = styled(Link) <{ $collapsed: boolean; $active: boolean; }>`
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   text-decoration: none;
-  color: ${(p) => (p.$active ? COLORS.HEADER : COLORS.SIDEBAR_MUTED)};
-  background-color: ${(p) => (p.$active ? COLORS.FOREGROUND : "transparent")};
+  color: ${(p) => (p.$active ? S.TEXT : S.MUTED)};
+  background-color: ${(p) => (p.$active ? S.NAV_ITEM_ACTIVE_BACKGROUND : "transparent")};
   border-bottom: ${(p) =>
-    p.$active ? `2px solid ${COLORS.SIDEBAR_ACCENT}` : "2px solid transparent"};
+    p.$active ? `2px solid ${S.ACCENT}` : "2px solid transparent"};
   outline: none;
   transition:
     color 0.15s ease,
@@ -130,16 +131,16 @@ const NavItemLink = styled(Link) <{ $collapsed: boolean; $active: boolean; }>`
     border-bottom 0.15s ease;
 
   &:hover {
-    color: ${COLORS.HEADER};
-    background-color: ${COLORS.FOREGROUND};
+    color: ${S.TEXT};
+    background-color: ${S.NAV_ITEM_ACTIVE_BACKGROUND};
     border-bottom: ${(p) =>
     p.$active
-      ? `2px solid ${COLORS.SIDEBAR_ACCENT}`
-      : `1px solid ${COLORS.SIDEBAR_NAV_BORDER_HOVER}`};
+      ? `2px solid ${S.ACCENT}`
+      : `1px solid ${S.NAV_BORDER_HOVER}`};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
+    box-shadow: 0 0 0 2px ${S.FOCUS_RING};
   }
 `;
 
@@ -165,8 +166,8 @@ const SrOnly = styled.span`
 const Footer = styled.div`
   position: relative;
   flex-shrink: 0;
-  border-top: 1px solid ${COLORS.BORDER};
-  padding: ${LAYOUT.SIDEBAR_FOOTER_INSET_INLINE};
+  border-top: 1px solid ${S.BORDER};
+  padding: ${S.FOOTER_INSET_INLINE};
 `;
 
 const ToggleSvg = styled.svg`

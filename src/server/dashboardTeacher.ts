@@ -15,13 +15,14 @@ import type {
   TeacherDashboardStat,
   TeacherDashboardUpcomingSession,
 } from "@/types/teacherDashboard";
+import { getTeacherEarningsSummary } from "@/server/teacherEarnings";
 import { getMyTeacherProfile } from "@/server/teachers";
 
 type TeacherRateRow = {
   subjectId: string;
   regionId: string;
   hourlyRate: number;
-  region: { currency: string; };
+  region: { currency: string };
 };
 
 function rateForSubject(
@@ -34,18 +35,6 @@ function rateForSubject(
   return match ?? rates.find((r) => r.subjectId === subjectId) ?? null;
 }
 
-/** Illustrative curve for the earnings chart (minor units). */
-export function buildChartPoints(monthlyTotalMinor: number, days = 28): number[] {
-  const safe = Math.max(0, monthlyTotalMinor);
-  if (safe === 0) {
-    return Array.from({ length: days }, (_, i) => Math.round(i * 1250));
-  }
-  return Array.from({ length: days }, (_, i) => {
-    const t = (i + 1) / days;
-    return Math.round(safe * (0.22 + 0.78 * t * t));
-  });
-}
-
 export async function getTeacherDashboardPayload(userId: string): Promise<TeacherDashboardPayload | null> {
   const data = await getMyTeacherProfile(userId);
   if (!data) return null;
@@ -56,26 +45,8 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
     profile.user.region?.currency ?? profile.rates[0]?.region.currency ?? "USD";
 
   const rates = profile.rates as TeacherRateRow[];
-
   const activeOfferings = profile.offerings.filter((o) => o.active);
-
-  let monthlyEstimateMinor = 0;
-  for (const o of activeOfferings) {
-    const r = rateForSubject(o.subjectId, regionId, rates);
-    const n = o.enrollments.length;
-    if (r && n > 0) {
-      monthlyEstimateMinor += r.hourlyRate * n * 4;
-    }
-  }
-
-  const earningsTotalFormatted =
-    monthlyEstimateMinor > 0 ? formatPrice(monthlyEstimateMinor, currency) : formatPrice(0, currency);
-
-  const prevEstimate = Math.round(monthlyEstimateMinor * 0.88);
-  const trendPct =
-    monthlyEstimateMinor > 0 && prevEstimate > 0
-      ? Math.max(1, Math.round(((monthlyEstimateMinor - prevEstimate) / prevEstimate) * 100))
-      : 12;
+  const earnings = await getTeacherEarningsSummary(userId);
 
   const stats: TeacherDashboardStat[] = [
     {
@@ -85,32 +56,44 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
       hint: "Active classes",
       trend:
         activeOfferings.length > 0
-          ? `↑ ${Math.min(activeOfferings.length, 9)} scheduled`
+          ? `↑ ${activeOfferings.length} on your roster`
           : undefined,
-      trendPositive: true,
+      trendPositive: activeOfferings.length > 0,
+      footerLink: { href: "/schedule", label: "View schedule →" },
     },
     {
       tone: "green",
       label: "Total students",
       value: String(activeStudentCount),
       hint: "Across all classes",
-      trend: activeStudentCount > 0 ? `↑ roster` : undefined,
-      trendPositive: true,
+      trend: activeStudentCount > 0 ? `↑ ${activeStudentCount} enrolled` : undefined,
+      trendPositive: activeStudentCount > 0,
     },
     {
       tone: "purple",
-      label: "Monthly earnings",
-      value: earningsTotalFormatted,
-      hint: "Estimated from rates × enrollments",
-      trend: monthlyEstimateMinor > 0 ? `↑ ${trendPct}% vs last month` : undefined,
-      trendPositive: monthlyEstimateMinor > 0,
+      label: "Net earnings",
+      value: earnings?.netAmountFormatted ?? formatPrice(0, currency),
+      hint:
+        earnings && earnings.grossAmountMinor > 0
+          ? `${earnings.commissionPercent}% platform fee applied`
+          : "From completed sessions",
+      trend:
+        earnings && earnings.totalSessions > 0
+          ? `↑ ${earnings.totalSessions} billable session${earnings.totalSessions === 1 ? "" : "s"}`
+          : undefined,
+      trendPositive: (earnings?.netAmountMinor ?? 0) > 0,
+      footerLink: { href: "/earnings", label: "View earnings →" },
     },
     {
       tone: "orange",
-      label: "Upcoming sessions",
-      value: String(Math.min(activeOfferings.length, 99)),
-      hint: "This week",
-      footerLink: { href: "/schedule", label: "View schedule →" },
+      label: "Classes held",
+      value: String(earnings?.totalClassesHeld ?? 0),
+      hint: "Completed sessions to date",
+      trend:
+        earnings && earnings.totalClassesHeld > 0
+          ? `↑ ${earnings.grossAmountFormatted} gross`
+          : undefined,
+      trendPositive: (earnings?.totalClassesHeld ?? 0) > 0,
     },
   ];
 
@@ -122,7 +105,7 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
       title: o.title,
       studentCount: o.enrollments.length,
       sessionLabel: sessionLabel(o.dayOfWeek, o.startMinutes),
-      priceLabel: r ? `${formatPrice(r.hourlyRate, r.region.currency)}/hr` : "—",
+      priceLabel: r ? `${formatPrice(r.hourlyRate, r.region.currency)}/session` : "—",
       status: "active",
     };
   });
@@ -138,13 +121,6 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
       subtitle: titleShort,
       timeRange: `${formatTimeAmPm(o.startMinutes)} – ${formatTimeAmPm(o.endMinutes)}`,
     };
-  });
-
-  const chartValuesMinor = buildChartPoints(monthlyEstimateMinor, 28);
-  const chartDayKeys = Array.from({ length: 28 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (27 - i));
-    return d.toISOString().slice(0, 10);
   });
 
   const recentEnrollments = await db.enrollment.findMany({
@@ -177,12 +153,7 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
     stats,
     classes,
     upcomingSessions,
-    chartValuesMinor,
-    earningsTotalFormatted,
-    earningsTrendLabel: monthlyEstimateMinor > 0 ? `+${trendPct}%` : "+0%",
-    chartCurrency: currency,
     activity,
     messages: [],
-    chartDayKeys,
   };
 }

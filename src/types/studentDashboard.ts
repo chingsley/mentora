@@ -27,6 +27,31 @@ export interface StudentDashboardAssignmentItem {
   timeAgo: string;
 }
 
+/** Per-subject billing line: completed (held) sessions × the subject rate, plus attendance tally. */
+export interface StudentBillSubject {
+  subjectId: string;
+  subjectName: string;
+  /** Per-session rate in the smallest currency unit. */
+  rateMinor: number;
+  rateFormatted: string;
+  /** Held sessions in the past, attendance not considered. */
+  sessionsCompleted: number;
+  amountMinor: number;
+  amountFormatted: string;
+  present: number;
+  absent: number;
+  late: number;
+}
+
+export interface StudentBillSummary {
+  currency: string;
+  subjects: StudentBillSubject[];
+  totalSubjects: number;
+  totalSessions: number;
+  totalAmountMinor: number;
+  totalAmountFormatted: string;
+}
+
 export interface StudentDashboardPayload {
   studentName: string;
   studentImage: string | null;

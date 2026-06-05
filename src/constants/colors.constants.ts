@@ -9,6 +9,22 @@ export const COLORS = {
   // BACKGROUND: "#f5f5f7",
   BACKGROUND: "rgb(248 248 248)",
   FOREGROUND: "#ffffff",
+  /**
+   * Authenticated app shell main content surface (student, teacher, guardian).
+   * Applied once on `<Main>` in `AppShellClient`. Retune this token to change
+   * the page background across every in-app route.
+   */
+  APP_MAIN_BACKGROUND: "#ffffff", // "#f8f9fb",
+  /**
+   * Authenticated app shell sidebar surface (student, teacher, guardian).
+   * Applied once on `<Sidebar>` in `AppShellClient`. Retune this token to change
+   * the sidebar background across the entire app.
+   */
+  APP_SIDEBAR_BACKGROUND: "#ffffff",
+  /** Primary sidebar text / ink (brand links, nav labels, account menu). */
+  APP_SIDEBAR_TEXT: "#172033",
+  /** Sidebar dividers and outer border (brand, nav, footer, flyouts). */
+  APP_SIDEBAR_BORDER: "#e2e8f0",
 
   // Text
   TEXT: "#020817",

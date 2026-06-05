@@ -13,7 +13,7 @@ import { SPACING } from "@/constants/spacing.constants";
 import { formatPrice, minutesToTime } from "@/lib/time";
 import { DEFAULT_OFFERING_RECURRENCE, formatRecurrenceLabel } from "@/lib/offeringRecurrence";
 import { fillStatus } from "@/components/features/calendar/types";
-import { isPastSessionEnd, type SessionOccurrenceSnapshot } from "@/lib/sessionOccurrenceKey";
+import type { SessionOccurrenceSnapshot } from "@/lib/sessionOccurrenceKey";
 import {
   CommentSubheading,
   CommentSubsection,
@@ -226,12 +226,9 @@ export function ClassDetailsDialog({
   const isEnrolled = Boolean(enrollmentId);
   const isReserved = detail.periodType === "RESERVED";
   const canEnrol = isStudent && !isEnrolled && status !== "full";
-  const isPastHeldSession = Boolean(
-    sessionSnapshot &&
-      isPastSessionEnd(new Date(sessionSnapshot.sessionDateIso), detail.endMinutes) &&
-      sessionSnapshot.outcome !== "NOT_HELD",
-  );
-  const showLeaveClass = isStudent && isEnrolled && !isPastHeldSession;
+  // Calendar past clicks always pass a snapshot (see getOccurrenceSnapshot); hide drop
+  // enrollment when viewing that occurrence — including NOT_HELD sessions.
+  const showLeaveClass = isStudent && isEnrolled && !sessionSnapshot;
 
   return (
     <Dialog open={open} onClose={onClose} size="lg">

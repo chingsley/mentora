@@ -51,12 +51,6 @@ export interface TeacherDashboardPayload {
   stats: TeacherDashboardStat[];
   classes: TeacherDashboardClassRow[];
   upcomingSessions: TeacherDashboardUpcomingSession[];
-  chartValuesMinor: number[];
-  earningsTotalFormatted: string;
-  earningsTrendLabel: string;
-  chartCurrency: string;
   activity: TeacherDashboardActivityItem[];
   messages: TeacherDashboardMessageItem[];
-  /** ISO timestamps for chart X axis labels */
-  chartDayKeys: string[];
 }

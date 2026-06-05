@@ -14,6 +14,8 @@ import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { signOutAction } from "./actions";
 
+const S = LAYOUT.APP_SHELL.SIDEBAR;
+
 const Root = styled.div`
   position: relative;
   width: 100%;
@@ -83,10 +85,10 @@ const Avatar = styled.span`
   width: ${SPACING.EIGHT};
   height: ${SPACING.EIGHT};
   border-radius: ${LAYOUT.RADIUS.FULL};
-  background-color: ${COLORS.SIDEBAR_AVATAR_BG};
+  background-color: ${S.AVATAR_BG};
   font-size: ${FONTS.SIZE.XS};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
+  color: ${S.TEXT};
 `;
 
 const iconMenuItemCss = css`
@@ -96,7 +98,7 @@ const iconMenuItemCss = css`
   min-height: ${SPACING.TWELVE};
   padding: ${SPACING.THREE};
   border-radius: ${LAYOUT.RADIUS.MD};
-  color: ${COLORS.HEADER};
+  color: ${S.TEXT};
   outline: none;
   transition: background-color 0.15s ease;
 
@@ -105,7 +107,7 @@ const iconMenuItemCss = css`
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
+    box-shadow: 0 0 0 2px ${S.FOCUS_RING};
   }
 `;
 
@@ -136,23 +138,23 @@ const MenuItemLabel = styled.span`
   min-width: 0;
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
+  color: ${S.TEXT};
   text-align: left;
 `;
 
 const MenuSheet = styled.div<{ $open: boolean; }>`
   position: absolute;
-  bottom: calc(100% + ${LAYOUT.SIDEBAR_FOOTER_INSET_INLINE});
-  left: calc(-1 * ${LAYOUT.SIDEBAR_FOOTER_INSET_INLINE});
+  bottom: calc(100% + ${S.FOOTER_INSET_INLINE});
+  left: calc(-1 * ${S.FOOTER_INSET_INLINE});
   z-index: ${LAYOUT.Z.MODAL};
   display: flex;
   box-sizing: border-box;
-  width: calc(100% + 2 * ${LAYOUT.SIDEBAR_FOOTER_INSET_INLINE});
+  width: calc(100% + 2 * ${S.FOOTER_INSET_INLINE});
   flex-direction: column;
   gap: ${SPACING.ONE};
   padding: ${SPACING.TWO};
-  border-top: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
+  border-top: 1px solid ${S.BORDER};
+  background-color: ${S.BACKGROUND};
   opacity: ${(p) => (p.$open ? 1 : 0)};
   transform: translateY(${(p) => (p.$open ? "0" : SPACING.THREE)});
   visibility: ${(p) => (p.$open ? "visible" : "hidden")};
@@ -175,7 +177,7 @@ const MenuSheet = styled.div<{ $open: boolean; }>`
 const SignOutWrap = styled.div`
   margin-top: ${SPACING.ONE};
   padding-top: ${SPACING.TWO};
-  border-top: 1px solid ${COLORS.BORDER};
+  border-top: 1px solid ${S.BORDER};
 `;
 
 function initialsFromName(name: string | null | undefined, email: string | null | undefined): string {

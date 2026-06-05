@@ -28,9 +28,9 @@ export interface AppShellClientProps {
 const Root = styled.div`
   display: flex;
   min-height: 100dvh;
-  background-color: ${COLORS.BACKGROUND};
 `;
 
+/** Single application point for sidebar shell surface (student, teacher, guardian). */
 const Sidebar = styled.aside<{ $open: boolean; $collapsed: boolean; }>`
   position: fixed;
   inset-block: 0;
@@ -39,11 +39,11 @@ const Sidebar = styled.aside<{ $open: boolean; $collapsed: boolean; }>`
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  width: min(100%, 18rem);
-  background-color: ${COLORS.FOREGROUND};
-  color: ${COLORS.HEADER};
-  border-right: 1px solid ${COLORS.BORDER};
-  box-shadow: ${LAYOUT.SHADOW.MD};
+  width: min(100%, ${LAYOUT.APP_SHELL.SIDEBAR.MOBILE_MAX_WIDTH});
+  background-color: ${LAYOUT.APP_SHELL.SIDEBAR.BACKGROUND};
+  color: ${LAYOUT.APP_SHELL.SIDEBAR.TEXT};
+  border-right: 1px solid ${LAYOUT.APP_SHELL.SIDEBAR.BORDER};
+  box-shadow: ${LAYOUT.APP_SHELL.SIDEBAR.MOBILE_SHADOW};
   transform: translateX(${(p) => (p.$open ? "0" : "-100%")});
   transition: transform 0.2s ease-out;
 
@@ -55,7 +55,10 @@ const Sidebar = styled.aside<{ $open: boolean; $collapsed: boolean; }>`
     z-index: 0;
     transform: none;
     box-shadow: none;
-    width: ${(p) => (p.$collapsed ? LAYOUT.SIDEBAR_WIDTH_COLLAPSED : LAYOUT.SIDEBAR_WIDTH)};
+    width: ${(p) =>
+      p.$collapsed
+        ? LAYOUT.APP_SHELL.SIDEBAR.WIDTH_COLLAPSED
+        : LAYOUT.APP_SHELL.SIDEBAR.WIDTH};
     transition: width 0.2s ease-out;
 
     ${LAYOUT.MEDIA.REDUCED_MOTION} {
@@ -81,9 +84,13 @@ const Body = styled.div<{ $navCollapsed: boolean; }>`
   flex-direction: column;
   flex: 1;
   min-width: 0;
+  min-height: 100dvh;
 
   ${LAYOUT.MEDIA.LG} {
-    margin-left: ${(p) => (p.$navCollapsed ? LAYOUT.SIDEBAR_WIDTH_COLLAPSED : LAYOUT.SIDEBAR_WIDTH)};
+    margin-left: ${(p) =>
+      p.$navCollapsed
+        ? LAYOUT.APP_SHELL.SIDEBAR.WIDTH_COLLAPSED
+        : LAYOUT.APP_SHELL.SIDEBAR.WIDTH};
     transition: margin-left 0.2s ease-out;
 
     ${LAYOUT.MEDIA.REDUCED_MOTION} {
@@ -103,9 +110,9 @@ const MobileHeader = styled.header`
   height: 3.5rem;
   flex-shrink: 0;
   padding: 0 ${SPACING.THREE};
-  background-color: ${COLORS.FOREGROUND};
-  color: ${COLORS.HEADER};
-  border-bottom: 1px solid ${COLORS.BORDER};
+  background-color: ${LAYOUT.APP_SHELL.SIDEBAR.BACKGROUND};
+  color: ${LAYOUT.APP_SHELL.SIDEBAR.TEXT};
+  border-bottom: 1px solid ${LAYOUT.APP_SHELL.SIDEBAR.BORDER};
   box-shadow: ${LAYOUT.SHADOW.SM};
 
   ${LAYOUT.MEDIA.SM} {
@@ -130,11 +137,11 @@ const MobileMenuButton = styled.button`
   outline: none;
 
   &:hover {
-    background-color: ${COLORS.SIDEBAR_HOVER};
+    background-color: ${LAYOUT.APP_SHELL.SIDEBAR.HOVER};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
+    box-shadow: 0 0 0 2px ${LAYOUT.APP_SHELL.SIDEBAR.FOCUS_RING};
   }
 `;
 
@@ -144,14 +151,14 @@ const MobileLogo = styled(Link)`
   text-align: center;
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
+  color: ${LAYOUT.APP_SHELL.SIDEBAR.TEXT};
   outline: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
+    box-shadow: 0 0 0 2px ${LAYOUT.APP_SHELL.SIDEBAR.FOCUS_RING};
   }
 `;
 
@@ -177,6 +184,7 @@ const HamburgerSvg = styled.svg`
   height: 1.5rem;
 `;
 
+/** Single application point for in-app page background (student, teacher, guardian). */
 const Main = styled.main`
   flex: 1;
   width: 100%;
@@ -184,6 +192,7 @@ const Main = styled.main`
   margin: 0;
   padding: ${LAYOUT.PAGE_INSET.BLOCK} ${LAYOUT.PAGE_INSET.INLINE};
   box-sizing: border-box;
+  background-color: ${LAYOUT.APP_SHELL.MAIN_BACKGROUND};
 `;
 
 export function AppShellClient({ user, wards, children }: AppShellClientProps) {

@@ -3,11 +3,12 @@
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import styled from "styled-components";
-import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { signOutAction } from "./actions";
+
+const S = LAYOUT.APP_SHELL.SIDEBAR;
 
 export interface SignOutButtonProps {
   /** Icon-only control for narrow sidebars (still exposes an accessible name). */
@@ -24,7 +25,7 @@ const Base = styled.button<{ $compact: boolean }>`
   padding: ${(p) => (p.$compact ? "0" : `${SPACING.HALF} ${SPACING.THREE}`)};
   border-radius: ${LAYOUT.RADIUS.MD};
   background: transparent;
-  color: ${COLORS.SIDEBAR_MUTED};
+  color: ${S.MUTED};
   font-size: ${FONTS.SIZE.SM};
   text-align: left;
   outline: none;
@@ -33,12 +34,12 @@ const Base = styled.button<{ $compact: boolean }>`
     color 0.15s ease;
 
   &:hover:not(:disabled) {
-    background-color: ${COLORS.SIDEBAR_HOVER};
-    color: ${COLORS.HEADER};
+    background-color: ${S.HOVER};
+    color: ${S.TEXT};
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
+    box-shadow: 0 0 0 2px ${S.FOCUS_RING};
   }
 
   &:disabled {

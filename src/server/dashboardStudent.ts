@@ -10,6 +10,7 @@ import {
 } from "@/lib/dashboardSchedule";
 import { listAssignmentsForStudentUser } from "@/server/assignments";
 import { listStudentEnrollments } from "@/server/enrollments";
+import { rateForEnrollment } from "@/server/studentBill";
 import { getMyStudentProfile } from "@/server/students";
 import type {
   StudentDashboardAssignmentItem,
@@ -18,21 +19,6 @@ import type {
   StudentDashboardStat,
   StudentDashboardUpcomingSession,
 } from "@/types/studentDashboard";
-
-function rateForEnrollment(
-  enrollment: Awaited<ReturnType<typeof listStudentEnrollments>>[number],
-): { hourlyRate: number; currency: string } | null {
-  const { offering } = enrollment;
-  const regionId = offering.teacherProfile.user.regionId;
-  const rates = offering.teacherProfile.rates;
-  const match =
-    regionId !== null
-      ? rates.find((r) => r.subjectId === offering.subjectId && r.regionId === regionId)
-      : undefined;
-  const rate = match ?? rates.find((r) => r.subjectId === offering.subjectId) ?? rates[0] ?? null;
-  if (!rate) return null;
-  return { hourlyRate: rate.hourlyRate, currency: rate.region.currency };
-}
 
 export async function getStudentDashboardPayload(
   userId: string,
