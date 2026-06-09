@@ -28,6 +28,7 @@ export interface TeacherProfileScheduleOffering {
   endMinutes: number;
   periodType: OfferingPeriodType;
   teacherCap: number;
+  hourlyRate: number;
   enrolled: number;
   invitedStudentProfileIds: string[];
   recurrenceKind: OfferingRecurrenceKind;
@@ -86,4 +87,6 @@ export interface TeacherProfileTabsProps {
   dialogSubjects: { id: string; name: string; defaultCap: number }[];
   scheduleOfferings: TeacherProfileScheduleOffering[];
   inviteableStudents: TeacherProfileInviteableStudent[];
+  billingCurrency: string;
+  regionMinHourlyMajor: number | null;
 }

@@ -44,6 +44,7 @@ export async function getStudentBillSummary(userId: string): Promise<StudentBill
   const enrollments = await listStudentEnrollments(userId);
   const currency =
     profile.user.region?.currency ??
+    enrollments[0]?.offering.teacherProfile.user.region?.currency ??
     enrollments[0]?.offering.teacherProfile.rates[0]?.region.currency ??
     "USD";
 

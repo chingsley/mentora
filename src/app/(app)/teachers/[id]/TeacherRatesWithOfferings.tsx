@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import * as React from "react";
 import styled from "styled-components";
 import {
@@ -9,15 +10,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+import type { Role } from "@prisma/client";
+import { Button } from "@/components/ui/Button";
 import type { CalendarEntry } from "@/components/features/calendar/types";
-import { fillStatus, FILL_LABEL, FILL_THEME } from "@/components/features/calendar/types";
+import { fillStatus } from "@/components/features/calendar/types";
+import type { ClassDetail } from "@/components/features/class/ClassDetailsDialog";
+import { formatPrice } from "@/lib/time";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
+import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { DEFAULT_OFFERING_RECURRENCE, formatRecurrenceLabel } from "@/lib/offeringRecurrence";
 import { minutesToTime } from "@/lib/time";
 import type { TeacherRateRow } from "./TeacherDetailView";
+
+const OfferingActionButton = styled(Button)`
+  padding: ${SPACING.ONE} ${SPACING.THREE};
+  font-size: ${FONTS.SIZE["2XS"]};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  min-height: 0;
+`;
 
 const RatesGrid = styled.ul`
   display: grid;
@@ -36,7 +49,7 @@ const RatesGrid = styled.ul`
   }
 `;
 
-const RateButton = styled.button<{ $expanded: boolean }>`
+const RateButton = styled.button<{ $expanded: boolean; }>`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.ONE};
@@ -120,52 +133,57 @@ const OfferingsList = styled.ul`
   padding: 0;
 `;
 
-const OfferingButton = styled.button`
+const OfferingRow = styled.li`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${COLORS.BORDER_SUBTLE_LIGHT};
+  padding: ${SPACING.FOUR};
+  background-color: ${COLORS.BACKGROUND};
+`;
+
+const OfferingBody = styled.button`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.ONE};
   width: 100%;
   text-align: left;
-  border-radius: ${LAYOUT.RADIUS.LG};
-  border: 1px solid ${COLORS.BORDER_SUBTLE_LIGHT};
-  padding: ${SPACING.FOUR};
-  background-color: ${COLORS.BACKGROUND};
+  border: none;
+  padding: 0;
+  background: none;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-
-  &:hover {
-    border-color: ${COLORS.BORDER};
-    box-shadow: ${LAYOUT.SHADOW.SM};
-  }
 
   &:focus-visible {
+    border-radius: ${LAYOUT.RADIUS.SM};
     box-shadow: 0 0 0 2px ${COLORS.SIDEBAR_FOCUS_RING};
   }
 `;
 
-const OfferingTop = styled.div`
+const OfferingActions = styled.div`
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: ${SPACING.THREE};
+  justify-content: flex-start;
+`;
+
+const EnrolledMarker = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${SPACING.ONE};
+  align-self: flex-start;
+  border-radius: ${LAYOUT.RADIUS.FULL};
+  border: 1px solid ${COLORS.STATUS_PRESENT_BG};
+  background-color: ${COLORS.STATUS_PRESENT_BG};
+  padding: 0.125rem ${SPACING.TWO};
+  font-size: ${FONTS.SIZE.META};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.STATUS_PRESENT_TEXT};
 `;
 
 const OfferingTitle = styled.span`
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
-`;
-
-const StatusBadge = styled.span<{ $status: keyof typeof FILL_THEME }>`
-  flex-shrink: 0;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  border: 1px solid ${(p) => FILL_THEME[p.$status].border};
-  background-color: ${(p) => FILL_THEME[p.$status].bg};
-  padding: 0.125rem ${SPACING.TWO};
-  font-size: ${FONTS.SIZE.META};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${(p) => FILL_THEME[p.$status].text};
 `;
 
 const OfferingMeta = styled.span`
@@ -181,17 +199,60 @@ const Muted = styled.p`
 export interface TeacherRatesWithOfferingsProps {
   rates: TeacherRateRow[];
   entries: CalendarEntry[];
+  detailsByOfferingId: Record<string, ClassDetail>;
+  enrollmentByOfferingId: Record<string, string>;
+  viewerRole: Role;
+  pendingOfferingId: string | null;
   expandedSubjectId: string | null;
   onToggleSubject: (subjectId: string) => void;
   onOfferingClick: (offeringId: string) => void;
+  onEnrol: (offeringId: string) => void;
+}
+
+function OfferingEnrollmentAction({
+  offeringId,
+  isFull,
+  isBusy,
+  onEnrol,
+}: {
+  offeringId: string;
+  isFull: boolean;
+  isBusy: boolean;
+  onEnrol: (offeringId: string) => void;
+}) {
+  if (isFull) {
+    return (
+      <OfferingActionButton type="button" disabled onClick={(e) => e.stopPropagation()}>
+        Class full
+      </OfferingActionButton>
+    );
+  }
+
+  return (
+    <OfferingActionButton
+      type="button"
+      isLoading={isBusy}
+      onClick={(e) => {
+        e.stopPropagation();
+        onEnrol(offeringId);
+      }}
+    >
+      Enrol in this class
+    </OfferingActionButton>
+  );
 }
 
 export function TeacherRatesWithOfferings({
   rates,
   entries,
+  detailsByOfferingId,
+  enrollmentByOfferingId,
+  viewerRole,
+  pendingOfferingId,
   expandedSubjectId,
   onToggleSubject,
   onOfferingClick,
+  onEnrol,
 }: TeacherRatesWithOfferingsProps) {
   const classCountBySubject = React.useMemo(() => {
     const counts: Record<string, number> = {};
@@ -217,12 +278,12 @@ export function TeacherRatesWithOfferings({
       <CardHeader>
         <CardTitle>Rates</CardTitle>
         <CardDescription>
-          Hourly rates by subject and region. Select a subject to browse its classes.
+          Starting rates by subject (cheapest class shown). Select a subject to browse its classes.
         </CardDescription>
       </CardHeader>
       <CardContent>
         {rates.length === 0 ? (
-          <Muted>No rates set yet.</Muted>
+          <Muted>No published classes with rates yet.</Muted>
         ) : (
           <>
             <RatesGrid>
@@ -260,8 +321,7 @@ export function TeacherRatesWithOfferings({
               <OfferingsPanel>
                 <OfferingsHeading>{expandedSubjectName} classes</OfferingsHeading>
                 <OfferingsHint>
-                  Same classes shown on the weekly schedule. Tap a class for full details and
-                  enrollment.
+                  Same classes shown on the weekly schedule. Tap a class title for full details.
                 </OfferingsHint>
                 {expandedOfferings.length === 0 ? (
                   <Muted>No published classes for this subject yet.</Muted>
@@ -269,27 +329,50 @@ export function TeacherRatesWithOfferings({
                   <OfferingsList>
                     {expandedOfferings.map((entry) => {
                       const status = fillStatus(entry);
+                      const enrollmentId = enrollmentByOfferingId[entry.offeringId] ?? null;
                       const schedule = formatRecurrenceLabel(
                         entry.recurrence ?? DEFAULT_OFFERING_RECURRENCE,
                         entry.dayOfWeek,
                       );
                       const time = `${minutesToTime(entry.startMinutes)}–${minutesToTime(entry.endMinutes)}`;
+                      const classRate = detailsByOfferingId[entry.offeringId]?.hourlyRate;
+                      const rateLabel = classRate
+                        ? `${formatPrice(classRate.amount, classRate.currency)}/hr`
+                        : null;
                       return (
-                        <li key={entry.offeringId}>
-                          <OfferingButton
+                        <OfferingRow key={entry.offeringId}>
+                          <OfferingBody
                             type="button"
                             onClick={() => onOfferingClick(entry.offeringId)}
                           >
-                            <OfferingTop>
-                              <OfferingTitle>{entry.title}</OfferingTitle>
-                              <StatusBadge $status={status}>{FILL_LABEL[status]}</StatusBadge>
-                            </OfferingTop>
+                            {enrollmentId ? (
+                              <EnrolledMarker>
+                                <Check
+                                  size={ICON_SIZE.XS}
+                                  strokeWidth={ICON_STROKE.BOLD}
+                                  aria-hidden
+                                />
+                                Enrolled
+                              </EnrolledMarker>
+                            ) : null}
+                            <OfferingTitle>{entry.title}</OfferingTitle>
                             <OfferingMeta>
-                              {schedule} · {time} · {entry.enrolled}/{entry.effectiveCap}{" "}
-                              enrolled
+                              {schedule} · {time}
+                              {rateLabel ? ` · ${rateLabel}` : ""} · {entry.enrolled}/
+                              {entry.effectiveCap} enrolled
                             </OfferingMeta>
-                          </OfferingButton>
-                        </li>
+                          </OfferingBody>
+                          {viewerRole === "STUDENT" && !enrollmentId ? (
+                            <OfferingActions>
+                              <OfferingEnrollmentAction
+                                offeringId={entry.offeringId}
+                                isFull={status === "full"}
+                                isBusy={pendingOfferingId === entry.offeringId}
+                                onEnrol={onEnrol}
+                              />
+                            </OfferingActions>
+                          ) : null}
+                        </OfferingRow>
                       );
                     })}
                   </OfferingsList>

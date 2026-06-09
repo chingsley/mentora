@@ -75,7 +75,7 @@ const Title = styled.h2`
   color: ${COLORS.HEADER};
 `;
 
-const ClassTypeLine = styled.p`
+const MetaLine = styled.p`
   font-size: ${FONTS.SIZE.SM};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
@@ -236,7 +236,8 @@ export function ClassDetailsDialog({
         <TitleRow>
           <Title>{detail.title}</Title>
         </TitleRow>
-        <ClassTypeLine>Class Type: {formatClassType(detail.periodType)}</ClassTypeLine>
+        <MetaLine>Subject: {detail.subjectName}</MetaLine>
+        <MetaLine>Class Type: {formatClassType(detail.periodType)}</MetaLine>
         <Subtitle>Teacher: {detail.teacherName}</Subtitle>
       </Header>
 

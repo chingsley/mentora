@@ -5,20 +5,8 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import { minorUnitExponent } from "@/lib/money";
-
-export interface TeacherProfileCoursesTableRegion {
-  id: string;
-  code: string;
-  name: string;
-  currency: string;
-  minMajor: number;
-}
-
 export interface TeacherProfileCoursesTableProps {
   taughtSubjects: { id: string; name: string; defaultCap: number | null }[];
-  rateRegions: TeacherProfileCoursesTableRegion[];
-  rateCells: { subjectId: string; regionCode: string; hourlyMajor: number }[];
   globalCap: number;
   onEditSubject?: (subjectId: string) => void;
   onDeleteSubject?: (subjectId: string) => void;
@@ -146,43 +134,12 @@ const DeleteActionBtn = styled(ActionBtn)`
   }
 `;
 
-function formatHourlyMajor(major: number, currency: string): string {
-  const fractionDigits = minorUnitExponent(currency);
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: fractionDigits,
-      minimumFractionDigits: 0,
-    }).format(major);
-  } catch {
-    return fractionDigits > 0 ? `${major.toFixed(fractionDigits)} ${currency}` : `${Math.round(major)} ${currency}`;
-  }
-}
-
-function rateSummaryForSubject(
-  subjectId: string,
-  regions: TeacherProfileCoursesTableRegion[],
-  cells: TeacherProfileCoursesTableProps["rateCells"],
-): string {
-  const parts: string[] = [];
-  for (const region of regions) {
-    const cell = cells.find((c) => c.subjectId === subjectId && c.regionCode === region.code);
-    if (cell != null) {
-      parts.push(formatHourlyMajor(cell.hourlyMajor, region.currency));
-    }
-  }
-  return parts.length > 0 ? parts.join(" · ") : "—";
-}
-
 function formatTeacherClassLimit(defaultCap: number | null, adminCap: number): string {
   return String(defaultCap ?? adminCap);
 }
 
 export function TeacherProfileCoursesTable({
   taughtSubjects,
-  rateRegions,
-  rateCells,
   globalCap,
   onEditSubject,
   onDeleteSubject,
@@ -204,10 +161,7 @@ export function TeacherProfileCoursesTable({
               Subject
             </ThBase>
             <ThBase scope="col" $textAlign="left">
-              Rate per hour
-            </ThBase>
-            <ThBase scope="col" $textAlign="left">
-              Class Limit
+              Default class limit
             </ThBase>
             <ThBase scope="colgroup" colSpan={2} $textAlign="center">
               Action
@@ -218,7 +172,6 @@ export function TeacherProfileCoursesTable({
           {taughtSubjects.map((subject) => (
             <tr key={subject.id} data-interactive="true">
               <Td>{subject.name}</Td>
-              <Td>{rateSummaryForSubject(subject.id, rateRegions, rateCells)}</Td>
               <Td>{formatTeacherClassLimit(subject.defaultCap, globalCap)}</Td>
               <Td $textAlign="right">
                 <ActionBtn
@@ -243,7 +196,7 @@ export function TeacherProfileCoursesTable({
         </Tbody>
         <Tfoot>
           <tr>
-            <Tf colSpan={3}>Total courses</Tf>
+            <Tf colSpan={2}>Total courses</Tf>
             <Tf colSpan={2} $textAlign="right">
               {taughtSubjects.length}
             </Tf>

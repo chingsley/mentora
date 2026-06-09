@@ -28,7 +28,11 @@ interface Props {
 type TeacherRow = Awaited<ReturnType<typeof searchTeachers>>[number];
 
 function toCardProps(t: TeacherRow) {
-  const firstRate = t.rates[0];
+  const currency = t.user.region?.currency ?? t.rates[0]?.region.currency ?? "USD";
+  const offeringRates = t.offerings
+    .map((o) => o.hourlyRate)
+    .filter((rate) => rate > 0);
+  const minOfferingRate = offeringRates.length > 0 ? Math.min(...offeringRates) : null;
   const days = Array.from(new Set(t.offerings.map((o) => o.dayOfWeek)));
   return {
     id: t.id,
@@ -40,9 +44,8 @@ function toCardProps(t: TeacherRow) {
     ratingsCount: t.ratingsCount,
     subjectNames: t.subjects.map((s) => s.subject.name),
     regionCode: t.user.region?.code ?? null,
-    minRate: firstRate
-      ? { hourlyRate: firstRate.hourlyRate, currency: firstRate.region.currency }
-      : null,
+    minRate:
+      minOfferingRate != null ? { hourlyRate: minOfferingRate, currency } : null,
     daysTaught: days,
   };
 }

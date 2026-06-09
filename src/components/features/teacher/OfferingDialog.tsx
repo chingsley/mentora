@@ -32,6 +32,8 @@ import {
 } from "@/app/(app)/profile/actions";
 import { startClassAction } from "@/app/(app)/classroom/[offeringId]/actions";
 import { isClassLive } from "@/lib/classSession";
+import { smallestToMajor } from "@/lib/money";
+import { TEACHER_PROFILE_ADD_COURSE } from "@/constants/teacherProfileCourse.constants";
 import { OfferingDaySlotsEditor } from "./OfferingDaySlotsEditor";
 import {
   OfferingStudentInviteField,
@@ -127,6 +129,7 @@ export interface OfferingDialogValue {
   groupEnrolled?: number;
   groupDayCount?: number;
   recurrence?: OfferingRecurrence;
+  hourlyRateMinor?: number;
 }
 
 export interface OfferingDialogProps {
@@ -135,6 +138,8 @@ export interface OfferingDialogProps {
   subjects: OfferingDialogSubject[];
   inviteableStudents: OfferingInviteableStudent[];
   globalCap: number;
+  billingCurrency: string;
+  regionMinHourlyMajor: number | null;
   initial: OfferingDialogValue | null;
 }
 
@@ -184,6 +189,8 @@ export function OfferingDialog({
   subjects,
   inviteableStudents,
   globalCap,
+  billingCurrency,
+  regionMinHourlyMajor,
   initial,
 }: OfferingDialogProps) {
   const router = useRouter();
@@ -196,6 +203,7 @@ export function OfferingDialog({
   const [schedule, setSchedule] = React.useState<OfferingScheduleEditorValue>(
     defaultOfferingScheduleEditorValue(),
   );
+  const [hourlyRate, setHourlyRate] = React.useState("");
   const [deleteTarget, setDeleteTarget] = React.useState<OfferingDeletePeriodTarget | null>(null);
   const [startingClass, setStartingClass] = React.useState(false);
   const [startClassError, setStartClassError] = React.useState<string | null>(null);
@@ -208,10 +216,16 @@ export function OfferingDialog({
     setTeacherCap("");
     setInvitedIds([]);
     setSchedule(defaultOfferingScheduleEditorValue());
+    setHourlyRate("");
     setStartClassError(null);
     setStartingClass(false);
     onClose();
   }, [onClose]);
+
+  const rateMin = Math.max(
+    TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN,
+    Math.ceil(regionMinHourlyMajor ?? TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN),
+  );
 
   React.useEffect(() => {
     if (!open || !initial) return;
@@ -223,6 +237,11 @@ export function OfferingDialog({
       setSubjectId(initial.subjectId);
       setPeriodType(initial.periodType ?? OfferingPeriodType.OPEN);
       setInvitedIds(initial.invitedStudentProfileIds ?? []);
+      setHourlyRate(
+        initial.hourlyRateMinor != null && initial.hourlyRateMinor > 0
+          ? String(smallestToMajor(initial.hourlyRateMinor, billingCurrency))
+          : "",
+      );
       if ((initial.periodType ?? OfferingPeriodType.OPEN) === OfferingPeriodType.OPEN) {
         setTeacherCap(
           String(
@@ -239,7 +258,8 @@ export function OfferingDialog({
     setPeriodType(OfferingPeriodType.OPEN);
     setTeacherCap("");
     setInvitedIds([]);
-  }, [open, initial, isEdit, subjects, globalCap]);
+    setHourlyRate("");
+  }, [open, initial, isEdit, subjects, globalCap, billingCurrency]);
 
   function handleSubjectChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const nextSubjectId = e.target.value;
@@ -391,6 +411,21 @@ export function OfferingDialog({
             onChange={handlePeriodTypeChange}
             options={[...PERIOD_TYPE_OPTIONS]}
             error={errs?.periodType}
+          />
+          <Input
+            type="number"
+            inputMode="decimal"
+            name="hourlyRateMajor"
+            label="Hourly rate"
+            labelNote={regionMinHourlyMajor != null ? `min ${rateMin} ${billingCurrency}` : undefined}
+            value={hourlyRate}
+            onChange={(e) => setHourlyRate(e.target.value)}
+            min={rateMin}
+            max={TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MAX}
+            step={1}
+            required
+            hint="Students are billed this rate per completed session for this class."
+            error={errs?.hourlyRateMajor}
           />
           {isOpenPeriod ? (
             <Input

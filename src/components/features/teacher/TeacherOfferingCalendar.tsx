@@ -47,6 +47,7 @@ export interface TeacherOfferingCalendarOffering {
   recurrenceKind: OfferingRecurrenceKind;
   recurrenceAnchorDate: Date | null;
   recurrenceOrdinal: number | null;
+  hourlyRate: number;
 }
 
 export interface TeacherOfferingCalendarProps {
@@ -54,6 +55,8 @@ export interface TeacherOfferingCalendarProps {
   subjects: OfferingDialogSubject[];
   inviteableStudents: OfferingInviteableStudent[];
   globalCap: number;
+  billingCurrency: string;
+  regionMinHourlyMajor: number | null;
   emptyStateMessage?: string;
   initialView?: "day" | "week" | "month";
   tileColorMode?: "capacity" | "subject";
@@ -73,6 +76,7 @@ function toDialogOfferingRow(o: TeacherOfferingCalendarOffering) {
     teacherCap: o.teacherCap,
     invitedStudentProfileIds: o.invitedStudentProfileIds,
     enrolled: o.enrolled,
+    hourlyRate: o.hourlyRate,
     recurrenceKind: o.recurrenceKind,
     recurrenceAnchorDate: o.recurrenceAnchorDate,
     recurrenceOrdinal: o.recurrenceOrdinal,
@@ -92,6 +96,8 @@ export function TeacherOfferingCalendar({
   subjects,
   inviteableStudents,
   globalCap,
+  billingCurrency,
+  regionMinHourlyMajor,
   emptyStateMessage = "No class periods yet. Click an empty slot on the day or week view to add one.",
   initialView = "week",
   tileColorMode = "subject",
@@ -165,6 +171,8 @@ export function TeacherOfferingCalendar({
         subjects={subjects}
         inviteableStudents={inviteableStudents}
         globalCap={globalCap}
+        billingCurrency={billingCurrency}
+        regionMinHourlyMajor={regionMinHourlyMajor}
         initial={dialog}
       />
       <TeacherSessionAttendanceDialog

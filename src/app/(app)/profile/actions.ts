@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth";
+import { BelowMinimumRateError } from "@/lib/pricing";
 import { revalidateTeacherPaths } from "@/server/revalidateTeacherPaths";
 import {
   createOfferingSchedule,
@@ -37,7 +38,6 @@ import {
 } from "@/server/students";
 import { timeToMinutes } from "@/lib/time";
 import { db } from "@/lib/db";
-import { BelowMinimumRateError } from "@/lib/pricing";
 
 export type ActionResult =
   | { ok: true; }
@@ -136,8 +136,6 @@ export async function addTeacherCourseAction(formData: FormData): Promise<Action
   const session = await requireRole("TEACHER");
   const parsed = addTeacherCourseSchema.safeParse({
     subjectId: formData.get("subjectId"),
-    regionCode: formData.get("regionCode"),
-    hourlyRateMajor: formData.get("hourlyRateMajor"),
     defaultCap: formData.get("defaultCap"),
     isEdit: formData.get("isEdit"),
   });
@@ -151,13 +149,6 @@ export async function addTeacherCourseAction(formData: FormData): Promise<Action
   try {
     await addTeacherCourse(session.user.id, parsed.data);
   } catch (err) {
-    if (err instanceof BelowMinimumRateError) {
-      return {
-        ok: false,
-        error: err.message,
-        fieldErrors: { hourlyRateMajor: err.message },
-      };
-    }
     const msg = err instanceof Error ? err.message : "Could not add course";
     return { ok: false, error: msg };
   }
@@ -281,6 +272,7 @@ function parseOfferingForm(formData: FormData) {
       subjectId: formData.get("subjectId"),
       title: formData.get("title"),
       description: formData.get("description") || undefined,
+      hourlyRateMajor: formData.get("hourlyRateMajor"),
       slots,
       periodType,
       teacherCap,
@@ -322,6 +314,13 @@ export async function createOfferingAction(formData: FormData): Promise<ActionRe
     if (err instanceof OfferingScheduleConflictError) {
       return { ok: false, error: err.message };
     }
+    if (err instanceof BelowMinimumRateError) {
+      return {
+        ok: false,
+        error: err.message,
+        fieldErrors: { hourlyRateMajor: err.message },
+      };
+    }
     const msg = err instanceof Error ? err.message : "Failed to create period";
     return { ok: false, error: msg };
   }
@@ -350,6 +349,13 @@ export async function updateOfferingAction(formData: FormData): Promise<ActionRe
   } catch (err) {
     if (err instanceof OfferingScheduleConflictError) {
       return { ok: false, error: err.message };
+    }
+    if (err instanceof BelowMinimumRateError) {
+      return {
+        ok: false,
+        error: err.message,
+        fieldErrors: { hourlyRateMajor: err.message },
+      };
     }
     const msg = err instanceof Error ? err.message : "Failed to update period";
     return { ok: false, error: msg };

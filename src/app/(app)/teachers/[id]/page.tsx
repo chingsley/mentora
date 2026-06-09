@@ -10,10 +10,16 @@ import { getPolicy } from "@/server/policies";
 import { listTestimonialsByTeacher } from "@/server/testimonials";
 import { offeringCapacity } from "@/lib/offeringCapacity";
 import { buildTeacherOfferingCalendarEntry } from "@/lib/teacherCalendarEntries";
+import { offeringHourlyRateDisplay, teacherBillingCurrency } from "@/lib/offeringHourlyRate";
 import { recurrenceFromDb } from "@/lib/offeringRecurrence";
-import { formatPrice } from "@/lib/time";
+import {
+  buildTeacherSubjectRateRows,
+  formatTeacherPriceSummary,
+  minVisibleOfferingHourlyRate,
+} from "@/lib/teacherSubjectRateRows";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import type { ClassDetail } from "@/components/features/class/ClassDetailsDialog";
+import { getStudentClassCalendarData } from "@/server/studentClassCalendar";
 import { TeacherDetailView } from "./TeacherDetailView";
 
 export const metadata: Metadata = { title: "Teacher profile" };
@@ -38,28 +44,23 @@ export default async function TeacherPage({ params }: Props) {
       ? await getStudentProfileIdForUser(session.user.id)
       : null;
 
-  const [testimonials, myEnrollments] = await Promise.all([
+  const isStudent = session.user.role === "STUDENT";
+
+  const [testimonials, myEnrollments, studentSchedule] = await Promise.all([
     listTestimonialsByTeacher(teacher.id),
     getMyStudentEnrollmentsByOffering(
-      session.user.role === "STUDENT" ? session.user.id : undefined,
+      isStudent ? session.user.id : undefined,
       teacher.offerings.map((o) => o.id),
     ),
+    isStudent ? getStudentClassCalendarData(session.user.id) : null,
   ]);
 
-  const viewerRegionCode = teacher.user.region?.code ?? null;
-
-  function findRate(subjectId: string) {
-    const match =
-      teacher!.rates.find(
-        (r) => r.subjectId === subjectId && r.region.code === viewerRegionCode,
-      ) ?? teacher!.rates.find((r) => r.subjectId === subjectId);
-    return match
-      ? { amount: match.hourlyRate, currency: match.region.currency }
-      : null;
-  }
+  const billingCurrency = teacherBillingCurrency(teacher);
+  const regionName = teacher.user.region?.name ?? "";
 
   const entries: CalendarEntry[] = [];
   const detailsByOfferingId: Record<string, ClassDetail> = {};
+  const visibleOfferingIds = new Set<string>();
 
   for (const o of teacher.offerings) {
     const entry = buildTeacherOfferingCalendarEntry({
@@ -69,6 +70,8 @@ export default async function TeacherPage({ params }: Props) {
     });
     entries.push(entry);
     if (entry.visibility === "blocked") continue;
+
+    visibleOfferingIds.add(o.id);
 
     const cap = offeringCapacity({
       periodType: o.periodType,
@@ -88,7 +91,7 @@ export default async function TeacherPage({ params }: Props) {
       effectiveCap: cap.effectiveCap,
       enrolled: o.enrollments.length,
       periodType: o.periodType,
-      hourlyRate: findRate(o.subjectId),
+      hourlyRate: offeringHourlyRateDisplay(o.hourlyRate, billingCurrency),
       rules: o.rules,
       description: o.description,
       recurrence: recurrenceFromDb({
@@ -99,10 +102,17 @@ export default async function TeacherPage({ params }: Props) {
     };
   }
 
-  const averagePriceRow = teacher.rates[0];
-  const priceSummary = averagePriceRow
-    ? `from ${formatPrice(averagePriceRow.hourlyRate, averagePriceRow.region.currency)}/hr`
-    : "Rates coming soon";
+  const rates = buildTeacherSubjectRateRows({
+    offerings: teacher.offerings,
+    visibleOfferingIds,
+    currency: billingCurrency,
+    regionName,
+  });
+
+  const priceSummary = formatTeacherPriceSummary(
+    minVisibleOfferingHourlyRate(teacher.offerings, visibleOfferingIds),
+    billingCurrency,
+  );
 
   return (
     <TeacherDetailView
@@ -119,17 +129,20 @@ export default async function TeacherPage({ params }: Props) {
         id: s.subject.id,
         name: s.subject.name,
       }))}
-      rates={teacher.rates.map((r) => ({
-        id: r.id,
-        subjectId: r.subjectId,
-        subjectName: r.subject.name,
-        regionName: r.region.name,
-        hourlyDisplay: formatPrice(r.hourlyRate, r.region.currency),
-      }))}
+      rates={rates}
       entries={entries}
       detailsByOfferingId={detailsByOfferingId}
       enrollmentByOfferingId={myEnrollments}
       viewerRole={session.user.role}
+      studentSchedule={
+        studentSchedule
+          ? {
+              rows: studentSchedule.rows,
+              occurrenceMap: studentSchedule.occurrenceMap,
+              studentDisplayName: session.user.name ?? "You",
+            }
+          : null
+      }
       testimonials={testimonials.map((t) => ({
         id: t.id,
         studentName: t.studentProfile.user.name,

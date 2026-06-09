@@ -20,6 +20,9 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import type { SessionOccurrenceSnapshot } from "@/lib/sessionOccurrenceKey";
+import type { StudentClassRow } from "@/types/studentClass";
+import { TeacherDetailStudentSchedule } from "./TeacherDetailStudentSchedule";
 import { TeacherPublicCalendar } from "./TeacherPublicCalendar";
 import { TeacherRatesWithOfferings } from "./TeacherRatesWithOfferings";
 import { useTeacherOfferingEnrollment } from "./useTeacherOfferingEnrollment";
@@ -284,6 +287,11 @@ export interface TeacherDetailViewProps {
   detailsByOfferingId: Record<string, ClassDetail>;
   enrollmentByOfferingId: Record<string, string>;
   viewerRole: Role;
+  studentSchedule: {
+    rows: StudentClassRow[];
+    occurrenceMap: Record<string, SessionOccurrenceSnapshot>;
+    studentDisplayName: string;
+  } | null;
   testimonials: TeacherTestimonial[];
 }
 
@@ -303,8 +311,10 @@ export function TeacherDetailView({
   detailsByOfferingId,
   enrollmentByOfferingId,
   viewerRole,
+  studentSchedule,
   testimonials,
 }: TeacherDetailViewProps) {
+  const isStudent = viewerRole === "STUDENT";
   const enrollment = useTeacherOfferingEnrollment();
   const [expandedSubjectId, setExpandedSubjectId] = React.useState<string | null>(null);
 
@@ -370,21 +380,40 @@ export function TeacherDetailView({
       <TeacherRatesWithOfferings
         rates={rates}
         entries={entries}
+        detailsByOfferingId={detailsByOfferingId}
+        enrollmentByOfferingId={enrollmentByOfferingId}
+        viewerRole={viewerRole}
+        pendingOfferingId={enrollment.pendingOfferingId}
         expandedSubjectId={expandedSubjectId}
         onToggleSubject={toggleSubject}
         onOfferingClick={enrollment.openOffering}
+        onEnrol={enrollment.handleEnrol}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Weekly schedule</CardTitle>
+          <CardTitle>{isStudent ? "Your weekly schedule" : "Weekly schedule"}</CardTitle>
           <CardDescription>
-            Tap a class to see capacity, rules and testimonies. Green tiles
-            are open, amber are almost full, red are full.
+            {isStudent
+              ? "Your enrolled classes across all teachers. Check for time clashes before enrolling in new classes."
+              : "Tap a class to see capacity, rules and testimonies. Green tiles are open, amber are almost full, red are full."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {entries.length === 0 ? (
+          {isStudent ? (
+            studentSchedule && studentSchedule.rows.length > 0 ? (
+              <TeacherDetailStudentSchedule
+                rows={studentSchedule.rows}
+                occurrenceMap={studentSchedule.occurrenceMap}
+                studentDisplayName={studentSchedule.studentDisplayName}
+              />
+            ) : (
+              <InfoBlock>
+                You have no enrolled classes yet. Pick a subject above to enrol in your
+                first class with {name}.
+              </InfoBlock>
+            )
+          ) : entries.length === 0 ? (
             <InfoBlock>
               This teacher hasn&apos;t published any class periods yet.
             </InfoBlock>
@@ -433,10 +462,17 @@ export function TeacherDetailView({
         detail={selectedDetail}
         viewerRole={viewerRole}
         enrollmentId={selectedEnrollmentId}
-        isBusy={enrollment.isPending}
+        isBusy={
+          enrollment.pendingOfferingId !== null &&
+          enrollment.pendingOfferingId === enrollment.selectedOfferingId
+        }
         message={enrollment.message}
         onEnrol={enrollment.handleEnrol}
-        onDrop={enrollment.handleDrop}
+        onDrop={(enrollmentId) => {
+          if (enrollment.selectedOfferingId) {
+            enrollment.handleDrop(enrollmentId, enrollment.selectedOfferingId);
+          }
+        }}
       />
     </Wrap>
   );
