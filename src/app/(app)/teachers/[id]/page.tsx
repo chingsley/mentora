@@ -10,6 +10,7 @@ import { getPolicy } from "@/server/policies";
 import { listTestimonialsByTeacher } from "@/server/testimonials";
 import { offeringCapacity } from "@/lib/offeringCapacity";
 import { buildTeacherOfferingCalendarEntry } from "@/lib/teacherCalendarEntries";
+import { recurrenceFromDb } from "@/lib/offeringRecurrence";
 import { formatPrice } from "@/lib/time";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import type { ClassDetail } from "@/components/features/class/ClassDetailsDialog";
@@ -90,6 +91,11 @@ export default async function TeacherPage({ params }: Props) {
       hourlyRate: findRate(o.subjectId),
       rules: o.rules,
       description: o.description,
+      recurrence: recurrenceFromDb({
+        recurrenceKind: o.recurrenceKind,
+        recurrenceAnchorDate: o.recurrenceAnchorDate,
+        recurrenceOrdinal: o.recurrenceOrdinal,
+      }),
     };
   }
 
@@ -115,6 +121,7 @@ export default async function TeacherPage({ params }: Props) {
       }))}
       rates={teacher.rates.map((r) => ({
         id: r.id,
+        subjectId: r.subjectId,
         subjectName: r.subject.name,
         regionName: r.region.name,
         hourlyDisplay: formatPrice(r.hourlyRate, r.region.currency),

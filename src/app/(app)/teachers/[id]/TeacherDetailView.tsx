@@ -11,13 +11,18 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import type { CalendarEntry } from "@/components/features/calendar/types";
-import type { ClassDetail } from "@/components/features/class/ClassDetailsDialog";
+import {
+  ClassDetailsDialog,
+  type ClassDetail,
+} from "@/components/features/class/ClassDetailsDialog";
 import type { Role } from "@prisma/client";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { TeacherPublicCalendar } from "./TeacherPublicCalendar";
+import { TeacherRatesWithOfferings } from "./TeacherRatesWithOfferings";
+import { useTeacherOfferingEnrollment } from "./useTeacherOfferingEnrollment";
 
 const Wrap = styled.div`
   display: flex;
@@ -190,63 +195,6 @@ const AboutText = styled.p`
   color: ${COLORS.SIDEBAR_MUTED};
 `;
 
-const RatesGrid = styled.ul`
-  display: grid;
-  gap: ${SPACING.THREE};
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  grid-template-columns: 1fr;
-
-  ${LAYOUT.MEDIA.SM} {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  ${LAYOUT.MEDIA.LG} {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-`;
-
-const RateItem = styled.li`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.ONE};
-  border-radius: ${LAYOUT.RADIUS.LG};
-  border: 1px solid ${COLORS.BORDER_SUBTLE_LIGHT};
-  padding: ${SPACING.FOUR};
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
-
-  &:hover {
-    border-color: ${COLORS.BORDER};
-    box-shadow: ${LAYOUT.SHADOW.SM};
-  }
-`;
-
-const RateSubject = styled.span`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-`;
-
-const RateRegion = styled.span`
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.SIDEBAR_MUTED};
-`;
-
-const RatePrice = styled.span`
-  margin-top: ${SPACING.ONE};
-  font-size: ${FONTS.SIZE.LG};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-  letter-spacing: -0.01em;
-`;
-
-const RatePriceUnit = styled.span`
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.NORMAL};
-  color: ${COLORS.SIDEBAR_MUTED};
-`;
-
 const Muted = styled.p`
   font-size: ${FONTS.SIZE.SM};
   color: ${COLORS.MUTED_FOREGROUND};
@@ -314,6 +262,7 @@ export interface TeacherTestimonial {
 
 export interface TeacherRateRow {
   id: string;
+  subjectId: string;
   subjectName: string;
   regionName: string;
   hourlyDisplay: string;
@@ -356,6 +305,20 @@ export function TeacherDetailView({
   viewerRole,
   testimonials,
 }: TeacherDetailViewProps) {
+  const enrollment = useTeacherOfferingEnrollment();
+  const [expandedSubjectId, setExpandedSubjectId] = React.useState<string | null>(null);
+
+  const toggleSubject = React.useCallback((subjectId: string) => {
+    setExpandedSubjectId((prev) => (prev === subjectId ? null : subjectId));
+  }, []);
+
+  const selectedDetail = enrollment.selectedOfferingId
+    ? detailsByOfferingId[enrollment.selectedOfferingId] ?? null
+    : null;
+  const selectedEnrollmentId = enrollment.selectedOfferingId
+    ? enrollmentByOfferingId[enrollment.selectedOfferingId] ?? null
+    : null;
+
   return (
     <Wrap>
       <HeroCard>
@@ -404,30 +367,13 @@ export function TeacherDetailView({
         </HeroInner>
       </HeroCard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Rates</CardTitle>
-          <CardDescription>Hourly rates by subject and region.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {rates.length === 0 ? (
-            <Muted>No rates set yet.</Muted>
-          ) : (
-            <RatesGrid>
-              {rates.map((r) => (
-                <RateItem key={r.id}>
-                  <RateSubject>{r.subjectName}</RateSubject>
-                  <RateRegion>{r.regionName}</RateRegion>
-                  <RatePrice>
-                    {r.hourlyDisplay}
-                    <RatePriceUnit> /hr</RatePriceUnit>
-                  </RatePrice>
-                </RateItem>
-              ))}
-            </RatesGrid>
-          )}
-        </CardContent>
-      </Card>
+      <TeacherRatesWithOfferings
+        rates={rates}
+        entries={entries}
+        expandedSubjectId={expandedSubjectId}
+        onToggleSubject={toggleSubject}
+        onOfferingClick={enrollment.openOffering}
+      />
 
       <Card>
         <CardHeader>
@@ -445,9 +391,7 @@ export function TeacherDetailView({
           ) : (
             <TeacherPublicCalendar
               entries={entries}
-              detailsByOfferingId={detailsByOfferingId}
-              enrollmentByOfferingId={enrollmentByOfferingId}
-              viewerRole={viewerRole}
+              onOfferingClick={enrollment.openOffering}
             />
           )}
         </CardContent>
@@ -482,6 +426,18 @@ export function TeacherDetailView({
           )}
         </CardContent>
       </Card>
+
+      <ClassDetailsDialog
+        open={enrollment.selectedOfferingId !== null}
+        onClose={enrollment.closeDialog}
+        detail={selectedDetail}
+        viewerRole={viewerRole}
+        enrollmentId={selectedEnrollmentId}
+        isBusy={enrollment.isPending}
+        message={enrollment.message}
+        onEnrol={enrollment.handleEnrol}
+        onDrop={enrollment.handleDrop}
+      />
     </Wrap>
   );
 }
