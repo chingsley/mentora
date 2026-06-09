@@ -85,6 +85,7 @@ interface TeacherProfileForPage {
     endMinutes: number;
     periodType: OfferingPeriodType;
     teacherCap: number | null;
+    hourlyRate: number;
     recurrenceKind: import("@prisma/client").OfferingRecurrenceKind;
     recurrenceAnchorDate: Date | null;
     recurrenceOrdinal: number | null;
@@ -168,7 +169,16 @@ export async function TeacherProfilePage({
     recurrenceKind: o.recurrenceKind,
     recurrenceAnchorDate: o.recurrenceAnchorDate,
     recurrenceOrdinal: o.recurrenceOrdinal,
+    hourlyRate: o.hourlyRate,
   }));
+
+  const billingCurrency =
+    profile.user.region?.currency ?? profile.rates[0]?.region.currency ?? "USD";
+  const teacherRegionCode = profile.user.region?.code ?? null;
+  const regionMinHourlyMajor =
+    teacherRegionCode != null
+      ? (rateRegions.find((r) => r.code === teacherRegionCode)?.minMajor ?? null)
+      : null;
 
   const inviteableStudents = inviteableStudentRows.map((s) => ({
     id: s.id,
@@ -194,11 +204,6 @@ export async function TeacherProfilePage({
     bio: profile.bio,
     spokenLanguages: profile.spokenLanguages ?? "",
     subjectIds: profile.subjects.map((s) => s.subjectId),
-    rates: profile.rates.map((r) => ({
-      subjectId: r.subjectId,
-      regionCode: r.region.code,
-    })),
-    teacherRegionCode: profile.user.region?.code ?? null,
     offeringsCount: profile.offerings.length,
     payoutLegalName: profile.payoutLegalName,
     payoutCountryCode: profile.payoutCountryCode,
@@ -247,6 +252,8 @@ export async function TeacherProfilePage({
       dialogSubjects={dialogSubjects}
       scheduleOfferings={scheduleOfferings}
       inviteableStudents={inviteableStudents}
+      billingCurrency={billingCurrency}
+      regionMinHourlyMajor={regionMinHourlyMajor}
     />
   );
 }

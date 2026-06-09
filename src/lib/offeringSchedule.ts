@@ -237,6 +237,7 @@ export interface OfferingDialogSeed {
   endMinutes: number;
   periodType: OfferingPeriodType;
   teacherCap: number;
+  hourlyRate: number;
   invitedStudentProfileIds: string[];
   enrolled: number;
   recurrenceKind?: OfferingRecurrenceKind;
@@ -289,6 +290,7 @@ export function buildOfferingDialogInitial(
     teacherCap: target.teacherCap,
     invitedStudentProfileIds: target.invitedStudentProfileIds,
     enrolled: target.enrolled,
+    hourlyRateMinor: target.hourlyRate,
     groupEnrolled: siblings.reduce((total, row) => total + row.enrolled, 0),
     groupDayCount: siblings.length,
     recurrence: recurrenceFromOfferingSeed(target),

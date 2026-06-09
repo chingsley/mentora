@@ -334,6 +334,8 @@ model ClassOffering {
   recurrenceOrdinal    Int?
   /// 2+ for BIWEEKLY (every N weeks from anchor); null means 2 for legacy rows.
   recurrenceInterval   Int?
+  /// Hourly rate in the teacher billing region's smallest currency unit (kobo, cent).
+  hourlyRate       Int                @default(0)
   createdAt        DateTime           @default(now())
 
   teacherProfile TeacherProfile     @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)

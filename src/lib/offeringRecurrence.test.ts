@@ -1,10 +1,12 @@
 import {
+  calendarDateFromDb,
   formatRecurrenceLabel,
   frequencyViewToRecurrence,
   nextOfferingOccurrence,
   offeringOccursOnDate,
   parseIsoDate,
   patternToRecurrence,
+  recurrenceFromDb,
   recurrenceFromInput,
   recurrenceToFrequencyView,
 } from "./offeringRecurrence";
@@ -90,6 +92,24 @@ describe("offeringRecurrence", () => {
     ).toBe(true);
     expect(
       offeringOccursOnDate(once, "MON", parseIsoDate("2026-06-22")),
+    ).toBe(false);
+  });
+
+  it("reads one-time anchors from Prisma @db.Date without timezone shift", () => {
+    const anchorDb = new Date("2026-06-10T00:00:00.000Z");
+    expect(calendarDateFromDb(anchorDb)).toBe("2026-06-10");
+
+    const once = recurrenceFromDb({
+      recurrenceKind: "ONCE",
+      recurrenceAnchorDate: anchorDb,
+      recurrenceOrdinal: null,
+    });
+    expect(once.anchorDate).toBe("2026-06-10");
+    expect(
+      offeringOccursOnDate(once, "WED", parseIsoDate("2026-06-10")),
+    ).toBe(true);
+    expect(
+      offeringOccursOnDate(once, "WED", parseIsoDate("2026-06-17")),
     ).toBe(false);
   });
 

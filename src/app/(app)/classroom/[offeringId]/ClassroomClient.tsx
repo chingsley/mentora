@@ -11,7 +11,6 @@ import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
-import { VIDEO } from "@/constants/video.constants";
 import { buildExternalApiSrc, buildRoomUrl } from "@/lib/videoRoom";
 import type { ClassroomAccess, ClassroomView } from "@/server/classSession";
 import {
@@ -140,6 +139,7 @@ interface JitsiApiOptions {
   parentNode: HTMLElement;
   width?: string | number;
   height?: string | number;
+  jwt?: string;
   userInfo?: { displayName?: string };
   configOverwrite?: Record<string, unknown>;
   interfaceConfigOverwrite?: Record<string, unknown>;
@@ -158,24 +158,27 @@ declare global {
   }
 }
 
-let scriptPromise: Promise<void> | null = null;
+const scriptPromises = new Map<string, Promise<void>>();
 
-function loadJitsiScript(): Promise<void> {
+function loadJitsiScript(domain: string): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   if (window.JitsiMeetExternalAPI) return Promise.resolve();
-  if (scriptPromise) return scriptPromise;
-  scriptPromise = new Promise<void>((resolve, reject) => {
+  const cached = scriptPromises.get(domain);
+  if (cached) return cached;
+
+  const promise = new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = buildExternalApiSrc();
+    script.src = buildExternalApiSrc(domain);
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => {
-      scriptPromise = null;
+      scriptPromises.delete(domain);
       reject(new Error("Could not load the video client."));
     };
     document.body.appendChild(script);
   });
-  return scriptPromise;
+  scriptPromises.set(domain, promise);
+  return promise;
 }
 
 function JitsiRoom({
@@ -196,7 +199,7 @@ function JitsiRoom({
 
   React.useEffect(() => {
     let disposed = false;
-    loadJitsiScript()
+    loadJitsiScript(access.videoDomain)
       .then(() => {
         if (disposed) return;
         const Ctor = window.JitsiMeetExternalAPI;
@@ -204,11 +207,12 @@ function JitsiRoom({
           setError("The video client is unavailable right now.");
           return;
         }
-        const api = new Ctor(VIDEO.DOMAIN, {
+        const api = new Ctor(access.videoDomain, {
           roomName: access.roomName,
           parentNode: containerRef.current,
           width: "100%",
           height: "100%",
+          ...(access.jwt ? { jwt: access.jwt } : {}),
           userInfo: { displayName: access.displayName },
           configOverwrite: {
             prejoinPageEnabled: false,
@@ -230,7 +234,13 @@ function JitsiRoom({
       apiRef.current?.dispose();
       apiRef.current = null;
     };
-  }, [access.roomName, access.displayName, access.isModerator]);
+  }, [
+    access.roomName,
+    access.displayName,
+    access.isModerator,
+    access.videoDomain,
+    access.jwt,
+  ]);
 
   if (error) {
     return (
@@ -240,7 +250,12 @@ function JitsiRoom({
         <PanelActions>
           <Button
             type="button"
-            onClick={() => window.open(buildRoomUrl(access.roomName), "_blank")}
+            onClick={() =>
+              window.open(
+                buildRoomUrl(access.roomName, access.videoDomain),
+                "_blank",
+              )
+            }
           >
             Open call in a new tab
           </Button>
@@ -305,6 +320,12 @@ function LiveClassroom({ access }: { access: ClassroomAccess }) {
         </Button>
       </TopBar>
       {notice ? <ErrorText>{notice}</ErrorText> : null}
+      {access.isDemoEmbed ? (
+        <ErrorText>
+          Demo video mode disconnects after 5 minutes. Add JaaS credentials to
+          your server environment for longer classes.
+        </ErrorText>
+      ) : null}
       <JitsiRoom access={access} onLeave={leave} />
     </Wrap>
   );

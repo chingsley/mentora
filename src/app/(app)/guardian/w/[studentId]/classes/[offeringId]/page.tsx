@@ -73,14 +73,11 @@ export default async function WardClassDetailPage({ params }: Props) {
     inviteCount: o.invites.length,
     currentEnrolled: o.enrollments.length,
   });
-  const rate =
-    teacher.rates.find((r) => r.subjectId === o.subjectId) ??
-    teacher.rates[0] ??
-    null;
+  const billingCurrency =
+    teacher.user.region?.currency ?? teacher.rates[0]?.region.currency ?? "USD";
   const durationMinutes = o.endMinutes - o.startMinutes;
-  const hourlyDisplay = rate
-    ? formatPrice(rate.hourlyRate, rate.region.currency)
-    : null;
+  const hourlyDisplay =
+    o.hourlyRate > 0 ? formatPrice(o.hourlyRate, billingCurrency) : null;
   const [attendance, summary] = await Promise.all([
     listAttendanceForEnrollment(enrollment.id),
     attendanceSummary(enrollment.id),

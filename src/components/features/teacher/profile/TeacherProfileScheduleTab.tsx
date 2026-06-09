@@ -35,6 +35,8 @@ export interface TeacherProfileScheduleTabProps {
   dialogSubjects: { id: string; name: string; defaultCap: number }[];
   inviteableStudents: { id: string; name: string; email: string }[];
   globalCap: number;
+  billingCurrency: string;
+  regionMinHourlyMajor: number | null;
   onAdvance: () => void;
   onBack: () => void;
 }
@@ -44,6 +46,8 @@ export function TeacherProfileScheduleTab({
   dialogSubjects,
   inviteableStudents,
   globalCap,
+  billingCurrency,
+  regionMinHourlyMajor,
   onAdvance,
   onBack,
 }: TeacherProfileScheduleTabProps) {
@@ -70,6 +74,8 @@ export function TeacherProfileScheduleTab({
               subjects={dialogSubjects}
               inviteableStudents={inviteableStudents}
               globalCap={globalCap}
+              billingCurrency={billingCurrency}
+              regionMinHourlyMajor={regionMinHourlyMajor}
               tileColorMode="subject"
               emptyStateMessage="No class periods yet. Pick day or week view and click an empty slot to add one."
             />

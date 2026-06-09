@@ -35,6 +35,7 @@ export async function getStudentDashboardPayload(
   const pendingAssignments = assignments.filter((a) => a.submissions.length === 0);
   const currency =
     profile.user.region?.currency ??
+    enrollments[0]?.offering.teacherProfile.user.region?.currency ??
     enrollments[0]?.offering.teacherProfile.rates[0]?.region.currency ??
     "USD";
 

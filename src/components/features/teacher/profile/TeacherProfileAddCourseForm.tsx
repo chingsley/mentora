@@ -19,15 +19,11 @@ import {
 export interface TeacherProfileEditCourseValues {
   subjectId: string;
   subjectName: string;
-  hourlyRateMajor: number | null;
   defaultCap: number;
 }
 
 export interface TeacherProfileAddCourseFormProps {
   allSubjects: TeacherProfileSubjectOption[];
-  teacherRegionCode: string | null;
-  /** Region policy floor in major units (e.g. NGN); may exceed form minimum. */
-  regionMinHourlyMajor: number | null;
   globalCap: number;
   /** When set, the form edits this course instead of adding a new one. */
   editCourse?: TeacherProfileEditCourseValues | null;
@@ -47,13 +43,9 @@ const FieldsRow = styled.div`
   align-items: end;
 
   ${LAYOUT.MEDIA.SM} {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
     gap: ${SPACING.THREE};
   }
-`;
-
-const RateField = styled.div`
-  min-width: 0;
 `;
 
 const Actions = styled.div`
@@ -116,15 +108,8 @@ function fieldError(
   return msg && msg.length > 0 ? msg : undefined;
 }
 
-function effectiveRateMin(regionMinHourlyMajor: number | null): number {
-  const floor = regionMinHourlyMajor ?? TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN;
-  return Math.max(TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN, Math.ceil(floor));
-}
-
 export function TeacherProfileAddCourseForm({
   allSubjects,
-  teacherRegionCode,
-  regionMinHourlyMajor,
   globalCap,
   editCourse = null,
   onClearEdit,
@@ -134,25 +119,20 @@ export function TeacherProfileAddCourseForm({
   const [isPending, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<ActionResult | null>(null);
   const [subject, setSubject] = React.useState<TeacherProfileSubjectOption | null>(null);
-  const [hourlyRate, setHourlyRate] = React.useState("");
   const [classLimit, setClassLimit] = React.useState(String(defaultClassLimit(globalCap)));
   const isEditing = editCourse !== null;
 
-  const regionMissing = !teacherRegionCode;
-  const rateMin = effectiveRateMin(regionMinHourlyMajor);
   const classLimitMax = effectiveClassLimitMax(globalCap);
-  const canSubmit = !regionMissing && subject !== null;
+  const canSubmit = subject !== null;
 
   function resetToEmpty() {
     setSubject(null);
-    setHourlyRate("");
     setClassLimit(String(defaultClassLimit(globalCap)));
     setResult(null);
   }
 
   function applyEditCourse(course: TeacherProfileEditCourseValues) {
     setSubject({ id: course.subjectId, name: course.subjectName });
-    setHourlyRate(course.hourlyRateMajor != null ? String(course.hourlyRateMajor) : "");
     setClassLimit(String(course.defaultCap));
     setResult(null);
   }
@@ -178,12 +158,10 @@ export function TeacherProfileAddCourseForm({
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!subject || !teacherRegionCode) return;
+    if (!subject) return;
 
     const fd = new FormData();
     fd.append("subjectId", subject.id);
-    fd.append("regionCode", teacherRegionCode);
-    fd.append("hourlyRateMajor", hourlyRate);
     fd.append("defaultCap", classLimit);
     fd.append("isEdit", isEditing ? "true" : "false");
 
@@ -216,39 +194,22 @@ export function TeacherProfileAddCourseForm({
             </Button>
           </EditBanner>
         ) : null}
-        {regionMissing ? (
-          <Banner>Set your teaching region on your profile before adding courses and rates.</Banner>
-        ) : null}
+        <Banner>
+          Set hourly rates when you schedule each class on your weekly timetable.
+        </Banner>
         <FieldsRow>
           <TeacherProfileSubjectSearch
             subjects={allSubjects}
             value={subject}
             onChange={setSubject}
             error={fieldError(fieldErrors, "subjectId")}
-            disabled={regionMissing || isPending || isEditing}
+            disabled={isPending || isEditing}
           />
-          <RateField>
-            <Input
-              type="number"
-              inputMode="decimal"
-              label="Rate per hour"
-              labelNote={regionMissing ? undefined : "limits by region"}
-              name="hourlyRateMajor"
-              value={hourlyRate}
-              min={rateMin}
-              max={TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MAX}
-              step={1}
-              placeholder={`${rateMin}–${TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MAX}`}
-              error={fieldError(fieldErrors, "hourlyRateMajor")}
-              disabled={regionMissing || isPending}
-              onChange={(e) => setHourlyRate(e.target.value)}
-            />
-          </RateField>
           <Input
             type="number"
             inputMode="numeric"
-            label="Class limit"
-            labelNote={regionMissing ? undefined : `admin limit: ${globalCap}`}
+            label="Default class limit"
+            labelNote={`admin limit: ${globalCap}`}
             name="defaultCap"
             value={classLimit}
             min={TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MIN}
@@ -256,7 +217,7 @@ export function TeacherProfileAddCourseForm({
             step={1}
             placeholder={`${TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MIN}–${classLimitMax}`}
             error={fieldError(fieldErrors, "defaultCap")}
-            disabled={regionMissing || isPending}
+            disabled={isPending}
             onChange={(e) => setClassLimit(e.target.value)}
           />
           <Actions>

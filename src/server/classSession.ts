@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { isClassLive } from "@/lib/classSession";
 import { recurrenceFromDb } from "@/lib/offeringRecurrence";
+import { buildVideoCallCredentials } from "@/lib/jitsiJaas";
 import { generateRoomName } from "@/lib/videoRoom";
 import { recordAutoJoin, resolveCurrentSessionDate, finalizeSessionAttendance } from "./attendance";
 import { keyForOccurrence } from "@/lib/sessionOccurrenceKey";
@@ -78,12 +79,51 @@ export interface ClassroomAccess {
   offeringTitle: string;
   subjectName: string;
   teacherName: string;
+  /** Provider-ready room identifier (may include a JaaS tenant prefix). */
   roomName: string;
+  /** Jitsi deployment domain (no protocol). */
+  videoDomain: string;
+  /** Signed JaaS token when using 8x8.vc; omitted for self-hosted Jitsi. */
+  jwt?: string;
+  /** True when using the public meet.jit.si embed (5-minute demo cap). */
+  isDemoEmbed: boolean;
   /** Name shown to other participants in the call. */
   displayName: string;
   /** Teachers join as moderators; students as regular participants. */
   isModerator: boolean;
   startedAt: Date;
+}
+
+function classroomAccessForUser(args: {
+  offeringId: string;
+  offeringTitle: string;
+  subjectName: string;
+  teacherName: string;
+  roomSlug: string;
+  userId: string;
+  displayName: string;
+  isModerator: boolean;
+  startedAt: Date;
+}): ClassroomAccess {
+  const video = buildVideoCallCredentials({
+    roomSlug: args.roomSlug,
+    userId: args.userId,
+    displayName: args.displayName,
+    isModerator: args.isModerator,
+  });
+  return {
+    offeringId: args.offeringId,
+    offeringTitle: args.offeringTitle,
+    subjectName: args.subjectName,
+    teacherName: args.teacherName,
+    roomName: video.roomName,
+    videoDomain: video.domain,
+    jwt: video.jwt,
+    isDemoEmbed: video.isDemoEmbed,
+    displayName: args.displayName,
+    isModerator: args.isModerator,
+    startedAt: args.startedAt,
+  };
 }
 
 const OFFERING_SESSION_INCLUDE = {
@@ -156,16 +196,17 @@ export async function getClassroomView(
     if (active) {
       return {
         kind: "live",
-        access: {
+        access: classroomAccessForUser({
           offeringId,
           offeringTitle: offering.title,
           subjectName: offering.subject.name,
           teacherName: offering.teacherProfile.user.name,
-          roomName: active.roomName,
+          roomSlug: active.roomName,
+          userId,
           displayName: offering.teacherProfile.user.name,
           isModerator: true,
           startedAt: active.startedAt,
-        },
+        }),
       };
     }
     return {
@@ -194,16 +235,17 @@ export async function getClassroomView(
     if (active) {
       return {
         kind: "live",
-        access: {
+        access: classroomAccessForUser({
           offeringId,
           offeringTitle: offering.title,
           subjectName: offering.subject.name,
           teacherName: offering.teacherProfile.user.name,
-          roomName: active.roomName,
+          roomSlug: active.roomName,
+          userId,
           displayName: student.user.name,
           isModerator: false,
           startedAt: active.startedAt,
-        },
+        }),
       };
     }
     return {
@@ -251,16 +293,17 @@ export async function startClassSession(
       },
     }));
 
-  return {
+  return classroomAccessForUser({
     offeringId,
     offeringTitle: offering.title,
     subjectName: offering.subject.name,
     teacherName: offering.teacherProfile.user.name,
-    roomName: session.roomName,
+    roomSlug: session.roomName,
+    userId: teacherUserId,
     displayName: offering.teacherProfile.user.name,
     isModerator: true,
     startedAt: session.startedAt,
-  };
+  });
 }
 
 /** Teacher ends the live session (best-effort; safe to call when none is live). */
@@ -350,14 +393,15 @@ export async function joinClassSessionAsStudent(
     await recordAutoJoin({ enrollmentId: enrollment.id, sessionDate });
   }
 
-  return {
+  return classroomAccessForUser({
     offeringId,
     offeringTitle: offering.title,
     subjectName: offering.subject.name,
     teacherName: offering.teacherProfile.user.name,
-    roomName: session.roomName,
+    roomSlug: session.roomName,
+    userId: studentUserId,
     displayName: student.user.name,
     isModerator: false,
     startedAt: session.startedAt,
-  };
+  });
 }

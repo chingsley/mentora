@@ -53,11 +53,16 @@ export async function searchTeachers(filters: TeacherSearchFilters) {
       AND: queryClauses,
       user: regionCode ? { region: { code: regionCode } } : undefined,
       subjects: subjectSlug ? { some: { subject: { slug: subjectSlug } } } : undefined,
-      rates:
-        maxHourlyRate !== undefined
-          ? { some: { hourlyRate: { lte: maxHourlyRate } } }
+      offerings:
+        maxHourlyRate !== undefined || dayOfWeek
+          ? {
+              some: {
+                active: true,
+                ...(dayOfWeek ? { dayOfWeek } : {}),
+                ...(maxHourlyRate !== undefined ? { hourlyRate: { lte: maxHourlyRate } } : {}),
+              },
+            }
           : undefined,
-      offerings: dayOfWeek ? { some: { dayOfWeek, active: true } } : undefined,
       avgRating: minRating !== undefined ? { gte: minRating } : undefined,
     },
     include: {
@@ -66,7 +71,7 @@ export async function searchTeachers(filters: TeacherSearchFilters) {
       rates: { include: { region: true, subject: true } },
       offerings: {
         where: { active: true },
-        select: { dayOfWeek: true },
+        select: { dayOfWeek: true, hourlyRate: true },
       },
     },
     orderBy: [{ avgRating: "desc" }, { createdAt: "desc" }],
@@ -92,7 +97,7 @@ export async function recommendTeachers(studentUserId: string, limit = 6) {
       rates: { include: { region: true, subject: true } },
       offerings: {
         where: { active: true },
-        select: { dayOfWeek: true },
+        select: { dayOfWeek: true, hourlyRate: true },
       },
     },
     orderBy: [{ avgRating: "desc" }, { ratingsCount: "desc" }],
@@ -424,6 +429,18 @@ export async function setTeacherSubjects(
 
 // ---------- Offerings (schedule) ----------
 
+const offeringHourlyRateMajorSchema = z.coerce
+  .number()
+  .finite()
+  .min(
+    TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN,
+    `Rate must be at least ${TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN}`,
+  )
+  .max(
+    TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MAX,
+    `Rate must be at most ${TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MAX.toLocaleString()}`,
+  );
+
 const offeringPayloadBaseSchema = z.object({
   subjectId: z.string().min(1),
   title: z.string().min(3).max(120),
@@ -433,6 +450,7 @@ const offeringPayloadBaseSchema = z.object({
   periodType: z.enum(["OPEN", "RESERVED"]).default("OPEN"),
   teacherCap: z.coerce.number().int().min(1).max(1000).optional(),
   invitedStudentProfileIds: z.array(z.string().min(1)).default([]),
+  hourlyRateMajor: offeringHourlyRateMajorSchema,
 });
 
 type OfferingPeriodFields = {
@@ -492,6 +510,7 @@ const offeringScheduleFieldsSchema = z.object({
   periodType: z.enum(["OPEN", "RESERVED"]).default("OPEN"),
   teacherCap: z.coerce.number().int().min(1).max(1000).optional(),
   invitedStudentProfileIds: z.array(z.string().min(1)).default([]),
+  hourlyRateMajor: offeringHourlyRateMajorSchema,
   slots: z.array(offeringDaySlotSchema).min(1, "Add at least one weekly time slot"),
   recurrence: offeringRecurrenceSchema,
 });
@@ -553,6 +572,30 @@ export class OfferingScheduleConflictError extends Error {
     super(message);
     this.name = "OfferingScheduleConflictError";
   }
+}
+
+async function resolveOfferingHourlyRateSmallest(
+  teacherUserId: string,
+  hourlyRateMajor: number,
+): Promise<number> {
+  const user = await db.user.findUnique({
+    where: { id: teacherUserId },
+    select: {
+      region: {
+        select: {
+          currency: true,
+          minRates: { select: { hourlyRate: true }, take: 1 },
+        },
+      },
+    },
+  });
+  if (!user?.region) {
+    throw new Error("Set your teaching region before scheduling classes.");
+  }
+  const smallest = majorToSmallest(hourlyRateMajor, user.region.currency);
+  const min = user.region.minRates[0]?.hourlyRate ?? 0;
+  assertAtLeastMinRate(smallest, min);
+  return smallest;
 }
 
 async function assertSubjectBelongsToTeacher(teacherProfileId: string, subjectId: string) {
@@ -677,6 +720,8 @@ export async function createOffering(teacherUserId: string, input: CreateOfferin
     input.endMinutes,
   );
 
+  const hourlyRate = await resolveOfferingHourlyRateSmallest(teacherUserId, input.hourlyRateMajor);
+
   const offering = await db.$transaction(async (tx) => {
     const created = await tx.classOffering.create({
       data: {
@@ -690,6 +735,7 @@ export async function createOffering(teacherUserId: string, input: CreateOfferin
         periodType: input.periodType,
         teacherCap: cap,
         scheduleGroupId: input.scheduleGroupId ?? null,
+        hourlyRate,
       },
     });
     if (!isOpen) {
@@ -741,6 +787,8 @@ export async function updateOffering(
     [offeringId],
   );
 
+  const hourlyRate = await resolveOfferingHourlyRateSmallest(teacherUserId, input.hourlyRateMajor);
+
   const updated = await db.$transaction(async (tx) => {
     const row = await tx.classOffering.update({
       where: { id: offeringId },
@@ -754,6 +802,7 @@ export async function updateOffering(
         periodType: input.periodType,
         teacherCap: cap,
         scheduleGroupId: input.scheduleGroupId ?? null,
+        hourlyRate,
       },
     });
     if (isOpen) {
@@ -807,6 +856,7 @@ export async function createOfferingSchedule(
       interval: "",
     }),
   );
+  const hourlyRate = await resolveOfferingHourlyRateSmallest(teacherUserId, input.hourlyRateMajor);
 
   await db.$transaction(async (tx) => {
     for (const slot of slots) {
@@ -822,6 +872,7 @@ export async function createOfferingSchedule(
           periodType: input.periodType,
           teacherCap: cap,
           scheduleGroupId,
+          hourlyRate,
           ...recurrenceData,
         },
       });
@@ -892,6 +943,8 @@ export async function updateOfferingSchedule(
   const toCreate = targetDays.filter((day) => !siblingByDay.has(day));
   const toUpdate = targetDays.filter((day) => siblingByDay.has(day));
 
+  const hourlyRate = await resolveOfferingHourlyRateSmallest(teacherUserId, input.hourlyRateMajor);
+
   const sharedData = {
     subjectId: input.subjectId,
     title: input.title,
@@ -899,6 +952,7 @@ export async function updateOfferingSchedule(
     periodType: input.periodType,
     teacherCap: cap,
     scheduleGroupId: nextGroupId,
+    hourlyRate,
     ...recurrenceToDb(
       recurrenceFromInput({
         kind: input.recurrence.kind,
@@ -1064,18 +1118,6 @@ export async function setTeacherRateMajor(
 
 export const addTeacherCourseSchema = z.object({
   subjectId: z.string().min(1, "Choose a subject"),
-  regionCode: z.string().min(2).max(8),
-  hourlyRateMajor: z.coerce
-    .number()
-    .finite()
-    .min(
-      TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN,
-      `Rate must be at least ${TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MIN}`,
-    )
-    .max(
-      TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MAX,
-      `Rate must be at most ${TEACHER_PROFILE_ADD_COURSE.HOURLY_RATE_MAX.toLocaleString()}`,
-    ),
   defaultCap: z.coerce
     .number()
     .int()
@@ -1139,12 +1181,6 @@ export async function addTeacherCourse(
     },
     create: createData,
     update: updateData,
-  });
-
-  await setTeacherRateMajor(teacherUserId, {
-    subjectId: input.subjectId,
-    regionCode: input.regionCode,
-    hourlyRateMajor: input.hourlyRateMajor,
   });
 
   await recomputeProfileCompleted(teacher.id);
@@ -1244,11 +1280,6 @@ export async function recomputeProfileCompleted(teacherProfileId: string) {
 
   const coursesComplete = isTeacherCoursesPhaseComplete({
     subjectIds: profile.subjects.map((s) => s.subjectId),
-    rates: profile.rates.map((r) => ({
-      subjectId: r.subjectId,
-      regionCode: r.region.code,
-    })),
-    teacherRegionCode: profile.user.region?.code ?? null,
   });
   const complete =
     Boolean(profile.user.image) &&

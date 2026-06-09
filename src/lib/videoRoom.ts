@@ -11,11 +11,11 @@ export function generateRoomName(): string {
 }
 
 /** Absolute fallback URL to open a room directly in the Jitsi web client. */
-export function buildRoomUrl(roomName: string): string {
-  return `https://${VIDEO.DOMAIN}/${roomName}`;
+export function buildRoomUrl(roomName: string, domain: string = VIDEO.DEMO_DOMAIN): string {
+  return `https://${domain}/${roomName}`;
 }
 
 /** Source URL for the Jitsi external iframe API loader. */
-export function buildExternalApiSrc(): string {
-  return `https://${VIDEO.DOMAIN}${VIDEO.EXTERNAL_API_PATH}`;
+export function buildExternalApiSrc(domain: string = VIDEO.DEMO_DOMAIN): string {
+  return `https://${domain}${VIDEO.EXTERNAL_API_PATH}`;
 }

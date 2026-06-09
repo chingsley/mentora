@@ -14,6 +14,8 @@ export interface TeacherScheduleClientProps {
   subjects: OfferingDialogSubject[];
   inviteableStudents: OfferingInviteableStudent[];
   globalCap: number;
+  billingCurrency: string;
+  regionMinHourlyMajor: number | null;
 }
 
 export function TeacherScheduleClient({
@@ -21,6 +23,8 @@ export function TeacherScheduleClient({
   subjects,
   inviteableStudents,
   globalCap,
+  billingCurrency,
+  regionMinHourlyMajor,
 }: TeacherScheduleClientProps) {
   return (
     <TeacherOfferingCalendar
@@ -28,6 +32,8 @@ export function TeacherScheduleClient({
       subjects={subjects}
       inviteableStudents={inviteableStudents}
       globalCap={globalCap}
+      billingCurrency={billingCurrency}
+      regionMinHourlyMajor={regionMinHourlyMajor}
       tileColorMode="capacity"
     />
   );

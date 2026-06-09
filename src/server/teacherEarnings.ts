@@ -44,14 +44,13 @@ async function listTeacherBillableEnrollments(teacherProfileId: string): Promise
         select: {
           id: true,
           subjectId: true,
+          hourlyRate: true,
           endMinutes: true,
           subject: { select: { name: true } },
           teacherProfile: {
             select: {
-              user: { select: { regionId: true } },
-              rates: {
-                include: { region: true },
-              },
+              user: { select: { region: { select: { currency: true } } } },
+              rates: { select: { region: { select: { currency: true } } } },
             },
           },
         },

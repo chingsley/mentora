@@ -24,16 +24,12 @@ import { SPACING } from "@/constants/spacing.constants";
 import { DEFAULT_OFFERING_RECURRENCE, formatRecurrenceLabel } from "@/lib/offeringRecurrence";
 import { minutesToTime } from "@/lib/time";
 import { JoinClassButton } from "@/components/features/student/JoinClassButton";
+import type { StudentClassRow } from "@/types/studentClass";
 import { dropAction } from "./actions";
 
-type TabKey = "timetable" | "list";
+export type { StudentClassRow };
 
-export interface StudentClassRow {
-  enrollmentId: string;
-  entry: CalendarEntry;
-  detail: ClassDetail;
-  teacherName: string;
-}
+type TabKey = "timetable" | "list";
 
 export interface StudentClassesClientProps {
   rows: StudentClassRow[];

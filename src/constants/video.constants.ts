@@ -1,14 +1,14 @@
 /**
  * Live class video-call configuration.
  *
- * Mentora embeds Jitsi Meet via its external iframe API. The public
- * `meet.jit.si` instance needs no API keys or account, so live classes work
- * out of the box. To self-host or use a paid 8x8 tenant, override
- * `NEXT_PUBLIC_JITSI_DOMAIN` and the room namespace stays the same.
+ * Embedded calls on the public `meet.jit.si` host disconnect after 5 minutes.
+ * For production (1+ hour classes), configure JaaS on the server
+ * (`JITSI_JAAS_*` env vars) or point `NEXT_PUBLIC_JITSI_DOMAIN` at a
+ * self-hosted Jitsi deployment.
  */
 export const VIDEO = {
-  /** Jitsi deployment domain (no protocol). */
-  DOMAIN: process.env.NEXT_PUBLIC_JITSI_DOMAIN ?? "meet.jit.si",
+  /** Default Jitsi domain when no server credentials are configured. */
+  DEMO_DOMAIN: "meet.jit.si",
   /** Prefix applied to every generated room slug to namespace Mentora rooms. */
   ROOM_PREFIX: "mentora",
   /** External API loader served by the Jitsi deployment. */

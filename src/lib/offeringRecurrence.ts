@@ -165,16 +165,31 @@ function startOfDay(date: Date): Date {
   return copy;
 }
 
+/** Local calendar date (matches week/day grid cells). */
 export function parseIsoDate(iso: string): Date {
   const [year, month, day] = iso.split("-").map((part) => parseInt(part, 10));
   return new Date(year!, month! - 1, day);
 }
 
+/** Local calendar date (matches week/day grid cells). */
 export function formatIsoDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+/** Read Prisma `@db.Date` values without local timezone shifting the day. */
+export function calendarDateFromDb(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/** Write Prisma `@db.Date` values as the intended calendar day. */
+export function calendarDateToDb(iso: string): Date {
+  return new Date(`${iso}T00:00:00.000Z`);
 }
 
 function daysBetween(start: Date, end: Date): number {
@@ -231,7 +246,7 @@ export function recurrenceFromDb(args: {
   return {
     kind: args.recurrenceKind,
     anchorDate: args.recurrenceAnchorDate
-      ? formatIsoDate(args.recurrenceAnchorDate)
+      ? calendarDateFromDb(args.recurrenceAnchorDate)
       : null,
     ordinal: args.recurrenceOrdinal,
     interval:
@@ -249,7 +264,7 @@ export function recurrenceToDb(recurrence: OfferingRecurrence): {
   return {
     recurrenceKind: recurrence.kind,
     recurrenceAnchorDate:
-      needsAnchor && recurrence.anchorDate ? parseIsoDate(recurrence.anchorDate) : null,
+      needsAnchor && recurrence.anchorDate ? calendarDateToDb(recurrence.anchorDate) : null,
     recurrenceOrdinal: recurrence.kind === "MONTHLY_NTH" ? recurrence.ordinal : null,
     recurrenceInterval:
       recurrence.kind === "BIWEEKLY" ? (recurrence.interval ?? 2) : null,

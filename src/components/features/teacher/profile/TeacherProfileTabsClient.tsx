@@ -154,6 +154,8 @@ function TeacherProfileTabsInner({
           dialogSubjects={props.dialogSubjects}
           inviteableStudents={props.inviteableStudents}
           globalCap={props.globalCap}
+          billingCurrency={props.billingCurrency}
+          regionMinHourlyMajor={props.regionMinHourlyMajor}
           onAdvance={() => setTab(nextTabAfterSave("schedule"))}
           onBack={() => setTab(previousTabBefore("schedule"))}
         />

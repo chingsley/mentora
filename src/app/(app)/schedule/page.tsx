@@ -15,17 +15,19 @@ import { TodayAttendance, type TodayAttendanceSession } from "./TodayAttendance"
 import { AssignmentsList } from "./AssignmentsList";
 import { getMyTeacherProfile, listInviteableStudentsForTeacher } from "@/server/teachers";
 import { getTeacherTodaySessions } from "@/server/attendance";
-import { getPolicy } from "@/server/policies";
+import { getPolicy, listRegions } from "@/server/policies";
+import { smallestToMajor } from "@/lib/money";
 
 export const metadata: Metadata = { title: "My schedule" };
 
 export default async function TeacherSchedulePage() {
   const session = await requireRole("TEACHER");
-  const [data, policy, todayRaw, inviteableStudentRows] = await Promise.all([
+  const [data, policy, todayRaw, inviteableStudentRows, regions] = await Promise.all([
     getMyTeacherProfile(session.user.id),
     getPolicy(),
     getTeacherTodaySessions(session.user.id),
     listInviteableStudentsForTeacher(session.user.id),
+    listRegions(),
   ]);
   const todaySessions: TodayAttendanceSession[] = todayRaw.map((s) => ({
     offeringId: s.offeringId,
@@ -55,6 +57,18 @@ export default async function TeacherSchedulePage() {
   }
 
   const { profile } = data;
+  const billingCurrency = profile.user.region?.currency ?? profile.rates[0]?.region.currency ?? "USD";
+  const teacherRegionCode = profile.user.region?.code ?? null;
+  const regionMinHourlyMajor =
+    teacherRegionCode != null
+      ? (() => {
+          const region = regions.find((r) => r.code === teacherRegionCode);
+          return region?.minRates[0]
+            ? smallestToMajor(region.minRates[0].hourlyRate, region.currency)
+            : null;
+        })()
+      : null;
+
   const offerings = profile.offerings.map((o) => ({
     id: o.id,
     title: o.title,
@@ -72,6 +86,7 @@ export default async function TeacherSchedulePage() {
     recurrenceKind: o.recurrenceKind,
     recurrenceAnchorDate: o.recurrenceAnchorDate,
     recurrenceOrdinal: o.recurrenceOrdinal,
+    hourlyRate: o.hourlyRate,
   }));
 
   const inviteableStudents = inviteableStudentRows.map((s) => ({
@@ -116,6 +131,8 @@ export default async function TeacherSchedulePage() {
                 subjects={subjects}
                 inviteableStudents={inviteableStudents}
                 globalCap={policy.globalClassCap}
+                billingCurrency={billingCurrency}
+                regionMinHourlyMajor={regionMinHourlyMajor}
               />
             </CardContent>
           </Card>

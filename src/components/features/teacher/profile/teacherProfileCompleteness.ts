@@ -11,8 +11,6 @@ export interface TeacherProfileCompletenessInput {
   bio: string;
   spokenLanguages: string;
   subjectIds: string[];
-  rates: Array<{ subjectId: string; regionCode: string }>;
-  teacherRegionCode: string | null;
   offeringsCount: number;
   payoutLegalName: string | null;
   payoutCountryCode: string | null;
@@ -34,8 +32,6 @@ export function buildTeacherProfileChecklist(
     ]),
     courses: isTeacherCoursesPhaseComplete({
       subjectIds: input.subjectIds,
-      rates: input.rates,
-      teacherRegionCode: input.teacherRegionCode,
     }),
     schedule: input.offeringsCount > 0,
     payment: phaseDone([

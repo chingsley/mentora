@@ -3,6 +3,7 @@ import "server-only";
 import type { AttendanceStatus, SessionOutcome } from "@prisma/client";
 import { db } from "@/lib/db";
 import { sessionWithinEnrollment } from "@/lib/enrollmentSessionWindow";
+import { formatBillableRateLabel } from "@/lib/offeringHourlyRate";
 import {
   calendarDateFromSessionKey,
   isPastSessionEnd,
@@ -11,13 +12,8 @@ import {
 import { formatPrice } from "@/lib/time";
 
 export interface BillableOfferingTeacher {
-  user: { regionId: string | null };
-  rates: Array<{
-    subjectId: string;
-    regionId: string;
-    hourlyRate: number;
-    region: { currency: string };
-  }>;
+  user: { region: { currency: string } | null };
+  rates: Array<{ region: { currency: string } }>;
 }
 
 export interface BillableEnrollment {
@@ -27,6 +23,7 @@ export interface BillableEnrollment {
   offering: {
     id: string;
     subjectId: string;
+    hourlyRate: number;
     endMinutes: number;
     subject: { name: string };
     teacherProfile: BillableOfferingTeacher;
@@ -65,19 +62,24 @@ function isMigrationLagError(err: unknown): boolean {
   return code === "P2021" || code === "P2022";
 }
 
+export function billableEnrollmentCurrency(enrollment: BillableEnrollment): string {
+  const { offering } = enrollment;
+  return (
+    offering.teacherProfile.user.region?.currency ??
+    offering.teacherProfile.rates[0]?.region.currency ??
+    "USD"
+  );
+}
+
 export function rateForBillableEnrollment(
   enrollment: BillableEnrollment,
 ): { hourlyRate: number; currency: string } | null {
   const { offering } = enrollment;
-  const regionId = offering.teacherProfile.user.regionId;
-  const rates = offering.teacherProfile.rates;
-  const match =
-    regionId !== null
-      ? rates.find((r) => r.subjectId === offering.subjectId && r.regionId === regionId)
-      : undefined;
-  const rate = match ?? rates.find((r) => r.subjectId === offering.subjectId) ?? rates[0] ?? null;
-  if (!rate) return null;
-  return { hourlyRate: rate.hourlyRate, currency: rate.region.currency };
+  if (offering.hourlyRate <= 0) return null;
+  return {
+    hourlyRate: offering.hourlyRate,
+    currency: billableEnrollmentCurrency(enrollment),
+  };
 }
 
 function emptySummary(currency: string): SessionBillingSummary {
@@ -93,7 +95,7 @@ function emptySummary(currency: string): SessionBillingSummary {
 }
 
 /**
- * Billable amount = each completed (HELD, past) student-session × subject rate.
+ * Billable amount = each completed (HELD, past) student-session × class hourly rate.
  * Sessions before enrollment or after drop are excluded.
  */
 export async function computeSessionBilling(
@@ -162,7 +164,10 @@ export async function computeSessionBilling(
   }
 
   const heldClassKeysBySubject = new Map<string, Set<string>>();
-  const bySubject = new Map<string, SessionBillingSubjectLine>();
+  const bySubject = new Map<
+    string,
+    SessionBillingSubjectLine & { minRateMinor: number; maxRateMinor: number }
+  >();
 
   for (const e of enrollments) {
     const { offering } = e;
@@ -187,6 +192,10 @@ export async function computeSessionBilling(
       existing.present += attendance.present;
       existing.absent += attendance.absent;
       existing.late += attendance.late;
+      if (rateMinor > 0) {
+        existing.minRateMinor = Math.min(existing.minRateMinor, rateMinor);
+        existing.maxRateMinor = Math.max(existing.maxRateMinor, rateMinor);
+      }
       continue;
     }
     bySubject.set(offering.subjectId, {
@@ -201,14 +210,24 @@ export async function computeSessionBilling(
       present: attendance.present,
       absent: attendance.absent,
       late: attendance.late,
+      minRateMinor: rateMinor,
+      maxRateMinor: rateMinor,
     });
   }
 
   const subjects = [...bySubject.values()]
     .map((s) => ({
-      ...s,
+      subjectId: s.subjectId,
+      subjectName: s.subjectName,
+      rateMinor: s.minRateMinor,
+      rateFormatted: formatBillableRateLabel(s.minRateMinor, s.maxRateMinor, currency),
+      sessionsCompleted: s.sessionsCompleted,
       classesHeld: heldClassKeysBySubject.get(s.subjectId)?.size ?? 0,
+      amountMinor: s.amountMinor,
       amountFormatted: formatPrice(s.amountMinor, currency),
+      present: s.present,
+      absent: s.absent,
+      late: s.late,
     }))
     .sort((a, b) => b.amountMinor - a.amountMinor || a.subjectName.localeCompare(b.subjectName));
 

@@ -38,36 +38,14 @@ const Stack = styled.div`
   gap: ${SPACING.SIX};
 `;
 
-function hourlyMajorForSubject(
-  subjectId: string,
-  teacherRegionCode: string | null,
-  rateCells: TeacherProfileCoursesTabProps["rateCells"],
-): number | null {
-  if (teacherRegionCode) {
-    const cell = rateCells.find(
-      (c) => c.subjectId === subjectId && c.regionCode === teacherRegionCode,
-    );
-    return cell?.hourlyMajor ?? null;
-  }
-  return rateCells.find((c) => c.subjectId === subjectId)?.hourlyMajor ?? null;
-}
-
 export function TeacherProfileCoursesTab({
   allSubjects,
   taughtSubjects,
   taughtSubjectsWithStudents,
-  rateRegions,
-  rateCells,
   globalCap,
-  teacherRegionCode,
   onAdvance,
   onBack,
 }: TeacherProfileCoursesTabProps) {
-  const regionMinHourlyMajor =
-    teacherRegionCode != null
-      ? (rateRegions.find((r) => r.code === teacherRegionCode)?.minMajor ?? null)
-      : null;
-
   const [editCourse, setEditCourse] = React.useState<TeacherProfileEditCourseValues | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<TeacherProfileDeleteCourseTarget | null>(
     null,
@@ -80,7 +58,6 @@ export function TeacherProfileCoursesTab({
     setEditCourse({
       subjectId: row.id,
       subjectName: row.name,
-      hourlyRateMajor: hourlyMajorForSubject(subjectId, teacherRegionCode, rateCells),
       defaultCap: row.defaultCap ?? globalCap,
     });
   }
@@ -102,16 +79,12 @@ export function TeacherProfileCoursesTab({
       <Stack>
         <TeacherProfileAddCourseForm
           allSubjects={allSubjects}
-          teacherRegionCode={teacherRegionCode}
-          regionMinHourlyMajor={regionMinHourlyMajor}
           globalCap={globalCap}
           editCourse={editCourse}
           onClearEdit={() => setEditCourse(null)}
         />
         <TeacherProfileCoursesTable
           taughtSubjects={taughtSubjects}
-          rateRegions={rateRegions}
-          rateCells={rateCells}
           globalCap={globalCap}
           onEditSubject={handleEditSubject}
           onDeleteSubject={handleDeleteSubject}

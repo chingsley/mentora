@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import styled from "styled-components";
 import { Settings2 } from "lucide-react";
+import { startClassAction } from "@/app/(app)/classroom/[offeringId]/actions";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import {
@@ -13,6 +15,8 @@ import {
   getTeacherSessionAttendanceAction,
   type TeacherSessionAttendancePayload,
 } from "@/app/(app)/schedule/attendanceActions";
+import { isClassLive } from "@/lib/classSession";
+import { recurrenceFromDb } from "@/lib/offeringRecurrence";
 import { canTakeSessionAttendance } from "@/lib/sessionAttendance";
 import {
   formatSessionJoinSummary,
@@ -160,9 +164,12 @@ export function TeacherSessionAttendanceDialog({
   sessionDate,
   onEditSchedule,
 }: TeacherSessionAttendanceDialogProps) {
+  const router = useRouter();
   const [session, setSession] = React.useState<SessionAttendanceData | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [startingClass, setStartingClass] = React.useState(false);
+  const [startClassError, setStartClassError] = React.useState<string | null>(null);
 
   const sessionDateIso = React.useMemo(() => {
     if (!offering || !sessionDate) return null;
@@ -178,6 +185,34 @@ export function TeacherSessionAttendanceDialog({
     if (!offering || !sessionDate) return false;
     return isPastSessionEnd(sessionDate, offering.endMinutes);
   }, [offering, sessionDate]);
+
+  const classLive = React.useMemo(() => {
+    if (!offering) return false;
+    return isClassLive({
+      dayOfWeek: offering.dayOfWeek,
+      startMinutes: offering.startMinutes,
+      endMinutes: offering.endMinutes,
+      recurrence: recurrenceFromDb({
+        recurrenceKind: offering.recurrenceKind,
+        recurrenceAnchorDate: offering.recurrenceAnchorDate,
+        recurrenceOrdinal: offering.recurrenceOrdinal,
+      }),
+    });
+  }, [offering]);
+
+  function handleStartClass() {
+    if (!offering) return;
+    setStartingClass(true);
+    setStartClassError(null);
+    void startClassAction(offering.id).then((res) => {
+      if (res.ok) {
+        router.push(`/classroom/${offering.id}`);
+        return;
+      }
+      setStartClassError(res.error ?? "Could not start the class.");
+      setStartingClass(false);
+    });
+  }
 
   const loadSession = React.useCallback(async () => {
     if (!offering || !sessionDateIso) return;
@@ -197,6 +232,8 @@ export function TeacherSessionAttendanceDialog({
     if (!open) {
       setSession(null);
       setError(null);
+      setStartingClass(false);
+      setStartClassError(null);
       return;
     }
     if (!attendanceAvailable) {
@@ -251,18 +288,31 @@ export function TeacherSessionAttendanceDialog({
         />
       ) : null}
 
-      {offering && onEditSchedule && !isPastSession ? (
+      {offering && !isPastSession && (classLive || onEditSchedule) ? (
         <DialogActions>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => onEditSchedule(offering)}
-          >
-            <Settings2 size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.NORMAL} aria-hidden />
-            Edit class schedule
-          </Button>
+          {classLive ? (
+            <Button
+              type="button"
+              onClick={handleStartClass}
+              isLoading={startingClass}
+            >
+              Start class
+            </Button>
+          ) : null}
+          {onEditSchedule ? (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => onEditSchedule(offering)}
+            >
+              <Settings2 size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.NORMAL} aria-hidden />
+              Edit class schedule
+            </Button>
+          ) : null}
         </DialogActions>
       ) : null}
+
+      {startClassError ? <ErrorText>{startClassError}</ErrorText> : null}
 
       {!attendanceAvailable && offering && sessionDate && !isPastSession ? (
         <UnavailableText>
