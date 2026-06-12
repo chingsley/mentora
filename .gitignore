@@ -10,6 +10,9 @@ coverage
 .env.local
 .env.*.local
 
+# local secrets (JaaS keys, etc.)
+.secrets/
+
 # editor
 .vscode/*
 !.vscode/extensions.json

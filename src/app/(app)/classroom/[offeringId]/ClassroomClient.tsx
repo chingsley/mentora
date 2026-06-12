@@ -11,10 +11,11 @@ import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
-import { buildExternalApiSrc, buildRoomUrl } from "@/lib/videoRoom";
+import { buildRoomUrl } from "@/lib/videoRoom";
 import type { ClassroomAccess, ClassroomView } from "@/server/classSession";
 import {
   endClassAction,
+  mintJitsiJwtAction,
   registerStudentJoinAction,
   startClassAction,
 } from "./actions";
@@ -148,6 +149,7 @@ interface JitsiApiOptions {
 interface JitsiApi {
   dispose(): void;
   addEventListener(event: string, listener: (...args: unknown[]) => void): void;
+  addListener(event: string, listener: (...args: unknown[]) => void): void;
 }
 
 type JitsiApiCtor = new (domain: string, options: JitsiApiOptions) => JitsiApi;
@@ -160,25 +162,32 @@ declare global {
 
 const scriptPromises = new Map<string, Promise<void>>();
 
-function loadJitsiScript(domain: string): Promise<void> {
+function loadJitsiScript(scriptSrc: string): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
-  if (window.JitsiMeetExternalAPI) return Promise.resolve();
-  const cached = scriptPromises.get(domain);
+  const cached = scriptPromises.get(scriptSrc);
   if (cached) return cached;
 
   const promise = new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = buildExternalApiSrc(domain);
+    script.src = scriptSrc;
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => {
-      scriptPromises.delete(domain);
+      scriptPromises.delete(scriptSrc);
       reject(new Error("Could not load the video client."));
     };
     document.body.appendChild(script);
   });
-  scriptPromises.set(domain, promise);
+  scriptPromises.set(scriptSrc, promise);
   return promise;
+}
+
+function jitsiErrorMessage(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const record = payload as Record<string, unknown>;
+  if (typeof record.message === "string") return record.message;
+  if (typeof record.error === "string") return record.error;
+  return null;
 }
 
 function JitsiRoom({
@@ -199,35 +208,57 @@ function JitsiRoom({
 
   React.useEffect(() => {
     let disposed = false;
-    loadJitsiScript(access.videoDomain)
-      .then(() => {
+
+    async function joinCall() {
+      let jwt: string | undefined;
+      if (access.requiresJaasJwt) {
+        const tokenResult = await mintJitsiJwtAction(access.offeringId);
         if (disposed) return;
-        const Ctor = window.JitsiMeetExternalAPI;
-        if (!Ctor || !containerRef.current) {
-          setError("The video client is unavailable right now.");
+        if (!tokenResult.ok) {
+          setError(tokenResult.error);
           return;
         }
-        const api = new Ctor(access.videoDomain, {
-          roomName: access.roomName,
-          parentNode: containerRef.current,
-          width: "100%",
-          height: "100%",
-          ...(access.jwt ? { jwt: access.jwt } : {}),
-          userInfo: { displayName: access.displayName },
-          configOverwrite: {
-            prejoinPageEnabled: false,
-            startWithAudioMuted: !access.isModerator,
-            startWithVideoMuted: !access.isModerator,
-          },
-        });
-        api.addEventListener("readyToClose", () => onLeaveRef.current());
-        apiRef.current = api;
-      })
-      .catch((err: unknown) => {
-        setError(
-          err instanceof Error ? err.message : "Could not load the video client.",
-        );
+        jwt = tokenResult.jwt;
+      }
+
+      await loadJitsiScript(access.externalApiSrc);
+      if (disposed) return;
+
+      const Ctor = window.JitsiMeetExternalAPI;
+      if (!Ctor || !containerRef.current) {
+        setError("The video client is unavailable right now.");
+        return;
+      }
+
+      const api = new Ctor(access.videoDomain, {
+        roomName: access.roomName,
+        parentNode: containerRef.current,
+        width: "100%",
+        height: "100%",
+        ...(jwt ? { jwt } : {}),
+        userInfo: { displayName: access.displayName },
+        configOverwrite: {
+          prejoinPageEnabled: false,
+          startWithAudioMuted: !access.isModerator,
+          startWithVideoMuted: !access.isModerator,
+        },
       });
+      const onJitsiError = (...args: unknown[]) => {
+        const message = jitsiErrorMessage(args[0]) ?? "Video call error.";
+        setError(message);
+      };
+      api.addEventListener("errorOccurred", onJitsiError);
+      api.addListener("errorOccurred", onJitsiError);
+      api.addEventListener("readyToClose", () => onLeaveRef.current());
+      apiRef.current = api;
+    }
+
+    void joinCall().catch((err: unknown) => {
+      if (disposed) return;
+      setError(
+        err instanceof Error ? err.message : "Could not load the video client.",
+      );
+    });
 
     return () => {
       disposed = true;
@@ -235,11 +266,13 @@ function JitsiRoom({
       apiRef.current = null;
     };
   }, [
+    access.offeringId,
     access.roomName,
     access.displayName,
     access.isModerator,
     access.videoDomain,
-    access.jwt,
+    access.externalApiSrc,
+    access.requiresJaasJwt,
   ]);
 
   if (error) {

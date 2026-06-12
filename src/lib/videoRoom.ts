@@ -19,3 +19,8 @@ export function buildRoomUrl(roomName: string, domain: string = VIDEO.DEMO_DOMAI
 export function buildExternalApiSrc(domain: string = VIDEO.DEMO_DOMAIN): string {
   return `https://${domain}${VIDEO.EXTERNAL_API_PATH}`;
 }
+
+/** JaaS requires the tenant-scoped loader, not the bare 8x8.vc script. */
+export function buildJaasExternalApiSrc(appId: string, domain = "8x8.vc"): string {
+  return `https://${domain}/${appId}${VIDEO.EXTERNAL_API_PATH}`;
+}

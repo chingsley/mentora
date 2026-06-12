@@ -25,7 +25,7 @@ function signTestJwt(args: {
     aud: "jitsi",
     iss: "chat",
     sub: args.appId,
-    room: args.roomName,
+    room: "*",
     exp: nowSeconds + 7200,
     nbf: nowSeconds - 10,
     context: {
@@ -73,7 +73,7 @@ describe("JaaS JWT signing", () => {
 
     expect(payload.aud).toBe("jitsi");
     expect(payload.sub).toBe("vpaas-magic-cookie-test");
-    expect(payload.room).toBe("vpaas-magic-cookie-test/mentora-abc123");
+    expect(payload.room).toBe("*");
     expect(payload.context.user.name).toBe("Ada Lovelace");
     expect(payload.context.user.moderator).toBe("true");
     expect(publicKey).toContain("BEGIN PUBLIC KEY");

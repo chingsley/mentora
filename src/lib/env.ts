@@ -19,21 +19,17 @@ const serverSchema = z
     JITSI_JAAS_APP_ID: z.string().min(1).optional(),
     /** JaaS API key ID (`kid`) from the developer console. */
     JITSI_JAAS_API_KEY: z.string().min(1).optional(),
-    /** PEM private key paired with the JaaS API key (use \\n for newlines in .env). */
+    /** PEM private key inline (prefer JITSI_JAAS_PRIVATE_KEY_PATH for local dev). */
     JITSI_JAAS_PRIVATE_KEY: z.string().min(1).optional(),
+    /** Absolute or project-relative path to the JaaS private key PEM file. */
+    JITSI_JAAS_PRIVATE_KEY_PATH: z.string().min(1).optional(),
   })
   .superRefine((data, ctx) => {
-    const jaasFields = [
-      data.JITSI_JAAS_APP_ID,
-      data.JITSI_JAAS_API_KEY,
-      data.JITSI_JAAS_PRIVATE_KEY,
-    ];
-    const configured = jaasFields.filter(Boolean).length;
-    if (configured > 0 && configured < 3) {
+    if (data.JITSI_JAAS_PRIVATE_KEY && data.JITSI_JAAS_PRIVATE_KEY_PATH) {
       ctx.addIssue({
         code: "custom",
         message:
-          "JITSI_JAAS_APP_ID, JITSI_JAAS_API_KEY, and JITSI_JAAS_PRIVATE_KEY must all be set together for production video.",
+          "Set only one of JITSI_JAAS_PRIVATE_KEY or JITSI_JAAS_PRIVATE_KEY_PATH.",
       });
     }
   });
@@ -66,6 +62,7 @@ const rawServer = {
   JITSI_JAAS_APP_ID: process.env.JITSI_JAAS_APP_ID,
   JITSI_JAAS_API_KEY: process.env.JITSI_JAAS_API_KEY,
   JITSI_JAAS_PRIVATE_KEY: process.env.JITSI_JAAS_PRIVATE_KEY,
+  JITSI_JAAS_PRIVATE_KEY_PATH: process.env.JITSI_JAAS_PRIVATE_KEY_PATH,
 };
 
 const rawClient = {

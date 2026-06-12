@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { isClassLive } from "@/lib/classSession";
 import { recurrenceFromDb } from "@/lib/offeringRecurrence";
-import { buildVideoCallCredentials } from "@/lib/jitsiJaas";
+import { buildVideoCallCredentials, isJaasConfigured, mintJaasJwt } from "@/lib/jitsiJaas";
 import { generateRoomName } from "@/lib/videoRoom";
 import { recordAutoJoin, resolveCurrentSessionDate, finalizeSessionAttendance } from "./attendance";
 import { keyForOccurrence } from "@/lib/sessionOccurrenceKey";
@@ -83,8 +83,10 @@ export interface ClassroomAccess {
   roomName: string;
   /** Jitsi deployment domain (no protocol). */
   videoDomain: string;
-  /** Signed JaaS token when using 8x8.vc; omitted for self-hosted Jitsi. */
-  jwt?: string;
+  /** Tenant-scoped or domain-scoped external_api.js URL. */
+  externalApiSrc: string;
+  /** True when the server must mint a JaaS JWT before joining. */
+  requiresJaasJwt: boolean;
   /** True when using the public meet.jit.si embed (5-minute demo cap). */
   isDemoEmbed: boolean;
   /** Name shown to other participants in the call. */
@@ -118,7 +120,8 @@ function classroomAccessForUser(args: {
     teacherName: args.teacherName,
     roomName: video.roomName,
     videoDomain: video.domain,
-    jwt: video.jwt,
+    externalApiSrc: video.externalApiSrc,
+    requiresJaasJwt: isJaasConfigured(),
     isDemoEmbed: video.isDemoEmbed,
     displayName: args.displayName,
     isModerator: args.isModerator,
@@ -403,5 +406,29 @@ export async function joinClassSessionAsStudent(
     displayName: student.user.name,
     isModerator: false,
     startedAt: session.startedAt,
+  });
+}
+
+/**
+ * Mint a JaaS JWT for the current viewer. Re-checks classroom access so tokens
+ * are never issued to unauthorized users.
+ */
+export async function mintClassroomJitsiJwt(
+  userId: string,
+  role: "TEACHER" | "STUDENT" | "ADMIN" | "GUARDIAN",
+  offeringId: string,
+): Promise<string> {
+  const view = await getClassroomView(userId, role, offeringId);
+  if (view.kind !== "live") {
+    throw new ClassSessionError("This class is not live.");
+  }
+  if (!view.access.requiresJaasJwt) {
+    throw new ClassSessionError("JaaS is not configured for this deployment.");
+  }
+  return mintJaasJwt({
+    roomName: view.access.roomName,
+    userId,
+    displayName: view.access.displayName,
+    isModerator: view.access.isModerator,
   });
 }
