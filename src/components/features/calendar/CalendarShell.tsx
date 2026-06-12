@@ -11,6 +11,7 @@ import { SPACING } from "@/constants/spacing.constants";
 import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import { Button } from "@/components/ui/Button";
 import { DayGrid } from "./DayGrid";
+import { CalendarRangePicker } from "./CalendarRangePicker";
 import { MonthGrid } from "./MonthGrid";
 import { WeekGrid, startOfISOWeek } from "./WeekGrid";
 import type { CalendarEntry, CalendarEntryClickHandler, CalendarOccurrenceLookup, CalendarTileColorMode, CalendarView } from "./types";
@@ -76,6 +77,11 @@ const IconButton = styled.button`
   padding: ${SPACING.TWO};
 `;
 
+const RangeSelectWrap = styled.div`
+  position: relative;
+  display: inline-flex;
+`;
+
 const RangeButton = styled.button`
   display: inline-flex;
   align-items: center;
@@ -87,8 +93,12 @@ const RangeButton = styled.button`
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.HEADER};
-  cursor: default;
+  cursor: pointer;
   line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+
+  &:hover {
+    color: ${COLORS.ACTION_PRIMARY};
+  }
 `;
 
 const ViewSelectWrap = styled.div`
@@ -108,32 +118,38 @@ const ViewSelectButton = styled.button`
 
 const ViewMenu = styled.div`
   position: absolute;
-  top: calc(100% + ${SPACING.ONE});
+  top: calc(100% + ${SPACING.TWO});
   right: 0;
   z-index: ${LAYOUT.Z.STICKY};
-  min-width: calc(${SPACING.TEN} * 1.5);
+  min-width: calc(${SPACING.TWELVE} * 2);
   overflow: hidden;
   border: 1px solid ${COLORS.BORDER};
-  border-radius: ${LAYOUT.RADIUS.MD};
+  border-radius: ${LAYOUT.RADIUS.LG};
   background-color: ${COLORS.FOREGROUND};
-  box-shadow: ${LAYOUT.SHADOW.MD};
+  box-shadow: ${LAYOUT.SHADOW.LG};
+  padding: ${SPACING.TWO};
 `;
 
 const ViewMenuItem = styled.button<{ $active: boolean }>`
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
+  min-height: ${SPACING.TWELVE};
   border: none;
-  background-color: ${(p) => (p.$active ? COLORS.CALENDAR_TODAY_COLUMN_BG : COLORS.FOREGROUND)};
-  padding: ${SPACING.TWO} ${SPACING.THREE};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: ${(p) => (p.$active ? COLORS.ACTION_PRIMARY_TINT_10 : COLORS.TRANSPARENT)};
+  padding: ${SPACING.THREE} ${SPACING.FOUR};
   text-align: left;
   font-family: ${FONTS.FAMILY.PRIMARY};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${(p) => (p.$active ? FONTS.WEIGHT.SEMIBOLD : FONTS.WEIGHT.NORMAL)};
+  font-weight: ${(p) => (p.$active ? FONTS.WEIGHT.SEMIBOLD : FONTS.WEIGHT.MEDIUM)};
   color: ${COLORS.HEADER};
   cursor: pointer;
+  transition: background-color 0.15s ease;
 
   &:hover {
-    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+    background-color: ${(p) =>
+      p.$active ? COLORS.ACTION_PRIMARY_TINT_16 : COLORS.SURFACE_NEUTRAL_HOVER};
   }
 `;
 
@@ -153,7 +169,9 @@ export function CalendarShell({
   const [view, setView] = React.useState<CalendarView>(initialView);
   const [anchor, setAnchor] = React.useState<Date>(() => new Date());
   const [viewMenuOpen, setViewMenuOpen] = React.useState(false);
+  const [rangeMenuOpen, setRangeMenuOpen] = React.useState(false);
   const viewMenuRef = React.useRef<HTMLDivElement>(null);
+  const rangeMenuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!viewMenuOpen) return;
@@ -165,6 +183,17 @@ export function CalendarShell({
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [viewMenuOpen]);
+
+  React.useEffect(() => {
+    if (!rangeMenuOpen) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!rangeMenuRef.current?.contains(event.target as Node)) {
+        setRangeMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [rangeMenuOpen]);
 
   function shift(direction: -1 | 1) {
     const next = new Date(anchor);
@@ -196,10 +225,31 @@ export function CalendarShell({
           <Button type="button" variant="secondary" onClick={goToday}>
             Today
           </Button>
-          <RangeButton type="button" aria-live="polite">
-            {title}
-            <ChevronDown size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.NORMAL} color={COLORS.MUTED_FOREGROUND} />
-          </RangeButton>
+          <RangeSelectWrap ref={rangeMenuRef}>
+            <RangeButton
+              type="button"
+              aria-live="polite"
+              aria-haspopup="dialog"
+              aria-expanded={rangeMenuOpen}
+              onClick={() => {
+                setRangeMenuOpen((open) => !open);
+                setViewMenuOpen(false);
+              }}
+            >
+              {title}
+              <ChevronDown size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.NORMAL} color={COLORS.MUTED_FOREGROUND} />
+            </RangeButton>
+            {rangeMenuOpen ? (
+              <CalendarRangePicker
+                view={view}
+                anchor={anchor}
+                onSelect={(date) => {
+                  setAnchor(date);
+                  setRangeMenuOpen(false);
+                }}
+              />
+            ) : null}
+          </RangeSelectWrap>
         </NavGroup>
 
         <ViewSelectWrap ref={viewMenuRef}>
@@ -207,7 +257,10 @@ export function CalendarShell({
             type="button"
             aria-haspopup="listbox"
             aria-expanded={viewMenuOpen}
-            onClick={() => setViewMenuOpen((open) => !open)}
+            onClick={() => {
+              setViewMenuOpen((open) => !open);
+              setRangeMenuOpen(false);
+            }}
           >
             <CalendarDays size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.NORMAL} />
             {activeViewLabel}

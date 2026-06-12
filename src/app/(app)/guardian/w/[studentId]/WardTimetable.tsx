@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CalendarShell } from "@/components/features/calendar/CalendarShell";
+import { AppCalendar } from "@/components/features/calendar";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 
 export interface WardTimetableProps {
@@ -12,7 +12,7 @@ export interface WardTimetableProps {
 export function WardTimetable({ entries, studentId }: WardTimetableProps) {
   const router = useRouter();
   return (
-    <CalendarShell
+    <AppCalendar
       entries={entries}
       onEntryClick={(entry, _meta) => {
         router.push(`/guardian/w/${studentId}/classes/${entry.offeringId}`);

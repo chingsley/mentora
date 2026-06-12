@@ -4,6 +4,7 @@ import type { ChangeEvent } from "react";
 import type { DayOfWeek } from "@prisma/client";
 import { Repeat, Trash2 } from "lucide-react";
 import styled, { css } from "styled-components";
+import { CalendarDateField } from "@/components/features/calendar";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { COLORS } from "@/constants/colors.constants";
@@ -227,10 +228,6 @@ export function OfferingDaySlotsEditor({
     onChange({ ...schedule, ...next });
   }
 
-  function handleStartDateChange(event: ChangeEvent<HTMLInputElement>) {
-    patch({ startDate: event.target.value });
-  }
-
   function handleRepeatUnitChange(event: ChangeEvent<HTMLSelectElement>) {
     patch({
       repeatUnit: event.target.value as OfferingScheduleEditorValue["repeatUnit"],
@@ -266,13 +263,12 @@ export function OfferingDaySlotsEditor({
   return (
     <Wrap>
       <DateTimeRow>
-        <Input
-          type="date"
+        <CalendarDateField
           label="Start date"
           required
           value={schedule.startDate}
           disabled={disabled}
-          onChange={handleStartDateChange}
+          onChange={(startDate) => patch({ startDate })}
           error={fieldErrors?.["recurrence.anchorDate"]}
         />
         <Input
@@ -382,12 +378,11 @@ export function OfferingDaySlotsEditor({
 
           <InlineLabel>Until</InlineLabel>
           <CompactSelectWrap $width="until">
-            <Input
-              type="date"
+            <CalendarDateField
               aria-label="Until date"
               value={schedule.untilDate}
               disabled={disabled}
-              onChange={(event) => patch({ untilDate: event.target.value })}
+              onChange={(untilDate) => patch({ untilDate })}
             />
           </CompactSelectWrap>
 

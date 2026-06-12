@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarShell } from "@/components/features/calendar/CalendarShell";
+import { AppCalendar } from "@/components/features/calendar";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 
 export interface TeacherPublicCalendarProps {
@@ -18,5 +18,5 @@ export function TeacherPublicCalendar({
     onOfferingClick(entry.offeringId);
   }
 
-  return <CalendarShell entries={entries} onEntryClick={onEntryClick} />;
+  return <AppCalendar entries={entries} onEntryClick={onEntryClick} />;
 }

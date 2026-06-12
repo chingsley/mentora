@@ -33,7 +33,6 @@ export const APP_NAV: readonly AppNavItem[] = [
   { href: "/billing", label: "My billing", roles: ["STUDENT"], icon: "billing" },
   { href: "/teacher/classes", label: "My classes", roles: ["TEACHER"], icon: "classes" },
   { href: "/earnings", label: "My earnings", roles: ["TEACHER"], icon: "earnings" },
-  { href: "/profile", label: "My profile", roles: ["TEACHER", "STUDENT"], icon: "profile" },
   { href: "/schedule", label: "My schedule", roles: ["TEACHER"], icon: "schedule" },
   { href: "/guardians", label: "Guardians", roles: ["STUDENT"], icon: "guardians" },
   { href: "/guardian", label: "My wards", roles: ["GUARDIAN"], icon: "ward" },

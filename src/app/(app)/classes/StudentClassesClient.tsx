@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
-import { CalendarShell } from "@/components/features/calendar/CalendarShell";
+import { AppCalendar } from "@/components/features/calendar";
 import {
   ClassDetailsDialog,
   type ClassDetail,
@@ -271,7 +271,7 @@ export function StudentClassesClient({
               {SESSION_MARKER_LABEL.not_held}
             </LegendItem>
           </Legend>
-          <CalendarShell
+          <AppCalendar
             entries={entries}
             occurrenceLookup={occurrenceLookup}
             onEntryClick={(e, meta) => {
