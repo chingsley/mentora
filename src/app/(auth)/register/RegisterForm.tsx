@@ -10,7 +10,6 @@ import {
   AuthFormActions,
   AuthLink,
   AuthPasswordField,
-  AuthPasswordVisibilityCheckbox,
   AuthRoleRadioGroup,
   type AuthRegisterRole,
   AuthSubmitButton,
@@ -30,7 +29,6 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
   const [isPending, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<RegisterActionResult | null>(null);
   const [role, setRole] = React.useState<AuthRegisterRole>(defaultRole);
-  const [showPassword, setShowPassword] = React.useState(false);
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
 
@@ -93,7 +91,6 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
         <AuthPasswordField
           id={passwordId}
           name="password"
-          visible={showPassword}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           label="Password"
@@ -106,7 +103,6 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
         <AuthPasswordField
           id={confirmPasswordId}
           name="confirmPassword"
-          visible={showPassword}
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           label="Confirm password"
@@ -116,13 +112,6 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
           error={fieldErrors?.confirmPassword}
         />
       </AuthFieldGrid>
-
-      <AuthPasswordVisibilityCheckbox
-        checked={showPassword}
-        onCheckedChange={setShowPassword}
-      >
-        Show passwords
-      </AuthPasswordVisibilityCheckbox>
 
       {/* {role === "STUDENT" ? (
         <AuthCallout>

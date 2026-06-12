@@ -10,7 +10,6 @@ import {
   AuthFormActions,
   AuthLink,
   AuthPasswordField,
-  AuthPasswordVisibilityCheckbox,
   AuthSubmitButton,
   AuthTextField,
 } from "../AuthFormControls";
@@ -22,7 +21,6 @@ export function LoginForm() {
   const passwordId = React.useId();
   const [isPending, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<LoginActionResult | null>(null);
-  const [showPassword, setShowPassword] = React.useState(false);
   const [password, setPassword] = React.useState("");
 
   const globalError =
@@ -62,7 +60,6 @@ export function LoginForm() {
       <AuthPasswordField
         id={passwordId}
         name="password"
-        visible={showPassword}
         value={password}
         onChange={(event) => setPassword(event.target.value)}
         autoComplete="current-password"
@@ -71,13 +68,6 @@ export function LoginForm() {
         minLength={8}
         error={passwordError}
       />
-
-      <AuthPasswordVisibilityCheckbox
-        checked={showPassword}
-        onCheckedChange={setShowPassword}
-      >
-        Show password
-      </AuthPasswordVisibilityCheckbox>
 
       <AuthAuxiliaryRow>
         <AuthLink href="/login">Forgot password?</AuthLink>

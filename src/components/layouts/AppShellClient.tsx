@@ -193,6 +193,7 @@ const Main = styled.main`
   padding: ${LAYOUT.PAGE_INSET.BLOCK} ${LAYOUT.PAGE_INSET.INLINE};
   box-sizing: border-box;
   background-color: ${LAYOUT.APP_SHELL.MAIN_BACKGROUND};
+  color: ${COLORS.TEXT};
 `;
 
 export function AppShellClient({ user, wards, children }: AppShellClientProps) {

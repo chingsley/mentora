@@ -5,23 +5,23 @@ import Link from "next/link";
 import { Bell, ChevronDown, Search } from "lucide-react";
 import styled from "styled-components";
 import { DASHBOARD } from "@/constants/dashboard.constants";
-import { ICON_BOX_TYPE, ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
+import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 
-const Wrap = styled.header`
+const Wrap = styled.header<{ $minimal: boolean; }>`
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: ${SPACING.FOUR};
-  margin-bottom: ${SPACING.SIX};
+  margin-bottom: ${(p) => (p.$minimal ? SPACING.EIGHT : SPACING.SIX)};
 
   ${LAYOUT.MEDIA.MD} {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: ${(p) => (p.$minimal ? "column" : "row")};
+    align-items: ${(p) => (p.$minimal ? "stretch" : "center")};
+    justify-content: ${(p) => (p.$minimal ? "flex-start" : "space-between")};
     gap: ${SPACING.FIVE};
   }
 `;
@@ -29,10 +29,6 @@ const Wrap = styled.header`
 const TitleBlock = styled.div`
   min-width: 0;
   flex-shrink: 0;
-
-  ${LAYOUT.MEDIA.MD} {
-    text-align: left;
-  }
 `;
 
 const HeaderTrailing = styled.div`
@@ -72,17 +68,19 @@ const Tools = styled.div`
 
 const PageTitle = styled.h1`
   margin: 0;
-  font-size: ${FONTS.SIZE.PAGE_HEADER};
+  font-size: ${FONTS.SIZE.H1};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${DASHBOARD.TEXT_PRIMARY};
-  letter-spacing: -0.03em;
+  letter-spacing: ${FONTS.LETTER_SPACING.TITLE};
+  line-height: ${FONTS.LINE_HEIGHT.TIGHT};
 `;
 
 const PageSubtitle = styled.p`
-  margin: 0.25rem 0 0;
-  font-size: ${DASHBOARD.SECONDARY_TEXT.FONT_SIZE};
+  margin: ${SPACING.TWO} 0 0;
+  max-width: 42rem;
+  font-size: ${FONTS.SIZE.BASE};
   color: ${DASHBOARD.SECONDARY_TEXT.COLOR};
-  line-height: 1.4;
+  line-height: ${FONTS.LINE_HEIGHT.RELAXED};
 `;
 
 const SearchField = styled.div`
@@ -93,7 +91,7 @@ const SearchField = styled.div`
   padding: 0 ${SPACING.FOUR};
   border-radius: ${DASHBOARD.SEARCH_RADIUS};
   border: 1px solid ${DASHBOARD.BORDER_SUBTLE};
-  background: ${COLORS.TRANSPARENT};
+  background: ${COLORS.FOREGROUND};
   box-shadow: none;
   outline: none;
   transition:
@@ -101,12 +99,12 @@ const SearchField = styled.div`
     box-shadow 0.15s ease;
 
   &:hover {
-    border-color: ${COLORS.PRIMARY};
+    border-color: ${COLORS.MARKETING_BORDER_STRONG};
   }
 
   &:focus-within {
-    border-color: ${COLORS.SIDEBAR_BRAND};
-    box-shadow: 0 0 0 2px ${COLORS.RING_BLACK_10};
+    border-color: ${COLORS.ACTION_PRIMARY};
+    box-shadow: 0 0 0 2px ${COLORS.ACTION_PRIMARY_RING_28};
   }
 `;
 
@@ -116,11 +114,11 @@ const SearchInput = styled.input`
   border: none;
   background: transparent;
   font-size: ${DASHBOARD.SECONDARY_TEXT.FONT_SIZE};
-  color: ${DASHBOARD.SECONDARY_TEXT.COLOR};
+  color: ${DASHBOARD.TEXT_PRIMARY};
   outline: none;
 
   &::placeholder {
-    color: ${DASHBOARD.SECONDARY_TEXT.COLOR};
+    color: ${DASHBOARD.TEXT_MUTED};
   }
 `;
 
@@ -131,19 +129,24 @@ const IconButton = styled.button`
   justify-content: center;
   width: ${ICON_THEME.METRIC_ICON_BOX_SIZE};
   height: ${ICON_THEME.METRIC_ICON_BOX_SIZE};
-  border-radius: ${LAYOUT.RADIUS.LG};
-  border: none;
-  background: ${ICON_BOX_TYPE.SECONDARY.background};
-  color: ${ICON_BOX_TYPE.SECONDARY.color};
+  border-radius: ${LAYOUT.RADIUS.SM};
+  border: 1px solid ${DASHBOARD.BORDER_SUBTLE};
+  background: ${COLORS.FOREGROUND};
+  color: ${DASHBOARD.TEXT_SECONDARY};
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 
   &:hover {
-    background: ${ICON_THEME.ACTION_LINK_BACKGROUND_HOVER};
+    background: ${COLORS.MARKETING_SURFACE_SECONDARY};
+    border-color: ${COLORS.MARKETING_BORDER_STRONG};
+    color: ${DASHBOARD.TEXT_PRIMARY};
   }
 
   &:focus-visible {
-    outline: 2px solid ${ICON_THEME.FOCUS_RING_NEUTRAL};
+    outline: 2px solid ${COLORS.ACTION_PRIMARY_RING_45};
     outline-offset: 2px;
   }
 `;
@@ -169,14 +172,14 @@ const ProfileLink = styled(Link)`
   align-items: center;
   gap: ${SPACING.THREE};
   padding: ${SPACING.ONE} ${SPACING.TWO} ${SPACING.ONE} ${SPACING.ONE};
-  border-radius: ${LAYOUT.RADIUS.LG};
+  border-radius: ${LAYOUT.RADIUS.SM};
   border: 1px solid ${DASHBOARD.BORDER_SUBTLE};
-  background: ${COLORS.TRANSPARENT};
+  background: ${COLORS.FOREGROUND};
   text-decoration: none;
   color: inherit;
 
   &:focus-visible {
-    outline: 2px solid ${ICON_THEME.FOCUS_RING_NEUTRAL};
+    outline: 2px solid ${COLORS.ACTION_PRIMARY_RING_45};
     outline-offset: 2px;
   }
 `;
@@ -190,8 +193,8 @@ const Avatar = styled.span`
   height: 2.5rem;
   border-radius: ${LAYOUT.RADIUS.FULL};
   overflow: hidden;
-  background: ${ICON_THEME.MAJE_BRAND};
-  color: ${ICON_THEME.GLYPH_ON_FILLED_BOX};
+  background: ${DASHBOARD.ICON_TILE_BACKGROUND};
+  color: ${DASHBOARD.ICON_TILE_COLOR};
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
 `;
@@ -231,6 +234,8 @@ export interface TeacherDashboardHeaderProps {
   searchPlaceholder?: string;
   /** When false, hides the profile shortcut (e.g. on `/profile` where it is redundant). Default true. */
   showProfileLink?: boolean;
+  /** When false, shows title and subtitle only (sidebar owns account + nav). Default true. */
+  showToolbar?: boolean;
   /** Role line under the profile name (default: Teacher). */
   profileRole?: string;
 }
@@ -243,6 +248,7 @@ export function TeacherDashboardHeader({
   subtitle,
   searchPlaceholder = "Search students, classes, schedule…",
   showProfileLink = true,
+  showToolbar = false,
   profileRole = "Teacher",
 }: TeacherDashboardHeaderProps) {
   const initials = teacherName
@@ -253,49 +259,51 @@ export function TeacherDashboardHeader({
     .toUpperCase();
 
   return (
-    <Wrap>
+    <Wrap $minimal={!showToolbar}>
       <TitleBlock>
         <PageTitle>{title}</PageTitle>
         {subtitle ? <PageSubtitle>{subtitle}</PageSubtitle> : null}
       </TitleBlock>
 
-      <HeaderTrailing>
-        <SearchWrap>
-          <SearchField>
-            <Search size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden color={ICON_THEME.INLINE_SUBTLE} />
-            <SearchInput
-              type="search"
-              name="dashboard-search"
-              placeholder={searchPlaceholder}
-              aria-label="Search dashboard"
-            />
-          </SearchField>
-        </SearchWrap>
+      {showToolbar ? (
+        <HeaderTrailing>
+          <SearchWrap>
+            <SearchField>
+              <Search size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden color={ICON_THEME.INLINE_SUBTLE} />
+              <SearchInput
+                type="search"
+                name="dashboard-search"
+                placeholder={searchPlaceholder}
+                aria-label="Search dashboard"
+              />
+            </SearchField>
+          </SearchWrap>
 
-        <Tools>
-          <IconButton type="button" aria-label="Notifications">
-            <Bell size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
-            {notificationCount > 0 ? <Badge aria-hidden>{notificationCount > 9 ? "9+" : notificationCount}</Badge> : null}
-          </IconButton>
+          <Tools>
+            <IconButton type="button" aria-label="Notifications">
+              <Bell size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
+              {notificationCount > 0 ? <Badge aria-hidden>{notificationCount > 9 ? "9+" : notificationCount}</Badge> : null}
+            </IconButton>
 
-          {showProfileLink ? (
-            <ProfileLink href="/profile" aria-label="Open profile">
-              <Avatar>
-                {teacherImage ? (
-                  <Image src={teacherImage} alt="" width={40} height={40} style={{ objectFit: "cover" }} unoptimized />
-                ) : (
-                  initials
-                )}
-              </Avatar>
-              <ProfileText>
-                <ProfileName>{teacherName}</ProfileName>
-                <ProfileRole>{profileRole}</ProfileRole>
-              </ProfileText>
-              <ChevronDown size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden color={ICON_THEME.INLINE_SUBTLE} />
-            </ProfileLink>
-          ) : null}
-        </Tools>
-      </HeaderTrailing>
+            {showProfileLink ? (
+              <ProfileLink href="/profile" aria-label="Open profile">
+                <Avatar>
+                  {teacherImage ? (
+                    <Image src={teacherImage} alt="" width={40} height={40} style={{ objectFit: "cover" }} unoptimized />
+                  ) : (
+                    initials
+                  )}
+                </Avatar>
+                <ProfileText>
+                  <ProfileName>{teacherName}</ProfileName>
+                  <ProfileRole>{profileRole}</ProfileRole>
+                </ProfileText>
+                <ChevronDown size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden color={ICON_THEME.INLINE_SUBTLE} />
+              </ProfileLink>
+            ) : null}
+          </Tools>
+        </HeaderTrailing>
+      ) : null}
     </Wrap>
   );
 }

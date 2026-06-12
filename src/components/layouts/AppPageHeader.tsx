@@ -11,6 +11,8 @@ export interface AppPageHeaderProps {
   profileImage?: string | null;
   profileDisplayName?: string;
   showProfileLink?: boolean;
+  /** When true, shows search, notifications, and profile chip in the header. Default false. */
+  showToolbar?: boolean;
   notificationCount?: number;
 }
 
@@ -21,6 +23,7 @@ export function AppPageHeader({
   profileImage = null,
   profileDisplayName,
   showProfileLink = true,
+  showToolbar = false,
   notificationCount = 0,
 }: AppPageHeaderProps) {
   const user = useAppShell();
@@ -33,6 +36,7 @@ export function AppPageHeader({
       subtitle={subtitle}
       searchPlaceholder={searchPlaceholder ?? appShellSearchPlaceholder(user.role)}
       showProfileLink={showProfileLink}
+      showToolbar={showToolbar}
       profileRole={appShellProfileRole(user.role)}
       notificationCount={notificationCount}
     />

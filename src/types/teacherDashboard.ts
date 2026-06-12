@@ -6,6 +6,8 @@ export interface TeacherDashboardStat {
   trendPositive?: boolean;
   footerLink?: { href: string; label: string };
   tone: "blue" | "green" | "purple" | "orange";
+  /** Filled accent surface (blue background, light text). */
+  accent?: boolean;
 }
 
 export interface TeacherDashboardClassRow {

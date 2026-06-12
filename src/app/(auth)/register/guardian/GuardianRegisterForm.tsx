@@ -1,14 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import styled from "styled-components";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { COLORS } from "@/constants/colors.constants";
-import { FONTS } from "@/constants/fonts.constants";
-import { SPACING } from "@/constants/spacing.constants";
+import {
+  AuthFeedbackBanner,
+  AuthFoot,
+  AuthForm,
+  AuthFormActions,
+  AuthLink,
+  AuthPasswordField,
+  AuthSubmitButton,
+  AuthTextField,
+} from "../../AuthFormControls";
 import { guardianRegisterAction, type RegisterActionResult } from "../actions";
 
 export interface GuardianRegisterFormProps {
@@ -16,44 +19,12 @@ export interface GuardianRegisterFormProps {
   defaultCode?: string;
 }
 
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.FOUR};
-`;
-
-const ErrorText = styled.p`
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.DESTRUCTIVE};
-`;
-
-const Footer = styled.p`
-  text-align: center;
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const FooterLink = styled(Link)`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-const CodeInput = styled(Input)`
-  font-family: ${FONTS.FAMILY.MONO};
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-`;
-
 export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: GuardianRegisterFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<RegisterActionResult | null>(null);
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -69,10 +40,16 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
   }
 
   const fieldErrors = result && !result.ok ? result.fieldErrors : undefined;
+  const globalError =
+    result && !result.ok && !result.fieldErrors ? result.error : null;
 
   return (
-    <Form onSubmit={onSubmit}>
-      <Input
+    <AuthForm onSubmit={onSubmit} noValidate>
+      <AuthFeedbackBanner $visible={!!globalError} role="status">
+        {globalError ?? ""}
+      </AuthFeedbackBanner>
+
+      <AuthTextField
         name="name"
         label="Full name"
         autoComplete="name"
@@ -80,7 +57,7 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
         minLength={2}
         error={fieldErrors?.name}
       />
-      <Input
+      <AuthTextField
         name="email"
         type="email"
         label="Your email"
@@ -90,7 +67,7 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
         hint="Use the same email the student invited."
         error={fieldErrors?.email}
       />
-      <CodeInput
+      <AuthTextField
         name="inviteCode"
         label="Invite code"
         placeholder="ABC-DEF-GHJ"
@@ -99,9 +76,10 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
         hint="9 characters. Dashes are optional."
         error={fieldErrors?.inviteCode}
       />
-      <Input
+      <AuthPasswordField
         name="password"
-        type="password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
         label="Password"
         autoComplete="new-password"
         required
@@ -109,24 +87,26 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
         hint="At least 8 characters."
         error={fieldErrors?.password}
       />
-      <Input
+      <AuthPasswordField
         name="confirmPassword"
-        type="password"
+        value={confirmPassword}
+        onChange={(event) => setConfirmPassword(event.target.value)}
         label="Confirm password"
         autoComplete="new-password"
         required
         minLength={8}
         error={fieldErrors?.confirmPassword}
       />
-      {result && !result.ok && !result.fieldErrors ? (
-        <ErrorText>{result.error}</ErrorText>
-      ) : null}
-      <Button type="submit" isLoading={isPending}>
-        Create guardian account
-      </Button>
-      <Footer>
-        Already have an account? <FooterLink href="/login">Log in</FooterLink>
-      </Footer>
-    </Form>
+
+      <AuthFormActions>
+        <AuthSubmitButton type="submit" isLoading={isPending}>
+          Create guardian account
+        </AuthSubmitButton>
+      </AuthFormActions>
+
+      <AuthFoot>
+        Already have an account? <AuthLink href="/login">Log in</AuthLink>
+      </AuthFoot>
+    </AuthForm>
   );
 }

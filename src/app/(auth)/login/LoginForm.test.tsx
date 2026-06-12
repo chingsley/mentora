@@ -14,17 +14,20 @@ jest.mock("./actions", () => ({
 }));
 
 describe("LoginForm show password", () => {
-  it("reveals password text when the checkbox is checked", () => {
+  it("reveals password text when the visibility toggle is pressed", () => {
     render(<LoginForm />);
 
     const passwordInput = screen.getByLabelText("Password");
     expect(passwordInput).toHaveAttribute("type", "password");
 
     fireEvent.change(passwordInput, { target: { value: "secret123" } });
-    fireEvent.click(screen.getByLabelText("Show password"));
+    fireEvent.click(screen.getByRole("button", { name: "Show password" }));
 
-    expect(screen.getByLabelText("Show password")).toBeChecked();
     expect(screen.getByLabelText("Password")).toHaveAttribute("type", "text");
     expect(screen.getByLabelText("Password")).toHaveValue("secret123");
+    expect(screen.getByRole("button", { name: "Hide password" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });

@@ -12,6 +12,8 @@ export const BOX_SHADOW_INPUTS = "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
 
 export const LAYOUT = {
   RADIUS: {
+    /** 4px — very subtle corners (marketing CTAs, Jitsi-style controls). */
+    XS: "0.25rem",
     SM: "0.375rem", // 6px
     MD: "0.5rem", // 8px
     LG: "0.75rem", // 12px
@@ -56,10 +58,10 @@ export const LAYOUT = {
    * To retune the whole app, change these two values.
    */
   PAGE_INSET: {
-    /** Horizontal padding: 12px → ~4vw → 32px. */
-    INLINE: "clamp(2rem, 4vw, 1rem)",
+    /** Horizontal padding: 16px → ~4vw → 32px. */
+    INLINE: "clamp(1rem, 4vw, 2rem)",
     /** Vertical padding: 24px → ~4vw → 40px. */
-    BLOCK: "clamp(1.5rem, 4vw, 0.5rem)",
+    BLOCK: "clamp(1.5rem, 4vw, 2.5rem)",
   },
   /**
    * App shell chrome. Shell surfaces are applied once in `AppShellClient`:

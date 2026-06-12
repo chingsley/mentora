@@ -113,30 +113,24 @@ const NavItemLink = styled(Link) <{ $collapsed: boolean; $active: boolean; }>`
   align-items: center;
   gap: ${SPACING.THREE};
   min-height: ${SPACING.TWELVE};
-  padding: ${(p) => (p.$collapsed ? SPACING.TWO : `${SPACING.TWO} 0.625rem`)};
+  padding: ${(p) => (p.$collapsed ? SPACING.TWO : `${SPACING.TWO} ${SPACING.THREE}`)};
   justify-content: ${(p) => (p.$collapsed ? "center" : "flex-start")};
   box-sizing: border-box;
-  border-radius: 2px;
+  border-radius: ${LAYOUT.RADIUS.SM};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  font-weight: ${(p) => (p.$active ? FONTS.WEIGHT.SEMIBOLD : FONTS.WEIGHT.MEDIUM)};
   text-decoration: none;
-  color: ${(p) => (p.$active ? S.TEXT : S.MUTED)};
-  background-color: ${(p) => (p.$active ? S.NAV_ITEM_ACTIVE_BACKGROUND : "transparent")};
-  border-bottom: ${(p) =>
-    p.$active ? `2px solid ${S.ACCENT}` : "2px solid transparent"};
+  color: ${(p) => (p.$active ? S.ACCENT : S.MUTED)};
+  background-color: ${(p) => (p.$active ? S.ACTIVE_BG : "transparent")};
+  border: none;
   outline: none;
   transition:
     color 0.15s ease,
-    background-color 0.15s ease,
-    border-bottom 0.15s ease;
+    background-color 0.15s ease;
 
   &:hover {
-    color: ${S.TEXT};
-    background-color: ${S.NAV_ITEM_ACTIVE_BACKGROUND};
-    border-bottom: ${(p) =>
-    p.$active
-      ? `2px solid ${S.ACCENT}`
-      : `1px solid ${S.NAV_BORDER_HOVER}`};
+    color: ${(p) => (p.$active ? S.ACCENT : S.TEXT)};
+    background-color: ${(p) => (p.$active ? S.ACTIVE_BG : S.HOVER)};
   }
 
   &:focus-visible {

@@ -1,47 +1,49 @@
 /**
- * Teacher dashboard UI tokens (reference: dashboard layout cards, stats, tables, sessions).
- * Compose with `COLORS`, `LAYOUT`, and `SPACING` from sibling constants.
+ * Teacher dashboard UI tokens — aligned with marketing/auth Apple-style theme.
  */
-import { COLORS } from "@/constants/colors.constants";
-import { FONTS } from "@/constants/fonts.constants";
-import { BOX_SHADOW_CARD, LAYOUT } from "@/constants/layout.constants";
+import { COLORS } from "./colors.constants";
+import { FONTS } from "./fonts.constants";
+import { BOX_SHADOW_CARD, LAYOUT } from "./layout.constants";
+import { MARKETING } from "./marketing.constants";
 
 export const DASHBOARD = {
-  /** Alias of `COLORS.APP_MAIN_BACKGROUND` for dashboard table chrome. */
-  PAGE_BACKGROUND: COLORS.APP_MAIN_BACKGROUND,
-  CARD_BACKGROUND: "#ffffff",
-  /** Shell border for `DashboardCard` and stat tiles */
-  CARD_BORDER: "#e1e7ef",
-  BORDER_SUBTLE: "#e8ecf1",
-  TEXT_PRIMARY: "#0f172a",
-  TEXT_SECONDARY: "#64748b",
-  TEXT_MUTED: "#94a3b8",
-
-  /**
-   * Dashboard secondary text: supporting copy (stat hints, table meta, session sublines,
-   * empty states, profile role, search field text and placeholder). 0.875rem + `COLORS.SIDEBAR_MUTED`.
-   */
+  PAGE_BACKGROUND: COLORS.BACKGROUND,
+  CARD_BACKGROUND: COLORS.FOREGROUND,
+  CARD_BORDER: COLORS.MARKETING_BORDER,
+  BORDER_SUBTLE: COLORS.MARKETING_BORDER,
+  TEXT_PRIMARY: COLORS.MARKETING_TEXT_PRIMARY,
+  TEXT_SECONDARY: COLORS.MARKETING_TEXT_SECONDARY,
+  TEXT_MUTED: COLORS.MARKETING_TEXT_TERTIARY,
   SECONDARY_TEXT: {
     FONT_SIZE: FONTS.SIZE.SM,
-    COLOR: COLORS.SIDEBAR_MUTED,
+    COLOR: COLORS.MARKETING_TEXT_SECONDARY,
   },
-  ROW_HOVER: "#f8fafc",
-  TABLE_HEADER: "#64748b",
-
-  SUCCESS: "#22c55e",
-
-  BADGE_ACTIVE_BG: "#dcfce7",
-  BADGE_ACTIVE_TEXT: "#166534",
-
-  /**
-   * Matches Maje `TeacherDashboardMetricCard` default (light) shell:
-   * `shadow-[0_4px_24px_rgba(19,30,53,0.06)]`
-   */
+  ROW_HOVER: COLORS.MARKETING_SURFACE_SECONDARY,
+  TABLE_HEADER: COLORS.MARKETING_TEXT_SECONDARY,
+  SUCCESS: COLORS.SUCCESS,
+  BADGE_ACTIVE_BG: COLORS.ACTION_PRIMARY_TINT_10,
+  BADGE_ACTIVE_TEXT: COLORS.ACTION_PRIMARY,
+  /** Soft elevation shadow for dashboard card surfaces. */
   CARD_SHADOW: BOX_SHADOW_CARD,
-  CARD_RADIUS: LAYOUT.RADIUS.LG,
-  SEARCH_RADIUS: LAYOUT.RADIUS.LG,
-  /**
-   * Shell search (`TeacherDashboardHeader`): prior cap was `36rem`; reduced by 30% (`× 0.7`).
-   */
+  CARD_RADIUS: MARKETING.FEATURES_PANEL_RADIUS,
+  SEARCH_RADIUS: LAYOUT.RADIUS.SM,
   SEARCH_FIELD_MAX_WIDTH: "calc(36rem * 0.7)",
+  ICON_TILE_BACKGROUND: COLORS.ACTION_PRIMARY_TINT_10,
+  ICON_TILE_COLOR: COLORS.ACTION_PRIMARY,
+  LINK_COLOR: COLORS.ACTION_PRIMARY,
+  LINK_HOVER: COLORS.ACTION_PRIMARY_HOVER,
+  /** Highlight stat card — blue fill with light ink (Net earnings). */
+  STAT_ACCENT: {
+    BACKGROUND: COLORS.BUTTON_PRIMARY_BG_HOVER,
+    TEXT: COLORS.ON_ACCENT_TEXT,
+    TEXT_SECONDARY: COLORS.ON_ACCENT_TEXT_MUTED,
+    ICON_TILE_BACKGROUND: COLORS.ON_ACCENT_SURFACE,
+    ICON_TILE_COLOR: COLORS.ON_ACCENT_TEXT,
+    LINK_COLOR: COLORS.ON_ACCENT_TEXT,
+    LINK_HOVER: COLORS.ON_ACCENT_TEXT_MUTED,
+    BORDER: COLORS.BUTTON_PRIMARY_BG_HOVER,
+    SHADOW: COLORS.ACTION_PRIMARY_SHADOW_MD,
+    TREND_POSITIVE: COLORS.ON_ACCENT_TEXT,
+    TREND_NEUTRAL: COLORS.ON_ACCENT_TEXT_MUTED,
+  },
 } as const;

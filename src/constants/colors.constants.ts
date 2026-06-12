@@ -6,15 +6,15 @@ export const COLORS = {
   TRANSPARENT: "transparent",
 
   // Surfaces
-  // BACKGROUND: "#f5f5f7",
-  BACKGROUND: "rgb(248 248 248)",
+  /** Apple-style system gray canvas (marketing + default page background). */
+  BACKGROUND: "#f5f5f7",
   FOREGROUND: "#ffffff",
   /**
    * Authenticated app shell main content surface (student, teacher, guardian).
    * Applied once on `<Main>` in `AppShellClient`. Retune this token to change
    * the page background across every in-app route.
    */
-  APP_MAIN_BACKGROUND: "#ffffff", // "#f8f9fb",
+  APP_MAIN_BACKGROUND: "#ffffff",
   /**
    * Authenticated app shell sidebar surface (student, teacher, guardian).
    * Applied once on `<Sidebar>` in `AppShellClient`. Retune this token to change
@@ -22,9 +22,9 @@ export const COLORS = {
    */
   APP_SIDEBAR_BACKGROUND: "#ffffff",
   /** Primary sidebar text / ink (brand links, nav labels, account menu). */
-  APP_SIDEBAR_TEXT: "#172033",
+  APP_SIDEBAR_TEXT: "#1d1d1f",
   /** Sidebar dividers and outer border (brand, nav, footer, flyouts). */
-  APP_SIDEBAR_BORDER: "#e2e8f0",
+  APP_SIDEBAR_BORDER: "#d2d2d7",
 
   // Text
   TEXT: "#020817",
@@ -35,20 +35,29 @@ export const COLORS = {
 
   /**
    * Primary clickable / interactive accent (links, primary buttons, active tab, info pills).
-   * Use these tokens for ANY blue clickable item or its translucent variants.
-   * Never reintroduce raw `#2563eb`, `#1d4ed8`, or `rgba(37, 99, 235, …)` literals.
+   * Apple system blue — use these tokens for ANY accent clickable item or its translucent variants.
    */
-  ACTION_PRIMARY: "#2563eb",
-  ACTION_PRIMARY_HOVER: "#1d4ed8",
-  ACTION_PRIMARY_TINT_06: "rgba(37, 99, 235, 0.06)",
-  ACTION_PRIMARY_TINT_10: "rgba(37, 99, 235, 0.10)",
-  ACTION_PRIMARY_TINT_16: "rgba(37, 99, 235, 0.16)",
-  ACTION_PRIMARY_BORDER_22: "rgba(37, 99, 235, 0.22)",
-  ACTION_PRIMARY_BORDER_25: "rgba(37, 99, 235, 0.25)",
-  ACTION_PRIMARY_RING_28: "rgba(37, 99, 235, 0.28)",
-  ACTION_PRIMARY_RING_45: "rgba(37, 99, 235, 0.45)",
-  ACTION_PRIMARY_DISABLED_TEXT: "rgba(37, 99, 235, 0.42)",
-  ACTION_PRIMARY_SHADOW_MD: "0 8px 16px rgba(37, 99, 235, 0.16)",
+  ACTION_PRIMARY: "#007aff",
+  ACTION_PRIMARY_HOVER: "#0062cc",
+  ACTION_PRIMARY_TINT_06: "rgba(0, 122, 255, 0.06)",
+  ACTION_PRIMARY_TINT_10: "rgba(0, 122, 255, 0.10)",
+  ACTION_PRIMARY_TINT_16: "rgba(0, 122, 255, 0.16)",
+  ACTION_PRIMARY_BORDER_22: "rgba(0, 122, 255, 0.22)",
+  ACTION_PRIMARY_BORDER_25: "rgba(0, 122, 255, 0.25)",
+  ACTION_PRIMARY_RING_28: "rgba(0, 122, 255, 0.28)",
+  ACTION_PRIMARY_RING_45: "rgba(0, 122, 255, 0.45)",
+  ACTION_PRIMARY_DISABLED_TEXT: "rgba(0, 122, 255, 0.42)",
+  ACTION_PRIMARY_SHADOW_MD: "0 8px 20px rgba(0, 122, 255, 0.18)",
+
+  /** Marketing / landing page ink (Apple-style neutrals). */
+  MARKETING_TEXT_PRIMARY: "#1d1d1f",
+  MARKETING_TEXT_SECONDARY: "#86868b",
+  MARKETING_TEXT_TERTIARY: "#aeaeb2",
+  MARKETING_BORDER: "#d2d2d7",
+  MARKETING_BORDER_STRONG: "#c7c7cc",
+  MARKETING_SURFACE_SECONDARY: "#f2f2f7",
+  /** Frosted marketing header fill (white @ 72%). */
+  MARKETING_HEADER_SURFACE: "rgba(255, 255, 255, 0.72)",
 
   // Neutrals
   MUTED: "#e5e7eb",
@@ -102,45 +111,50 @@ export const COLORS = {
   CALENDAR_BLOCKED_TEXT: "#475569",
 
   /** Time-grid chrome (day/week views) */
-  CALENDAR_TODAY_COLUMN_BG: "rgba(37, 99, 235, 0.06)",
-  CALENDAR_TODAY_COLUMN_BORDER: "rgba(37, 99, 235, 0.35)",
-  CALENDAR_NOW_LINE: "#2563eb",
-  CALENDAR_NOW_LINE_FADED: "rgba(37, 99, 235, 0.35)",
+  CALENDAR_TODAY_COLUMN_BG: "rgba(0, 122, 255, 0.06)",
+  CALENDAR_TODAY_COLUMN_BORDER: "rgba(0, 122, 255, 0.35)",
+  CALENDAR_NOW_LINE: "#007aff",
+  CALENDAR_NOW_LINE_FADED: "rgba(0, 122, 255, 0.35)",
   CALENDAR_GRID_HOUR_LINE: "#e2e8f0",
   CALENDAR_GRID_HALF_HOUR_LINE: "rgba(226, 232, 240, 0.75)",
 
   /** Month-view event chips */
-  CALENDAR_EVENT_BG: "rgba(37, 99, 235, 0.1)",
-  CALENDAR_EVENT_BG_HOVER: "rgba(37, 99, 235, 0.16)",
-  CALENDAR_EVENT_ACCENT: "#2563eb",
-  CALENDAR_EVENT_TEXT: "#1e3a8a",
+  CALENDAR_EVENT_BG: "rgba(0, 122, 255, 0.1)",
+  CALENDAR_EVENT_BG_HOVER: "rgba(0, 122, 255, 0.16)",
+  CALENDAR_EVENT_ACCENT: "#007aff",
+  CALENDAR_EVENT_TEXT: "#004999",
   CALENDAR_OUT_OF_MONTH_BG: "rgba(248, 248, 248, 0.85)",
 
   /** Teacher calendar: invite-only (reserved) class lock icon */
   CALENDAR_RESERVED_ICON: "rgba(95, 111, 149, 0.85)",
 
-  // App shell sidebar — aligned with Maje portal (`.maje-teacher-db .sidebar`: `--surface`, `--ink`, `--muted`)
-  SIDEBAR_MUTED: "#4d566b",
-  SIDEBAR_ACCENT: "#5a6888",
-  SIDEBAR_BRAND: "#5f6f95",
-  SIDEBAR_HOVER: "rgba(95, 111, 149, 0.06)",
-  SIDEBAR_ACTIVE_BG: "rgba(95, 111, 149, 0.1)",
-  SIDEBAR_ROLE: "#7c879d",
-  SIDEBAR_AVATAR_BG: "rgba(95, 111, 149, 0.12)",
-  /** Maje `.nav-link:hover` bottom border */
-  SIDEBAR_NAV_BORDER_HOVER: "#8b9bb4",
-  SIDEBAR_FOCUS_RING: "rgba(95, 111, 149, 0.45)",
+  // App shell sidebar
+  SIDEBAR_MUTED: "#86868b",
+  SIDEBAR_ACCENT: "#007aff",
+  SIDEBAR_BRAND: "#007aff",
+  SIDEBAR_HOVER: "rgba(0, 122, 255, 0.06)",
+  SIDEBAR_ACTIVE_BG: "rgba(0, 122, 255, 0.10)",
+  SIDEBAR_ROLE: "#86868b",
+  SIDEBAR_AVATAR_BG: "rgba(0, 122, 255, 0.10)",
+  SIDEBAR_NAV_BORDER_HOVER: "#d2d2d7",
+  SIDEBAR_FOCUS_RING: "rgba(0, 122, 255, 0.45)",
 
   // Misc
   WHITE: "#ffffff",
 
   // Buttons (canonical primary/secondary roles, used by `Button` and any matching CTA)
-  /** Primary CTA fill (alias of `HEADER`/`PRIMARY` so button system tokens are explicit). */
-  BUTTON_PRIMARY_BG: "#172033",
-  /** Primary CTA hover fill — slightly lifted from `BUTTON_PRIMARY_BG`. */
-  BUTTON_PRIMARY_BG_HOVER: "rgba(23, 32, 51, 0.92)",
+  /** Primary CTA fill — system blue (matches marketing/auth). */
+  BUTTON_PRIMARY_BG: "#007aff",
+  /** Primary CTA hover fill. */
+  BUTTON_PRIMARY_BG_HOVER: "#0062cc",
   /** Primary CTA glyph/text color. */
   BUTTON_PRIMARY_TEXT: "#ffffff",
+  /** Primary text on saturated accent surfaces (meets WCAG AA on `BUTTON_PRIMARY_BG_HOVER`). */
+  ON_ACCENT_TEXT: "#ffffff",
+  /** Secondary text on saturated accent surfaces. */
+  ON_ACCENT_TEXT_MUTED: "rgba(255, 255, 255, 0.85)",
+  /** Inset icon/chip wash on saturated accent surfaces. */
+  ON_ACCENT_SURFACE: "rgba(255, 255, 255, 0.15)",
   /** Secondary CTA fill (neutral wash). */
   BUTTON_SECONDARY_BG: "#e5e7eb",
   /** Secondary CTA hover fill — slate-300. */

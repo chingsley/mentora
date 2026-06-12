@@ -1,4 +1,4 @@
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 
 /**
  * Single app-wide UI font. Apply `appSans.variable` on `<html>` (see root `layout.tsx`).
@@ -7,9 +7,9 @@ import { Plus_Jakarta_Sans } from "next/font/google";
  * imported constants. Keep it in sync with `FONT_FACE.APP_UI_VARIABLE` in
  * `src/constants/fonts.constants.ts`.
  */
-export const appSans = Plus_Jakarta_Sans({
+export const appSans = Inter({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-plus-jakarta-sans",
+  variable: "--font-inter",
   adjustFontFallback: true,
 });
