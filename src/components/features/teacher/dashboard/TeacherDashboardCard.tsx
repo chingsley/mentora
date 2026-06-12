@@ -43,7 +43,7 @@ const HeaderDivider = styled.hr`
 
 const Title = styled.h2`
   margin: 0;
-  font-size: ${FONTS.SIZE.UI_LARGE};
+  font-size: ${FONTS.SIZE.CARD_TITLE};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${DASHBOARD.TEXT_PRIMARY};
   letter-spacing: -0.02em;
