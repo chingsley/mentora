@@ -3,6 +3,7 @@
 import { TeacherDashboardHeader } from "@/components/features/teacher/dashboard/TeacherDashboardHeader";
 import { useAppShell } from "@/components/layouts/AppShellContext";
 import { appShellProfileRole, appShellSearchPlaceholder } from "@/lib/appShellHeader";
+import type { ReactNode } from "react";
 
 export interface AppPageHeaderProps {
   title: string;
@@ -14,6 +15,8 @@ export interface AppPageHeaderProps {
   /** When true, shows search, notifications, and profile chip in the header. Default false. */
   showToolbar?: boolean;
   notificationCount?: number;
+  /** Optional control aligned to the right of the title block. */
+  action?: ReactNode;
 }
 
 export function AppPageHeader({
@@ -25,6 +28,7 @@ export function AppPageHeader({
   showProfileLink = true,
   showToolbar = false,
   notificationCount = 0,
+  action,
 }: AppPageHeaderProps) {
   const user = useAppShell();
 
@@ -34,6 +38,7 @@ export function AppPageHeader({
       teacherImage={profileImage}
       title={title}
       subtitle={subtitle}
+      action={action}
       searchPlaceholder={searchPlaceholder ?? appShellSearchPlaceholder(user.role)}
       showProfileLink={showProfileLink}
       showToolbar={showToolbar}

@@ -361,6 +361,7 @@ export function OfferingDialog({
       onClose={handleClose}
       title={isEdit ? "Edit class period" : "Add class period"}
       size="lg"
+      placement="right"
     >
       {subjects.length === 0 ? (
         <EmptyWrap>

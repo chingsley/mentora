@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Bell, ChevronDown, Search } from "lucide-react";
@@ -27,7 +28,20 @@ const Wrap = styled.header<{ $minimal: boolean; }>`
 `;
 
 const TitleBlock = styled.div`
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: ${SPACING.FOUR};
+  width: 100%;
   min-width: 0;
+`;
+
+const TitleContent = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+const TitleAction = styled.div`
   flex-shrink: 0;
 `;
 
@@ -230,6 +244,8 @@ export interface TeacherDashboardHeaderProps {
   title?: string;
   /** Optional line below the heading */
   subtitle?: string | null;
+  /** Optional control aligned to the right of the title block (e.g. Add class). */
+  action?: ReactNode;
   /** Placeholder for the shell search field */
   searchPlaceholder?: string;
   /** When false, hides the profile shortcut (e.g. on `/profile` where it is redundant). Default true. */
@@ -246,6 +262,7 @@ export function TeacherDashboardHeader({
   notificationCount = 0,
   title = "Teacher Dashboard",
   subtitle,
+  action,
   searchPlaceholder = "Search students, classes, schedule…",
   showProfileLink = true,
   showToolbar = false,
@@ -261,8 +278,11 @@ export function TeacherDashboardHeader({
   return (
     <Wrap $minimal={!showToolbar}>
       <TitleBlock>
-        <PageTitle>{title}</PageTitle>
-        {subtitle ? <PageSubtitle>{subtitle}</PageSubtitle> : null}
+        <TitleContent>
+          <PageTitle>{title}</PageTitle>
+          {subtitle ? <PageSubtitle>{subtitle}</PageSubtitle> : null}
+        </TitleContent>
+        {action ? <TitleAction>{action}</TitleAction> : null}
       </TitleBlock>
 
       {showToolbar ? (

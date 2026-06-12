@@ -279,6 +279,7 @@ export function TeacherSessionAttendanceDialog({
       title={dialogTitle}
       titleBelow={titleBelow}
       size="lg"
+      placement="right"
     >
       {offering ? (
         <SessionInfoBlock

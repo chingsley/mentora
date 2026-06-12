@@ -34,16 +34,18 @@ export const LAYOUT = {
     MODAL: 1000,
     TOAST: 1100,
   },
+  /** Shared motion tokens for overlays and drawers. */
+  MOTION: {
+    DRAWER_DURATION: "0.28s",
+    DRAWER_EASING: "cubic-bezier(0.32, 0.72, 0, 1)",
+  },
   /** Shared `PageLoader` geometry and motion (App Router `loading.tsx`). */
   PAGE_LOADER: {
     SPINNER_SIZE: "3.75rem",
     MIN_HEIGHT: "min(70vh, 35rem)",
     GLOW_INSET: "4rem",
     GLOW_BLUR: "3rem",
-    SHIMMER_TRACK_WIDTH: "6rem",
-    SHIMMER_TRACK_HEIGHT: SPACING.ONE,
     SPIN_DURATION: "0.95s",
-    SHIMMER_DURATION: "1.4s",
   },
   /**
    * Page chrome inset applied once on `<Main>` in AppShellClient. Every
