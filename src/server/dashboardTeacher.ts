@@ -71,11 +71,6 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
         earnings && earnings.grossAmountMinor > 0
           ? `${earnings.commissionPercent}% platform fee applied`
           : "From completed sessions",
-      trend:
-        earnings && earnings.totalSessions > 0
-          ? `↑ ${earnings.totalSessions} billable session${earnings.totalSessions === 1 ? "" : "s"}`
-          : undefined,
-      trendPositive: (earnings?.netAmountMinor ?? 0) > 0,
       footerLink: { href: "/earnings", label: "View earnings" },
     },
   ];

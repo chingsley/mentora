@@ -64,14 +64,14 @@ const Value = styled.p<{ $accent?: boolean }>`
 `;
 
 const Hint = styled.p<{ $accent?: boolean }>`
-  margin: ${SPACING.ONE} 0 0;
+  margin: ${SPACING.FOUR} 0 0;
   font-size: ${DASHBOARD.SECONDARY_TEXT.FONT_SIZE};
   color: ${(p) =>
     p.$accent ? DASHBOARD.STAT_ACCENT.TEXT_SECONDARY : DASHBOARD.SECONDARY_TEXT.COLOR};
 `;
 
 const Trend = styled.p<{ $positive?: boolean; $accent?: boolean }>`
-  margin: ${SPACING.TWO} 0 0;
+  margin: ${SPACING.FOUR} 0 0;
   font-size: ${FONTS.SIZE.XS};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
   color: ${(p) => {

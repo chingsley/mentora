@@ -9,7 +9,7 @@ import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
+import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { signOutAction } from "./actions";
@@ -72,7 +72,7 @@ const UserNameLine = styled.span`
   overflow: hidden;
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.BUTTON_SECONDARY_TEXT};
+  color: inherit;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
@@ -85,10 +85,10 @@ const Avatar = styled.span`
   width: ${SPACING.EIGHT};
   height: ${SPACING.EIGHT};
   border-radius: ${LAYOUT.RADIUS.FULL};
-  background-color: ${S.AVATAR_BG};
+  background-color: ${COLORS.ON_ACCENT_SURFACE};
   font-size: ${FONTS.SIZE.XS};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${S.TEXT};
+  color: ${COLORS.ON_ACCENT_TEXT};
 `;
 
 const iconMenuItemCss = css`
@@ -98,11 +98,14 @@ const iconMenuItemCss = css`
   min-height: ${SPACING.TWELVE};
   padding: ${SPACING.THREE};
   border-radius: ${LAYOUT.RADIUS.MD};
-  color: ${S.TEXT};
+  color: ${S.MUTED};
   outline: none;
-  transition: background-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 
   &:hover {
+    color: ${S.TEXT};
     background-color: ${S.HOVER};
   }
 
@@ -138,7 +141,7 @@ const MenuItemLabel = styled.span`
   min-width: 0;
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${S.TEXT};
+  color: inherit;
   text-align: left;
 `;
 
@@ -241,7 +244,7 @@ export function SidebarAccountMenu({ user, navCollapsed, onNavigate }: SidebarAc
     <Root ref={rootRef}>
       <TriggerButton
         type="button"
-        variant="secondary"
+        variant="primary"
         $collapsed={navCollapsed}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -264,7 +267,6 @@ export function SidebarAccountMenu({ user, navCollapsed, onNavigate }: SidebarAc
             $open={open}
             size={ICON_SIZE.SM}
             strokeWidth={ICON_STROKE.MEDIUM}
-            color={ICON_THEME.INLINE_MUTED}
             aria-hidden
           />
         ) : null}
@@ -284,7 +286,7 @@ export function SidebarAccountMenu({ user, navCollapsed, onNavigate }: SidebarAc
           title={labeledMenu ? undefined : "Settings"}
           onClick={closeAndNavigate}
         >
-          <Settings size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} color={ICON_THEME.INLINE_MUTED} aria-hidden />
+          <Settings size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
           {labeledMenu ? <MenuItemLabel>Settings</MenuItemLabel> : null}
         </MenuIconLink>
         <MenuIconLink
@@ -295,7 +297,7 @@ export function SidebarAccountMenu({ user, navCollapsed, onNavigate }: SidebarAc
           title={labeledMenu ? undefined : "About us"}
           onClick={closeAndNavigate}
         >
-          <Info size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} color={ICON_THEME.INLINE_MUTED} aria-hidden />
+          <Info size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
           {labeledMenu ? <MenuItemLabel>About us</MenuItemLabel> : null}
         </MenuIconLink>
         <SignOutWrap role="none">
@@ -311,7 +313,7 @@ export function SidebarAccountMenu({ user, navCollapsed, onNavigate }: SidebarAc
               handleSignOut();
             }}
           >
-            <LogOut size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} color={ICON_THEME.INLINE_MUTED} aria-hidden />
+            <LogOut size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
             {labeledMenu ? <MenuItemLabel>Logout</MenuItemLabel> : null}
           </MenuSignOutIconButton>
         </SignOutWrap>

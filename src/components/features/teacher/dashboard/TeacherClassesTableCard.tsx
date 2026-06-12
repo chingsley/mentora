@@ -1,11 +1,10 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
 import styled from "styled-components";
 import { Chip } from "@/components/ui/Chip";
 import { AppHyperLink } from "@/components/ui/Link";
 import { DASHBOARD } from "@/constants/dashboard.constants";
-import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
+import { ICON_THEME } from "@/constants/iconTheme.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import type { TeacherDashboardClassRow } from "@/types/teacherDashboard";
@@ -31,9 +30,10 @@ const Th = styled.th`
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: ${DASHBOARD.TABLE_HEADER};
+  color: ${DASHBOARD.TABLE_HEAD.TEXT};
+  border-top: 1px solid ${DASHBOARD.TABLE_HEAD.BORDER_TOP};
   border-bottom: 1px solid ${DASHBOARD.BORDER_SUBTLE};
-  background: ${DASHBOARD.CARD_BACKGROUND};
+  background: ${DASHBOARD.TABLE_HEAD.BACKGROUND};
 `;
 
 const Td = styled.td`
@@ -81,24 +81,6 @@ const CountCell = styled.span`
   align-items: center;
   gap: ${SPACING.TWO};
   color: ${DASHBOARD.TEXT_SECONDARY};
-`;
-
-const GhostBtn = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: none;
-  border-radius: ${DASHBOARD.CHIP_RADIUS};
-  background: transparent;
-  color: ${ICON_THEME.INLINE_MUTED};
-  cursor: pointer;
-
-  &:hover {
-    background: ${DASHBOARD.ROW_HOVER};
-    color: ${DASHBOARD.TEXT_PRIMARY};
-  }
 `;
 
 const RowActions = styled.div`
@@ -184,9 +166,6 @@ export function TeacherClassesTableCard({
                       <Td>
                         <RowActions>
                           <AppHyperLink href="/schedule">View</AppHyperLink>
-                          <GhostBtn type="button" aria-label="More actions">
-                            <MoreHorizontal size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
-                          </GhostBtn>
                         </RowActions>
                       </Td>
                     </Tr>
