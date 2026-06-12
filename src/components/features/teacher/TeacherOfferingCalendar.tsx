@@ -3,7 +3,7 @@
 import type { DayOfWeek, OfferingPeriodType, OfferingRecurrenceKind } from "@prisma/client";
 import * as React from "react";
 import styled from "styled-components";
-import { CalendarShell } from "@/components/features/calendar/CalendarShell";
+import { AppCalendar } from "@/components/features/calendar";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import {
   OfferingDialog,
@@ -157,7 +157,7 @@ export function TeacherOfferingCalendar({
 
   return (
     <>
-      <CalendarShell
+      <AppCalendar
         entries={entries}
         initialView={initialView}
         tileColorMode={tileColorMode}

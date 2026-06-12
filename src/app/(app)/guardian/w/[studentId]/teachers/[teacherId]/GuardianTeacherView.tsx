@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { CalendarShell } from "@/components/features/calendar/CalendarShell";
+import { AppCalendar } from "@/components/features/calendar";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import { ReportTeacherButton } from "@/components/features/teacher/ReportTeacherButton";
 import { COLORS } from "@/constants/colors.constants";
@@ -375,7 +375,7 @@ export function GuardianTeacherView({
                 This teacher hasn&apos;t published any class periods yet.
               </InfoBlock>
             ) : (
-              <CalendarShell entries={entries} />
+              <AppCalendar entries={entries} />
             )}
           </CardContent>
         </ScheduleCard>

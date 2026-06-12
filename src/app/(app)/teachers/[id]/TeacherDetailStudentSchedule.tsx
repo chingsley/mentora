@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import styled from "styled-components";
-import { CalendarShell } from "@/components/features/calendar/CalendarShell";
+import { AppCalendar } from "@/components/features/calendar";
 import type { CalendarOccurrenceLookup } from "@/components/features/calendar/types";
 import {
   ClassDetailsDialog,
@@ -135,7 +135,7 @@ export function TeacherDetailStudentSchedule({
           {SESSION_MARKER_LABEL.not_held}
         </LegendItem>
       </Legend>
-      <CalendarShell
+      <AppCalendar
         entries={entries}
         occurrenceLookup={occurrenceLookup}
         tileColorMode="subject"
