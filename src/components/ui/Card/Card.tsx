@@ -6,15 +6,14 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { SURFACE } from "@/constants/surface.constants";
 
 const StyledCard = styled.div`
-  background-color: ${COLORS.FOREGROUND};
-  border-radius: ${LAYOUT.RADIUS.XL};
+  background-color: ${SURFACE.BACKGROUND};
+  border-radius: ${SURFACE.RADIUS};
   padding: ${SPACING.FIVE};
-  box-shadow: ${LAYOUT.SHADOW.SM};
-  outline: 1px solid ${COLORS.RING_BLACK_5};
-  outline-offset: -1px;
-  border: 1px solid ${COLORS.RING_BLACK_5};
+  box-shadow: ${SURFACE.SHADOW};
+  border: 1px solid ${SURFACE.BORDER};
 
   ${LAYOUT.MEDIA.SM} {
     padding: ${SPACING.SIX};

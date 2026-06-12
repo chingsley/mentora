@@ -93,7 +93,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
           <TeacherUpcomingSessionsCard
             sessions={data.upcomingSessions}
             viewAllHref="/classes"
-            viewAllLabel="View my classes →"
+            viewAllLabel="View my classes"
             sessionLinkHref="/classes"
             sessionLinkAriaLabel="Open my classes"
           />

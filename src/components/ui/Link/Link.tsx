@@ -4,20 +4,21 @@ import NextLink from "next/link";
 import styled, { css } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { ICON_THEME } from "@/constants/iconTheme.constants";
-import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { SURFACE } from "@/constants/surface.constants";
 
-/** Shared body/inline navigation link: system blue, underline on hover. */
+/** Shared body/inline navigation link: teal ink with a light underline. */
 export const appHyperLinkStyles = css`
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${COLORS.ACTION_PRIMARY};
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: ${COLORS.ACTION_PRIMARY_BORDER_22};
+  text-underline-offset: 0.15em;
 
   &:hover {
     color: ${COLORS.ACTION_PRIMARY_HOVER};
-    text-decoration: underline;
+    text-decoration-color: ${COLORS.ACTION_PRIMARY_BORDER_25};
   }
 `;
 
@@ -30,7 +31,7 @@ export const PrimaryLink = styled(NextLink)`
   height: 2.5rem;
   align-items: center;
   justify-content: center;
-  border-radius: ${LAYOUT.RADIUS.MD};
+  border-radius: ${SURFACE.RADIUS};
   background-color: ${COLORS.HEADER};
   padding: 0 ${SPACING.FOUR};
   font-size: ${FONTS.SIZE.SM};
@@ -39,7 +40,7 @@ export const PrimaryLink = styled(NextLink)`
   text-decoration: none;
 
   &:hover {
-    background-color: rgba(23, 32, 51, 0.9);
+    background-color: ${COLORS.GRAY_DARK_ALT};
   }
 `;
 
@@ -48,7 +49,7 @@ export const SecondaryLink = styled(NextLink)`
   height: 2.5rem;
   align-items: center;
   justify-content: center;
-  border-radius: ${LAYOUT.RADIUS.MD};
+  border-radius: ${SURFACE.RADIUS};
   border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.FOREGROUND};
   padding: 0 ${SPACING.FOUR};
@@ -58,7 +59,7 @@ export const SecondaryLink = styled(NextLink)`
   text-decoration: none;
 
   &:hover {
-    border-color: rgba(23, 32, 51, 0.4);
+    border-color: ${COLORS.HEADER_BORDER_25};
   }
 `;
 
@@ -67,7 +68,7 @@ export const SmallPrimaryLink = styled(NextLink)`
   height: 2.25rem;
   align-items: center;
   justify-content: center;
-  border-radius: ${LAYOUT.RADIUS.MD};
+  border-radius: ${SURFACE.RADIUS};
   background-color: ${COLORS.HEADER};
   padding: 0 ${SPACING.THREE};
   font-size: ${FONTS.SIZE.SM};
@@ -76,7 +77,7 @@ export const SmallPrimaryLink = styled(NextLink)`
   text-decoration: none;
 
   &:hover {
-    background-color: rgba(23, 32, 51, 0.9);
+    background-color: ${COLORS.GRAY_DARK_ALT};
   }
 `;
 

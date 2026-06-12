@@ -5,7 +5,7 @@ import { COLORS } from "./colors.constants";
 import { SPACING } from "./spacing.constants";
 
 /** Shared card chrome shadow (teacher dashboard + profile card surfaces). */
-export const BOX_SHADOW_CARD = "0 4px 24px rgba(19, 30, 53, 0.06)";
+export const BOX_SHADOW_CARD = "0 4px 24px rgba(44, 44, 46, 0.06)";
 
 /** Shared input/control shell shadow (inputs, textareas, and matching controls). */
 export const BOX_SHADOW_INPUTS = "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
@@ -14,7 +14,8 @@ export const LAYOUT = {
   RADIUS: {
     /** 4px — very subtle corners (marketing CTAs, Jitsi-style controls). */
     XS: "0.25rem",
-    SM: "0.375rem", // 6px
+    /** 6px — canonical radius for cards, dialogs, inputs, chips, and buttons. */
+    SM: "0.375rem",
     MD: "0.5rem", // 8px
     LG: "0.75rem", // 12px
     XL: "1rem", // 16px

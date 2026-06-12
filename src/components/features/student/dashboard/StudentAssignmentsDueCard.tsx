@@ -113,7 +113,7 @@ export function StudentAssignmentsDueCard({ items }: StudentAssignmentsDueCardPr
                     </Meta>
                     <Due $overdue={overdue}>{item.dueLabel}</Due>
                     <DashboardLink>
-                      <AppHyperLink href={href}>Open assignment →</AppHyperLink>
+                      <AppHyperLink href={href}>Open assignment</AppHyperLink>
                     </DashboardLink>
                   </Item>
                 );
@@ -121,7 +121,7 @@ export function StudentAssignmentsDueCard({ items }: StudentAssignmentsDueCardPr
             </List>
             <FooterPad>
               <DashboardLink>
-                <AppHyperLink href="/classes">View all classes →</AppHyperLink>
+                <AppHyperLink href="/classes">View all classes</AppHyperLink>
               </DashboardLink>
             </FooterPad>
           </>

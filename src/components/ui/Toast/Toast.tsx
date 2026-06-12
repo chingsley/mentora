@@ -6,6 +6,7 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { SURFACE } from "@/constants/surface.constants";
 
 export type ToastTone = "default" | "success" | "warning" | "error";
 
@@ -70,11 +71,11 @@ const Card = styled.div<{ $tone: ToastTone }>`
   width: 100%;
   max-width: 24rem;
   padding: ${SPACING.THREE} ${SPACING.FOUR};
-  border-radius: ${LAYOUT.RADIUS.LG};
+  border-radius: ${SURFACE.RADIUS};
   border: 1px solid ${(p) => TONE_PALETTE[p.$tone].border};
   background-color: ${(p) => TONE_PALETTE[p.$tone].bg};
   color: ${(p) => TONE_PALETTE[p.$tone].text};
-  box-shadow: ${LAYOUT.SHADOW.LG};
+  box-shadow: ${SURFACE.SHADOW};
 `;
 
 const Body = styled.div`
@@ -108,9 +109,9 @@ const ActionButton = styled.button`
   font-weight: ${FONTS.WEIGHT.MEDIUM};
   color: ${COLORS.WHITE};
   background-color: ${COLORS.HEADER};
-  border-radius: ${LAYOUT.RADIUS.MD};
+  border-radius: ${SURFACE.RADIUS};
 
-  &:hover { background-color: rgba(23, 32, 51, 0.92); }
+  &:hover { background-color: ${COLORS.GRAY_DARK_ALT}; }
 `;
 
 const DismissButton = styled.button`
@@ -120,7 +121,7 @@ const DismissButton = styled.button`
   padding: 0 ${SPACING.THREE};
   font-size: ${FONTS.SIZE.XS};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
-  border-radius: ${LAYOUT.RADIUS.MD};
+  border-radius: ${SURFACE.RADIUS};
   border: 1px solid currentColor;
   background-color: transparent;
   color: inherit;

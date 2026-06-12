@@ -1,18 +1,18 @@
 import { COLORS } from "@/constants/colors.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 
-/** Maje `teacher-dashboard-marketing.css` `--brand` / `--brand-strong` */
-const MAJE_BRAND = COLORS.SIDEBAR_BRAND;
-const MAJE_BRAND_STRONG = "#495679";
-/** Maje teacher KPI second icon box `bg-[#8b9bb4]` (`teacher-dashboard-view.tsx`) */
-const MAJE_ICON_BOX_MUTED = "#8b9bb4";
+/** Filled accent icon box (teal brand on light surfaces). */
+const MAJE_BRAND = COLORS.ACCENT;
+/** Darker teal for emphasis icon boxes. */
+const MAJE_BRAND_STRONG = COLORS.ACTION_PRIMARY_HOVER;
+/** Muted gray icon box on light surfaces. */
+const MAJE_ICON_BOX_MUTED = COLORS.GRAY_TEXT_SECONDARY;
 
 /** Shared wash behind secondary icon boxes and action-style icon links */
-const BRAND_WASH_8 = "rgba(95, 111, 149, 0.08)";
-// const BRAND_WASH_8 = "#f1f1f1";
+const BRAND_WASH_8 = COLORS.ACTION_PRIMARY_TINT_10;
 
 /** 1px brand outline on every secondary (wash) icon tile and matching controls */
-const ICON_SECONDARY_BORDER = `1px solid ${MAJE_BRAND}` as const;
+const ICON_SECONDARY_BORDER = `1px solid ${COLORS.ACTION_PRIMARY_BORDER_22}` as const;
 
 /**
  * Canonical icon chrome when the product asks for a **primary** vs **secondary** icon box.
@@ -26,22 +26,13 @@ export const ICON_BOX_TYPE = {
   },
   SECONDARY: {
     background: BRAND_WASH_8,
-    color: MAJE_BRAND,
+    color: COLORS.ACTION_PRIMARY,
     border: ICON_SECONDARY_BORDER,
   },
 } as const;
 
 export type IconBoxTypeKey = keyof typeof ICON_BOX_TYPE;
 
-/**
- * Maje `TeacherDashboardMetricCard` (see Maje `teacher-dashboard-metric-card.tsx`):
- * - Wrapper: `flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base leading-none`
- * - `iconBoxClassName` examples from `teacher-dashboard-view.tsx`:
- *   - `bg-[color:var(--brand)] text-white shadow-sm`
- *   - `bg-[#8b9bb4] text-white shadow-sm`
- *   - `bg-[color:var(--brand-strong)] text-white shadow-sm`
- * Tune the hex sources above (or this object) for app-wide teacher-dashboard icon chrome.
- */
 /**
  * Lucide glyph sizes (in px) and stroke widths used app-wide.
  * Always pass these to `<LucideIcon size={...} strokeWidth={...} />`
@@ -93,17 +84,17 @@ export const ICON_THEME = {
    */
   ACTION_LINK_SIZE: "2.25rem",
   ACTION_LINK_BACKGROUND: BRAND_WASH_8,
-  ACTION_LINK_BACKGROUND_HOVER: "rgba(95, 111, 149, 0.16)",
+  ACTION_LINK_BACKGROUND_HOVER: COLORS.ACTION_PRIMARY_TINT_16,
   ACTION_LINK_BORDER: ICON_SECONDARY_BORDER,
-  ACTION_LINK_FOREGROUND: MAJE_BRAND,
+  ACTION_LINK_FOREGROUND: COLORS.ACTION_PRIMARY,
   /** @deprecated Use `ICON_SIZE.MD` instead. Kept for back-compat. */
   ACTION_LINK_LUCIDE_SIZE: ICON_SIZE.MD,
 
   AVATAR_PLACEHOLDER_BACKGROUND: MAJE_ICON_BOX_MUTED,
   AVATAR_PLACEHOLDER_GLYPH: COLORS.WHITE,
 
-  INLINE_MUTED: "#64748b",
-  INLINE_SUBTLE: "#94a3b8",
+  INLINE_MUTED: COLORS.GRAY_TEXT_SECONDARY,
+  INLINE_SUBTLE: COLORS.GRAY_TEXT_TERTIARY,
 
-  FOCUS_RING_NEUTRAL: "rgba(95, 111, 149, 0.45)",
+  FOCUS_RING_NEUTRAL: COLORS.ACTION_PRIMARY_RING_45,
 } as const;

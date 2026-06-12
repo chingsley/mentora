@@ -103,7 +103,7 @@ const iconMenuItemCss = css`
   transition: background-color 0.15s ease;
 
   &:hover {
-    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
+    background-color: ${S.HOVER};
   }
 
   &:focus-visible {

@@ -2,11 +2,11 @@
 
 import { MoreHorizontal } from "lucide-react";
 import styled from "styled-components";
+import { Chip } from "@/components/ui/Chip";
 import { AppHyperLink } from "@/components/ui/Link";
 import { DASHBOARD } from "@/constants/dashboard.constants";
 import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import type { TeacherDashboardClassRow } from "@/types/teacherDashboard";
 import {
@@ -83,17 +83,6 @@ const CountCell = styled.span`
   color: ${DASHBOARD.TEXT_SECONDARY};
 `;
 
-const Badge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.125rem 0.5rem;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  font-size: ${FONTS.SIZE["2XS"]};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  background: ${DASHBOARD.BADGE_ACTIVE_BG};
-  color: ${DASHBOARD.BADGE_ACTIVE_TEXT};
-`;
-
 const GhostBtn = styled.button`
   display: inline-flex;
   align-items: center;
@@ -101,7 +90,7 @@ const GhostBtn = styled.button`
   width: 2rem;
   height: 2rem;
   border: none;
-  border-radius: ${LAYOUT.RADIUS.MD};
+  border-radius: ${DASHBOARD.CHIP_RADIUS};
   background: transparent;
   color: ${ICON_THEME.INLINE_MUTED};
   cursor: pointer;
@@ -129,17 +118,24 @@ const Empty = styled.p`
 
 export interface TeacherClassesTableCardProps {
   rows: TeacherDashboardClassRow[];
+  /** When true, shows a link to manage periods on the schedule page. */
+  showScheduleLink?: boolean;
 }
 
-export function TeacherClassesTableCard({ rows }: TeacherClassesTableCardProps) {
+export function TeacherClassesTableCard({
+  rows,
+  showScheduleLink = false,
+}: TeacherClassesTableCardProps) {
   return (
     <DashboardCard $flush $fillColumn>
       <TeacherDashboardCardHeader
         title="My classes"
         action={
-          <DashboardLink>
-            <AppHyperLink href="/schedule">View all classes →</AppHyperLink>
-          </DashboardLink>
+          showScheduleLink ? (
+            <DashboardLink>
+              <AppHyperLink href="/schedule">Manage schedule</AppHyperLink>
+            </DashboardLink>
+          ) : undefined
         }
       />
       <DashboardCardBody $pad={false} $fill>
@@ -181,7 +177,9 @@ export function TeacherClassesTableCard({ rows }: TeacherClassesTableCardProps) 
                       <Td>{row.sessionLabel}</Td>
                       <Td>{row.priceLabel}</Td>
                       <Td>
-                        <Badge>{row.status === "active" ? "Active" : "Paused"}</Badge>
+                        <Chip tone={row.status === "active" ? "active" : "neutral"}>
+                          {row.status === "active" ? "Active" : "Paused"}
+                        </Chip>
                       </Td>
                       <Td>
                         <RowActions>

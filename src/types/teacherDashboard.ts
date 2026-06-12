@@ -1,7 +1,7 @@
 export interface TeacherDashboardStat {
   label: string;
   value: string;
-  hint: string;
+  hint?: string;
   trend?: string;
   trendPositive?: boolean;
   footerLink?: { href: string; label: string };
@@ -46,12 +46,33 @@ export interface TeacherDashboardMessageItem {
   unread: boolean;
 }
 
+export interface TeacherDashboardChartPoint {
+  label: string;
+  /** Short label for the chart x-axis (e.g. "Jun 8"). */
+  axisLabel?: string;
+  value: number;
+  valueFormatted?: string;
+}
+
+export interface TeacherDashboardCharts {
+  currency: string;
+  classesHeldThisMonth: {
+    monthLabel: string;
+    total: number;
+    points: TeacherDashboardChartPoint[];
+  };
+  studentAttendancePast8Weeks: {
+    averageFormatted: string;
+    points: TeacherDashboardChartPoint[];
+  };
+}
+
 export interface TeacherDashboardPayload {
   teacherName: string;
   teacherImage: string | null;
   profileCompleted: boolean;
   stats: TeacherDashboardStat[];
-  classes: TeacherDashboardClassRow[];
+  charts: TeacherDashboardCharts;
   upcomingSessions: TeacherDashboardUpcomingSession[];
   activity: TeacherDashboardActivityItem[];
   messages: TeacherDashboardMessageItem[];

@@ -130,20 +130,22 @@ export interface TeacherUpcomingSessionsCardProps {
   viewAllLabel?: string;
   sessionLinkHref?: string;
   sessionLinkAriaLabel?: string;
+  $fillColumn?: boolean;
 }
 
 export function TeacherUpcomingSessionsCard({
   sessions,
   title = "Upcoming sessions",
   viewAllHref = "/schedule",
-  viewAllLabel = "View full schedule →",
+  viewAllLabel = "View full schedule",
   sessionLinkHref = "/schedule",
   sessionLinkAriaLabel = "Open schedule",
+  $fillColumn = false,
 }: TeacherUpcomingSessionsCardProps) {
   const preview = sessions.slice(0, UPCOMING_SESSIONS_PREVIEW_LIMIT);
 
   return (
-    <DashboardCard $flush>
+    <DashboardCard $flush $fillColumn={$fillColumn}>
       <TeacherDashboardCardHeader
         title={title}
         action={

@@ -183,7 +183,7 @@ export function TeacherRecentMessagesCard({ items }: TeacherRecentMessagesCardPr
             </List>
             <FooterPad>
               <DashboardLink>
-                <AppHyperLink href="/dashboard">Go to Messages →</AppHyperLink>
+                <AppHyperLink href="/dashboard">Go to Messages</AppHyperLink>
               </DashboardLink>
             </FooterPad>
           </>
