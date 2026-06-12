@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import styled from "styled-components";
+import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { AppHyperLink } from "@/components/ui/Link";
 import { DASHBOARD } from "@/constants/dashboard.constants";
@@ -11,10 +13,14 @@ import type { TeacherDashboardClassRow } from "@/types/teacherDashboard";
 import {
   DashboardCard,
   DashboardCardBody,
-  DashboardLink,
   DashboardScrollX,
   TeacherDashboardCardHeader,
 } from "./TeacherDashboardCard";
+
+const AddClassButton = styled(Button).attrs({
+  as: Link,
+  variant: "secondary" as const,
+})``;
 
 const Table = styled.table`
   width: 100%;
@@ -100,23 +106,21 @@ const Empty = styled.p`
 
 export interface TeacherClassesTableCardProps {
   rows: TeacherDashboardClassRow[];
-  /** When true, shows a link to manage periods on the schedule page. */
-  showScheduleLink?: boolean;
+  /** When true, shows a secondary action to add a class on the schedule page. */
+  showAddClassAction?: boolean;
 }
 
 export function TeacherClassesTableCard({
   rows,
-  showScheduleLink = false,
+  showAddClassAction = false,
 }: TeacherClassesTableCardProps) {
   return (
     <DashboardCard $flush $fillColumn>
       <TeacherDashboardCardHeader
         title="My classes"
         action={
-          showScheduleLink ? (
-            <DashboardLink>
-              <AppHyperLink href="/schedule">Manage schedule</AppHyperLink>
-            </DashboardLink>
+          showAddClassAction ? (
+            <AddClassButton href="/schedule">Add class</AddClassButton>
           ) : undefined
         }
       />

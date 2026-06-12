@@ -46,7 +46,7 @@ export default async function TeacherMyClassesPage() {
   return (
     <PageWrap>
       <AppPageHeader title="My classes" subtitle={subtitle} profileImage={data.teacherImage} />
-      <TeacherClassesTableCard rows={data.rows} showScheduleLink />
+      <TeacherClassesTableCard rows={data.rows} showAddClassAction />
     </PageWrap>
   );
 }

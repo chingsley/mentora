@@ -33,8 +33,10 @@ export const FONTS = {
     SM: "0.875rem", // 14px
     MD: "0.9375rem", // 15px
     BASE: "1rem", // 16px
-    /** 17px — dashboard card titles, KPI emphasis text. */
+    /** 17px — KPI emphasis text, compact UI labels. */
     UI_LARGE: "1.0625rem",
+    /** 24px — dashboard card section titles (My classes, charts, etc.). */
+    CARD_TITLE: "1.5rem",
     LG: "1.125rem", // 18px
     /** 22px — section titles, compact headers. */
     PAGE_HEADER: "1.375rem",
