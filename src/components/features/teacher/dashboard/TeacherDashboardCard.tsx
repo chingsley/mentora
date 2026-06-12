@@ -35,6 +35,12 @@ const HeaderRow = styled.div`
   padding: ${SPACING.SIX} ${SPACING.SIX} ${SPACING.FOUR};
 `;
 
+const HeaderDivider = styled.hr`
+  margin: 0 ${SPACING.FOUR};
+  border: none;
+  border-top: 1px solid ${DASHBOARD.BORDER_SUBTLE};
+`;
+
 const Title = styled.h2`
   margin: 0;
   font-size: ${FONTS.SIZE.UI_LARGE};
@@ -46,14 +52,23 @@ const Title = styled.h2`
 export interface TeacherDashboardCardHeaderProps {
   title: string;
   action?: ReactNode;
+  /** Inset divider between the title row and card body (flush cards). */
+  divider?: boolean;
 }
 
-export function TeacherDashboardCardHeader({ title, action }: TeacherDashboardCardHeaderProps) {
+export function TeacherDashboardCardHeader({
+  title,
+  action,
+  divider = false,
+}: TeacherDashboardCardHeaderProps) {
   return (
-    <HeaderRow>
-      <Title>{title}</Title>
-      {action ? <div>{action}</div> : null}
-    </HeaderRow>
+    <>
+      <HeaderRow>
+        <Title>{title}</Title>
+        {action ? <div>{action}</div> : null}
+      </HeaderRow>
+      {divider ? <HeaderDivider /> : null}
+    </>
   );
 }
 
