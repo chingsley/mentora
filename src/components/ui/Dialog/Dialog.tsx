@@ -6,6 +6,7 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { SURFACE } from "@/constants/surface.constants";
 
 export type DialogSize = "sm" | "md" | "lg" | "xl";
 
@@ -52,10 +53,11 @@ const Panel = styled.div<{ $size: DialogSize }>`
   max-width: ${(p) => SIZE_MAX_WIDTH[p.$size]};
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
-  background-color: ${COLORS.FOREGROUND};
-  border-radius: ${LAYOUT.RADIUS.XL};
+  background-color: ${SURFACE.BACKGROUND};
+  border-radius: ${SURFACE.RADIUS};
   padding: ${SPACING.SIX};
-  box-shadow: ${LAYOUT.SHADOW.XL};
+  box-shadow: ${SURFACE.SHADOW};
+  border: 1px solid ${SURFACE.BORDER};
 `;
 
 const PanelTitle = styled.h2<{ $hasTitleBelow: boolean }>`

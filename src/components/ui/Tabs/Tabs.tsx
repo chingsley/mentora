@@ -6,6 +6,7 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { SURFACE } from "@/constants/surface.constants";
 
 export type TabsVisualVariant = "default" | "underline";
 
@@ -73,7 +74,7 @@ const TabButton = styled.button<{ $active: boolean; $underline: boolean; }>`
               `}
         `
       : css`
-          border-radius: ${LAYOUT.RADIUS.MD};
+          border-radius: ${SURFACE.RADIUS};
           border: 1px solid transparent;
           ${p.$active
           ? css`

@@ -3,8 +3,10 @@
 import styled, { css } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
+import { CHIP, CHIP_TONE } from "@/constants/chip.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { SURFACE } from "@/constants/surface.constants";
 
 export const PageWrap = styled.div`
   display: flex;
@@ -113,10 +115,11 @@ export const CardSurface = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.THREE};
-  border-radius: ${LAYOUT.RADIUS.LG};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
+  border-radius: ${SURFACE.RADIUS};
+  border: 1px solid ${SURFACE.BORDER};
+  background-color: ${SURFACE.BACKGROUND};
   padding: ${SPACING.FOUR};
+  box-shadow: ${SURFACE.SHADOW};
 `;
 
 export const Muted = styled.p`
@@ -133,44 +136,31 @@ export const Pill = styled.span<{ $tone?: "default" | "success" | "warning" | "d
   display: inline-flex;
   align-items: center;
   gap: ${SPACING.ONE};
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  padding: 0.125rem ${SPACING.TWO};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.BACKGROUND};
-  color: ${COLORS.HEADER};
-
-  ${(p) => {
-    switch (p.$tone) {
-      case "success":
-        return css`
-          background-color: ${COLORS.STATUS_PRESENT_BG};
-          color: ${COLORS.STATUS_PRESENT_TEXT};
-          border-color: rgba(22, 163, 74, 0.3);
-        `;
-      case "warning":
-        return css`
-          background-color: ${COLORS.STATUS_LATE_BG};
-          color: ${COLORS.STATUS_LATE_TEXT};
-          border-color: rgba(217, 119, 6, 0.3);
-        `;
-      case "danger":
-        return css`
-          background-color: ${COLORS.STATUS_ABSENT_BG};
-          color: ${COLORS.STATUS_ABSENT_TEXT};
-          border-color: rgba(220, 38, 38, 0.3);
-        `;
-      case "info":
-        return css`
-          background-color: ${COLORS.STATUS_EXCUSED_BG};
-          color: ${COLORS.STATUS_EXCUSED_TEXT};
-          border-color: rgba(79, 70, 229, 0.3);
-        `;
-      default:
-        return null;
-    }
-  }}
+  border-radius: ${CHIP.RADIUS};
+  padding: ${CHIP.PADDING_BLOCK} ${CHIP.PADDING_INLINE};
+  font-size: ${CHIP.FONT_SIZE};
+  font-weight: ${CHIP.FONT_WEIGHT};
+  border: 1px solid ${(p) => {
+    if (p.$tone === "success") return CHIP_TONE.success.border;
+    if (p.$tone === "warning") return CHIP_TONE.warning.border;
+    if (p.$tone === "danger") return CHIP_TONE.danger.border;
+    if (p.$tone === "info") return CHIP_TONE.info.border;
+    return CHIP_TONE.neutral.border;
+  }};
+  background-color: ${(p) => {
+    if (p.$tone === "success") return CHIP_TONE.success.background;
+    if (p.$tone === "warning") return CHIP_TONE.warning.background;
+    if (p.$tone === "danger") return CHIP_TONE.danger.background;
+    if (p.$tone === "info") return CHIP_TONE.info.background;
+    return CHIP_TONE.neutral.background;
+  }};
+  color: ${(p) => {
+    if (p.$tone === "success") return CHIP_TONE.success.color;
+    if (p.$tone === "warning") return CHIP_TONE.warning.color;
+    if (p.$tone === "danger") return CHIP_TONE.danger.color;
+    if (p.$tone === "info") return CHIP_TONE.info.color;
+    return CHIP_TONE.neutral.color;
+  }};
 `;
 
 export const StatusPill = Pill;

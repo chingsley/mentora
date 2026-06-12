@@ -56,7 +56,7 @@ export async function getStudentDashboardPayload(
       hint: "Enrolled periods",
       trend: enrollments.length > 0 ? `↑ on your roster` : undefined,
       trendPositive: enrollments.length > 0,
-      footerLink: { href: "/classes", label: "View my classes →" },
+      footerLink: { href: "/classes", label: "View my classes" },
     },
     {
       tone: "green",
@@ -65,7 +65,7 @@ export async function getStudentDashboardPayload(
       hint: "Across all subjects",
       trend: teacherIds.size > 0 ? `↑ learning with ${teacherIds.size}` : undefined,
       trendPositive: teacherIds.size > 0,
-      footerLink: { href: "/teachers", label: "Find teachers →" },
+      footerLink: { href: "/teachers", label: "Find teachers" },
     },
     {
       tone: "purple",

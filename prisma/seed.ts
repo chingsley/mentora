@@ -779,10 +779,10 @@ async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
     { status: "PRESENT", source: "AUTO_JOIN", joined: true },
     { status: "LATE", source: "AUTO_JOIN", joined: true },
     { status: "PRESENT", source: "AUTO_JOIN", joined: true },
-    { status: "ABSENT", source: "SYSTEM", joined: false },
+    { status: "ABSENT", source: "AUTO_JOIN", joined: false },
     { status: "EXCUSED", source: "TEACHER", joined: false },
     { status: "PRESENT", source: "AUTO_JOIN", joined: true },
-    { status: "ABSENT", source: "SYSTEM", joined: false },
+    { status: "ABSENT", source: "AUTO_JOIN", joined: false },
     { status: "LATE", source: "AUTO_JOIN", joined: true },
     { status: "EXCUSED", source: "TEACHER", joined: false },
     { status: "PRESENT", source: "AUTO_JOIN", joined: true },
@@ -790,7 +790,7 @@ async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
 
   for (let i = 0; i < enrollments.length; i += 1) {
     const enrollment = enrollments[i]!;
-    const spec = demoStatuses[i] ?? { status: "ABSENT", source: "SYSTEM", joined: false };
+    const spec = demoStatuses[i] ?? { status: "ABSENT", source: "AUTO_JOIN", joined: false };
     const joinedAt = spec.joined
       ? new Date(sessionDate.getTime() + (i + 1) * 60_000)
       : null;
@@ -809,6 +809,237 @@ async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
 
   console.log(
     `[demo] ${cfg.offeringTitle}: ${enrollments.length} enrolled, past session ${cfg.sessionCalendarDate} ${minutesToTime(cfg.startMinutes)}–${minutesToTime(cfg.endMinutes)}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// teacher1 dashboard chart demo — past sessions + attendance for Weekly trends
+// ---------------------------------------------------------------------------
+
+const DAY_OFFSET: Record<DayOfWeek, number> = {
+  MON: 0,
+  TUE: 1,
+  WED: 2,
+  THU: 3,
+  FRI: 4,
+  SAT: 5,
+  SUN: 6,
+};
+
+function startOfWeekMonday(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const diff = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - diff);
+  return d;
+}
+
+function sessionDateOnWeek(
+  weekStartMonday: Date,
+  dayOfWeek: DayOfWeek,
+  startMinutes: number,
+): Date {
+  const d = new Date(weekStartMonday);
+  d.setDate(d.getDate() + DAY_OFFSET[dayOfWeek]);
+  d.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
+  d.setSeconds(0, 0);
+  return d;
+}
+
+const TEACHER1_CHART_DEMO = {
+  teacherEmail: "teacher1@mentora.local",
+  /** Indices into teacher1's seeded offerings (MON/TUE/WED/THU/FRI spread). */
+  offeringIndices: [0, 1, 2, 3, 4],
+  studentEmails: Array.from({ length: 8 }, (_, i) => `student${i + 1}@mentora.local`),
+  /** Held sessions per offering per week (index 0 = oldest of past 8 weeks). */
+  sessionsPerOfferingByWeek: [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 1, 1, 0, 0],
+    [1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1],
+  ],
+  /** Target attendance rate (0–100) per week for marked student-sessions. */
+  attendanceRateByWeek: [0, 0, 0, 45, 58, 68, 79, 86],
+} as const;
+
+function attendanceStatusForRate(
+  weekIdx: number,
+  studentIdx: number,
+  rates: readonly number[],
+): "PRESENT" | "LATE" | "ABSENT" {
+  const rate = rates[weekIdx] ?? 0;
+  if (rate <= 0) return "ABSENT";
+  const slot = (studentIdx * 17 + weekIdx * 11) % 100;
+  if (slot < rate - 8) return "PRESENT";
+  if (slot < rate) return "LATE";
+  return "ABSENT";
+}
+
+async function seedTeacher1DashboardChartDemo(): Promise<void> {
+  const cfg = TEACHER1_CHART_DEMO;
+  const now = new Date();
+  const anchor = startOfWeekMonday(now);
+  const enrolledAt = new Date(anchor);
+  enrolledAt.setDate(enrolledAt.getDate() - 70);
+
+  const teacher = await db.user.findUnique({
+    where: { email: cfg.teacherEmail },
+    include: {
+      teacherProfile: {
+        include: {
+          offerings: {
+            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+              dayOfWeek: true,
+              startMinutes: true,
+              endMinutes: true,
+              subjectId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!teacher?.teacherProfile) {
+    console.warn(`[chart-demo] Skip: ${cfg.teacherEmail} not found`);
+    return;
+  }
+
+  const offerings = cfg.offeringIndices
+    .map((idx) => teacher.teacherProfile!.offerings[idx])
+    .filter((o): o is NonNullable<typeof o> => Boolean(o));
+
+  if (offerings.length === 0) {
+    console.warn("[chart-demo] Skip: teacher1 has no offerings");
+    return;
+  }
+
+  const students = await db.user.findMany({
+    where: { email: { in: [...cfg.studentEmails] }, role: "STUDENT" },
+    include: { studentProfile: true },
+    orderBy: { email: "asc" },
+  });
+
+  const enrollments: Array<{ id: string; studentProfileId: string; offeringId: string }> = [];
+  for (const email of cfg.studentEmails) {
+    const student = students.find((s) => s.email === email);
+    const profileId = student?.studentProfile?.id;
+    if (!profileId) continue;
+
+    for (const offering of offerings) {
+      const enrollment = await db.enrollment.upsert({
+        where: {
+          studentProfileId_offeringId: {
+            studentProfileId: profileId,
+            offeringId: offering.id,
+          },
+        },
+        create: {
+          studentProfileId: profileId,
+          offeringId: offering.id,
+          status: "ACTIVE",
+          enrolledAt,
+        },
+        update: { status: "ACTIVE", enrolledAt },
+        select: { id: true, studentProfileId: true },
+      });
+      enrollments.push({ ...enrollment, offeringId: offering.id });
+
+      await db.studentInterest.upsert({
+        where: {
+          studentProfileId_subjectId: {
+            studentProfileId: profileId,
+            subjectId: offering.subjectId,
+          },
+        },
+        create: { studentProfileId: profileId, subjectId: offering.subjectId },
+        update: {},
+      });
+    }
+  }
+
+  let sessionCount = 0;
+  let attendanceCount = 0;
+
+  for (let weekIdx = 0; weekIdx < cfg.sessionsPerOfferingByWeek.length; weekIdx += 1) {
+    const weekStart = new Date(anchor);
+    weekStart.setDate(anchor.getDate() - (cfg.sessionsPerOfferingByWeek.length - 1 - weekIdx) * 7);
+    const weekPlan = cfg.sessionsPerOfferingByWeek[weekIdx]!;
+
+    for (let offeringIdx = 0; offeringIdx < offerings.length; offeringIdx += 1) {
+      if ((weekPlan[offeringIdx] ?? 0) < 1) continue;
+
+      const offering = offerings[offeringIdx]!;
+      const sessionDate = sessionDateOnWeek(
+        weekStart,
+        offering.dayOfWeek,
+        offering.startMinutes,
+      );
+      const sessionEnd = sessionDateOnWeek(
+        weekStart,
+        offering.dayOfWeek,
+        offering.endMinutes,
+      );
+      if (sessionEnd.getTime() >= now.getTime()) continue;
+
+      await db.sessionOccurrence.upsert({
+        where: {
+          offeringId_sessionDate: {
+            offeringId: offering.id,
+            sessionDate,
+          },
+        },
+        create: {
+          offeringId: offering.id,
+          sessionDate,
+          outcome: "HELD",
+        },
+        update: { outcome: "HELD" },
+      });
+      sessionCount += 1;
+
+      await db.attendance.deleteMany({
+        where: {
+          sessionDate,
+          enrollment: { offeringId: offering.id },
+        },
+      });
+
+      const offeringEnrollments = enrollments.filter((e) => e.offeringId === offering.id);
+
+      for (let studentIdx = 0; studentIdx < offeringEnrollments.length; studentIdx += 1) {
+        const enrollment = offeringEnrollments[studentIdx]!;
+        const status = attendanceStatusForRate(
+          weekIdx,
+          studentIdx,
+          cfg.attendanceRateByWeek,
+        );
+        const joined = status === "PRESENT" || status === "LATE";
+
+        await db.attendance.create({
+          data: {
+            enrollmentId: enrollment.id,
+            sessionDate,
+            status,
+            source: "AUTO_JOIN",
+            joinedAt: joined
+              ? new Date(sessionDate.getTime() + (studentIdx + 1) * 60_000)
+              : null,
+          },
+        });
+        attendanceCount += 1;
+      }
+    }
+  }
+
+  console.log(
+    `[chart-demo] teacher1: ${sessionCount} held sessions, ${attendanceCount} attendance rows across ${offerings.length} courses`,
   );
 }
 
@@ -852,6 +1083,9 @@ async function main(): Promise<void> {
 
   console.log("Seeding teacher5 past class attendance demo...");
   await seedTeacher5PastClassAttendanceDemo();
+
+  console.log("Seeding teacher1 dashboard chart demo...");
+  await seedTeacher1DashboardChartDemo();
 
   console.log("Seed complete.");
   console.log(

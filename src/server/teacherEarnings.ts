@@ -33,7 +33,9 @@ function emptyEarnings(currency: string, commissionPercent: number): TeacherEarn
   };
 }
 
-async function listTeacherBillableEnrollments(teacherProfileId: string): Promise<BillableEnrollment[]> {
+export async function listTeacherBillableEnrollments(
+  teacherProfileId: string,
+): Promise<BillableEnrollment[]> {
   return db.enrollment.findMany({
     where: { offering: { teacherProfileId } },
     select: {

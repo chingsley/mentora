@@ -4,8 +4,8 @@ import * as React from "react";
 import styled, { keyframes } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { SURFACE } from "@/constants/surface.constants";
 
 /**
  * Canonical app button. Single height/font/radius across the whole app —
@@ -56,7 +56,7 @@ const StyledButton = styled.button<{ $variant: Variant; }>`
   justify-content: center;
   gap: ${SPACING.TWO};
   padding: ${SPACING.TWO} ${SPACING.FIVE};
-  border-radius: ${LAYOUT.RADIUS.FULL};
+  border-radius: ${SURFACE.RADIUS};
   border: none;
   font-family: ${FONTS.FAMILY.PRIMARY};
   font-size: ${FONTS.SIZE.SM};

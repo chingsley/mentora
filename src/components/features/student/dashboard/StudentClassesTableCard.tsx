@@ -2,11 +2,11 @@
 
 import { MoreHorizontal } from "lucide-react";
 import styled from "styled-components";
+import { Chip } from "@/components/ui/Chip";
 import { AppHyperLink } from "@/components/ui/Link";
 import { DASHBOARD } from "@/constants/dashboard.constants";
 import { ICON_BOX_TYPE, ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import type { StudentDashboardClassRow } from "@/types/studentDashboard";
 import {
@@ -87,17 +87,6 @@ const ClassMeta = styled.span`
   white-space: nowrap;
 `;
 
-const Badge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.125rem 0.5rem;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  font-size: ${FONTS.SIZE["2XS"]};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  background: ${DASHBOARD.BADGE_ACTIVE_BG};
-  color: ${DASHBOARD.BADGE_ACTIVE_TEXT};
-`;
-
 const GhostBtn = styled.button`
   display: inline-flex;
   align-items: center;
@@ -105,7 +94,7 @@ const GhostBtn = styled.button`
   width: 2rem;
   height: 2rem;
   border: none;
-  border-radius: ${LAYOUT.RADIUS.MD};
+  border-radius: ${DASHBOARD.CHIP_RADIUS};
   background: transparent;
   color: ${ICON_THEME.INLINE_MUTED};
   cursor: pointer;
@@ -142,7 +131,7 @@ export function StudentClassesTableCard({ rows }: StudentClassesTableCardProps) 
         title="My classes"
         action={
           <DashboardLink>
-            <AppHyperLink href="/classes">View all classes →</AppHyperLink>
+            <AppHyperLink href="/classes">View all classes</AppHyperLink>
           </DashboardLink>
         }
       />
@@ -183,7 +172,7 @@ export function StudentClassesTableCard({ rows }: StudentClassesTableCardProps) 
                       <Td>{row.teacherName}</Td>
                       <Td>{row.sessionLabel}</Td>
                       <Td>
-                        <Badge>Active</Badge>
+                        <Chip tone="active">Active</Chip>
                       </Td>
                       <Td>
                         <RowActions>

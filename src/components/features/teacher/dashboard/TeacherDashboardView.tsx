@@ -5,8 +5,7 @@ import styled from "styled-components";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import type { TeacherDashboardPayload } from "@/types/teacherDashboard";
-import { TeacherClassesTableCard } from "./TeacherClassesTableCard";
-import { TeacherRecentMessagesCard } from "./TeacherRecentMessagesCard";
+import { TeacherDashboardCharts } from "./TeacherDashboardCharts";
 import { TeacherStatCard } from "./TeacherStatCard";
 import { TeacherUpcomingSessionsCard } from "./TeacherUpcomingSessionsCard";
 
@@ -31,29 +30,15 @@ const StatGrid = styled.div`
   }
 `;
 
-const MidGrid = styled.div`
+const InsightsRow = styled.div`
   display: grid;
-  gap: ${SPACING.SIX};
-  grid-template-columns: 1fr;
-  margin-top: ${SPACING.TWELVE};
-
-  ${LAYOUT.MEDIA.LG} {
-    grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
-    align-items: stretch;
-  }
-`;
-
-const MidColumn = styled.div`
-  display: flex;
-  flex-direction: column;
   gap: ${SPACING.FIVE};
-  min-height: 0;
+  margin-top: ${SPACING.TWELVE};
+  grid-template-columns: 1fr;
+  align-items: stretch;
 
   ${LAYOUT.MEDIA.LG} {
-    > *:only-child {
-      flex: 1;
-      min-height: 0;
-    }
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   }
 `;
 
@@ -76,16 +61,10 @@ export function TeacherDashboardView({ data }: TeacherDashboardViewProps) {
         ))}
       </StatGrid>
 
-      <MidGrid>
-        <MidColumn>
-          <TeacherClassesTableCard rows={data.classes} />
-        </MidColumn>
-        <MidColumn>
-          <TeacherUpcomingSessionsCard sessions={data.upcomingSessions} />
-          <TeacherRecentMessagesCard items={data.messages} />
-        </MidColumn>
-      </MidGrid>
-
+      <InsightsRow>
+        <TeacherDashboardCharts charts={data.charts} />
+        <TeacherUpcomingSessionsCard sessions={data.upcomingSessions} $fillColumn />
+      </InsightsRow>
     </Root>
   );
 }

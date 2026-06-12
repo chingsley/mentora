@@ -5,16 +5,15 @@ import {
   daysAgo,
   formatTimeAmPm,
   nextOccurrenceParts,
-  sessionLabel,
 } from "@/lib/dashboardSchedule";
 import { formatPrice } from "@/lib/time";
 import type {
   TeacherDashboardActivityItem,
-  TeacherDashboardClassRow,
   TeacherDashboardPayload,
   TeacherDashboardStat,
   TeacherDashboardUpcomingSession,
 } from "@/types/teacherDashboard";
+import { getTeacherDashboardCharts } from "@/server/teacherDashboardCharts";
 import { getTeacherEarningsSummary } from "@/server/teacherEarnings";
 import { getMyTeacherProfile } from "@/server/teachers";
 
@@ -27,20 +26,22 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
     profile.user.region?.currency ?? profile.rates[0]?.region.currency ?? "USD";
 
   const activeOfferings = profile.offerings.filter((o) => o.active);
-  const earnings = await getTeacherEarningsSummary(userId);
+  const [earnings, charts] = await Promise.all([
+    getTeacherEarningsSummary(userId),
+    getTeacherDashboardCharts(profile),
+  ]);
 
   const stats: TeacherDashboardStat[] = [
     {
       tone: "blue",
-      label: "Total classes",
+      label: "Active classes",
       value: String(activeOfferings.length),
-      hint: "Active classes",
       trend:
         activeOfferings.length > 0
           ? `↑ ${activeOfferings.length} on your roster`
           : undefined,
       trendPositive: activeOfferings.length > 0,
-      footerLink: { href: "/schedule", label: "View schedule →" },
+      footerLink: { href: "/teacher/classes", label: "View classes" },
     },
     {
       tone: "green",
@@ -75,20 +76,9 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
           ? `↑ ${earnings.totalSessions} billable session${earnings.totalSessions === 1 ? "" : "s"}`
           : undefined,
       trendPositive: (earnings?.netAmountMinor ?? 0) > 0,
-      footerLink: { href: "/earnings", label: "View earnings →" },
+      footerLink: { href: "/earnings", label: "View earnings" },
     },
   ];
-
-  const classes: TeacherDashboardClassRow[] = activeOfferings.slice(0, 8).map((o) => ({
-    id: o.id,
-    subjectName: o.subject.name,
-    title: o.title,
-    studentCount: o.enrollments.length,
-    sessionLabel: sessionLabel(o.dayOfWeek, o.startMinutes),
-    priceLabel:
-      o.hourlyRate > 0 ? `${formatPrice(o.hourlyRate, currency)}/session` : "—",
-    status: "active",
-  }));
 
   const upcomingSessions: TeacherDashboardUpcomingSession[] = activeOfferings.slice(0, 6).map((o) => {
     const parts = nextOccurrenceParts(o.dayOfWeek, o.startMinutes);
@@ -131,7 +121,7 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
     teacherImage: profile.user.image,
     profileCompleted: profile.profileCompleted,
     stats,
-    classes,
+    charts,
     upcomingSessions,
     activity,
     messages: [],

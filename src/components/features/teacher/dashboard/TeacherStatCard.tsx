@@ -90,12 +90,11 @@ const Footer = styled.div`
 
 const AccentFooterLink = styled(AppHyperLink)`
   color: ${DASHBOARD.STAT_ACCENT.LINK_COLOR};
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
+  text-decoration-color: ${DASHBOARD.STAT_ACCENT.LINK_HOVER};
 
   &:hover {
     color: ${DASHBOARD.STAT_ACCENT.LINK_HOVER};
-    text-decoration: underline;
+    text-decoration-color: ${DASHBOARD.STAT_ACCENT.TEXT};
   }
 
   &:focus-visible {
@@ -117,7 +116,7 @@ export function TeacherStatCard({ stat, icon: Icon }: TeacherStatCardProps) {
         <div>
           <Label $accent={accent}>{stat.label}</Label>
           <Value $accent={accent}>{stat.value}</Value>
-          <Hint $accent={accent}>{stat.hint}</Hint>
+          {stat.hint ? <Hint $accent={accent}>{stat.hint}</Hint> : null}
           {stat.trend ? (
             <Trend $positive={stat.trendPositive} $accent={accent}>
               {stat.trend}

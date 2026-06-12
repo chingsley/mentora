@@ -158,7 +158,7 @@ async function AdminDash() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <TextLink href="/admin/policies">Manage policies →</TextLink>
+          <TextLink href="/admin/policies">Manage policies</TextLink>
         </CardContent>
       </Card>
       <Card>
@@ -167,7 +167,7 @@ async function AdminDash() {
           <CardDescription>View and manage accounts on the platform.</CardDescription>
         </CardHeader>
         <CardContent>
-          <TextLink href="/admin/users">View users →</TextLink>
+          <TextLink href="/admin/users">View users</TextLink>
         </CardContent>
       </Card>
     </Grid>

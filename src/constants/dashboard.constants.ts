@@ -1,10 +1,12 @@
 /**
  * Teacher dashboard UI tokens — aligned with marketing/auth Apple-style theme.
  */
+import { CHIP, CHIP_TONE } from "./chip.constants";
 import { COLORS } from "./colors.constants";
 import { FONTS } from "./fonts.constants";
-import { BOX_SHADOW_CARD, LAYOUT } from "./layout.constants";
+import { LAYOUT } from "./layout.constants";
 import { MARKETING } from "./marketing.constants";
+import { SURFACE } from "./surface.constants";
 
 export const DASHBOARD = {
   PAGE_BACKGROUND: COLORS.BACKGROUND,
@@ -21,18 +23,20 @@ export const DASHBOARD = {
   ROW_HOVER: COLORS.MARKETING_SURFACE_SECONDARY,
   TABLE_HEADER: COLORS.MARKETING_TEXT_SECONDARY,
   SUCCESS: COLORS.SUCCESS,
-  BADGE_ACTIVE_BG: COLORS.ACTION_PRIMARY_TINT_10,
-  BADGE_ACTIVE_TEXT: COLORS.ACTION_PRIMARY,
+  BADGE_ACTIVE_BG: CHIP_TONE.active.background,
+  BADGE_ACTIVE_TEXT: CHIP_TONE.active.color,
+  BADGE_ACTIVE_BORDER: CHIP_TONE.active.border,
+  CHIP_RADIUS: CHIP.RADIUS,
   /** Soft elevation shadow for dashboard card surfaces. */
-  CARD_SHADOW: BOX_SHADOW_CARD,
-  CARD_RADIUS: MARKETING.FEATURES_PANEL_RADIUS,
-  SEARCH_RADIUS: LAYOUT.RADIUS.SM,
+  CARD_SHADOW: SURFACE.SHADOW,
+  CARD_RADIUS: SURFACE.RADIUS,
+  SEARCH_RADIUS: SURFACE.RADIUS,
   SEARCH_FIELD_MAX_WIDTH: "calc(36rem * 0.7)",
   ICON_TILE_BACKGROUND: COLORS.ACTION_PRIMARY_TINT_10,
   ICON_TILE_COLOR: COLORS.ACTION_PRIMARY,
   LINK_COLOR: COLORS.ACTION_PRIMARY,
   LINK_HOVER: COLORS.ACTION_PRIMARY_HOVER,
-  /** Highlight stat card — blue fill with light ink (Net earnings). */
+  /** Highlight stat card — teal fill with light ink (Net earnings). */
   STAT_ACCENT: {
     BACKGROUND: COLORS.BUTTON_PRIMARY_BG_HOVER,
     TEXT: COLORS.ON_ACCENT_TEXT,
