@@ -201,7 +201,7 @@ export function ClassDetailsDialog({
   onDrop,
 }: ClassDetailsDialogProps) {
   if (!open || !detail) {
-    return <Dialog open={open} onClose={onClose}>{null}</Dialog>;
+    return <Dialog open={open} onClose={onClose} placement="right">{null}</Dialog>;
   }
 
   const status = fillStatus(detail);
@@ -231,7 +231,7 @@ export function ClassDetailsDialog({
   const showLeaveClass = isStudent && isEnrolled && !sessionSnapshot;
 
   return (
-    <Dialog open={open} onClose={onClose} size="lg">
+    <Dialog open={open} onClose={onClose} size="lg" placement="right">
       <Header>
         <TitleRow>
           <Title>{detail.title}</Title>

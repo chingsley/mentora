@@ -5,6 +5,7 @@ import { Calendar, GraduationCap, Search, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import styled from "styled-components";
 import { SiteHeader } from "@/components/layouts/SiteHeader";
+import { MarketingSecondaryCtaLink } from "@/components/ui/Link";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { ICON_STROKE } from "@/constants/iconTheme.constants";
@@ -72,7 +73,7 @@ const PrimaryCta = styled(Link)`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.75rem;
+  min-height: ${MARKETING.CTA_MIN_HEIGHT};
   padding: 0 ${SPACING.FIVE};
   border-radius: ${MARKETING.CTA_RADIUS};
   background-color: ${MARKETING.CTA_PRIMARY_BG};
@@ -88,30 +89,6 @@ const PrimaryCta = styled(Link)`
 
   &:focus-visible {
     outline: 2px solid ${COLORS.ACTION_PRIMARY_RING_45};
-    outline-offset: 2px;
-  }
-`;
-
-const SecondaryCta = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: 0 ${SPACING.FIVE};
-  border-radius: ${MARKETING.CTA_RADIUS};
-  background-color: ${MARKETING.CTA_SECONDARY_BG};
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${MARKETING.CTA_SECONDARY_TEXT};
-  text-decoration: none;
-  transition: background-color 0.15s ease;
-
-  &:hover {
-    background-color: ${MARKETING.CTA_SECONDARY_BG_HOVER};
-  }
-
-  &:focus-visible {
-    outline: 2px solid ${COLORS.ACTION_PRIMARY_RING_28};
     outline-offset: 2px;
   }
 `;
@@ -225,8 +202,8 @@ export function HomePageClient() {
 
           <CtaRow>
             <PrimaryCta href="/register?role=STUDENT">I&apos;m a student</PrimaryCta>
-            <SecondaryCta href="/register?role=TEACHER">I&apos;m a teacher</SecondaryCta>
-            <SecondaryCta href="/register?role=GUARDIAN">I&apos;m a guardian</SecondaryCta>
+            <MarketingSecondaryCtaLink href="/register?role=TEACHER">I&apos;m a teacher</MarketingSecondaryCtaLink>
+            <MarketingSecondaryCtaLink href="/register?role=GUARDIAN">I&apos;m a guardian</MarketingSecondaryCtaLink>
           </CtaRow>
         </HeroStack>
 

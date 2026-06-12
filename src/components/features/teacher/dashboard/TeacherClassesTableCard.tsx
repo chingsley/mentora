@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import styled from "styled-components";
-import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { AppHyperLink } from "@/components/ui/Link";
 import { DASHBOARD } from "@/constants/dashboard.constants";
@@ -14,13 +12,7 @@ import {
   DashboardCard,
   DashboardCardBody,
   DashboardScrollX,
-  TeacherDashboardCardHeader,
 } from "./TeacherDashboardCard";
-
-const AddClassButton = styled(Button).attrs({
-  as: Link,
-  variant: "secondary" as const,
-})``;
 
 const Table = styled.table`
   width: 100%;
@@ -106,24 +98,11 @@ const Empty = styled.p`
 
 export interface TeacherClassesTableCardProps {
   rows: TeacherDashboardClassRow[];
-  /** When true, shows a secondary action to add a class on the schedule page. */
-  showAddClassAction?: boolean;
 }
 
-export function TeacherClassesTableCard({
-  rows,
-  showAddClassAction = false,
-}: TeacherClassesTableCardProps) {
+export function TeacherClassesTableCard({ rows }: TeacherClassesTableCardProps) {
   return (
     <DashboardCard $flush $fillColumn>
-      <TeacherDashboardCardHeader
-        title="My classes"
-        action={
-          showAddClassAction ? (
-            <AddClassButton href="/schedule">Add class</AddClassButton>
-          ) : undefined
-        }
-      />
       <DashboardCardBody $pad={false} $fill>
         {rows.length === 0 ? (
           <Empty>No active class periods yet. Add periods on your schedule.</Empty>

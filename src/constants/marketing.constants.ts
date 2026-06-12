@@ -15,6 +15,8 @@ export const MARKETING = {
   HEADER_BORDER: COLORS.MARKETING_BORDER,
   /** Primary CTA geometry — very subtle corners (ref. jitsi.org). */
   CTA_RADIUS: LAYOUT.RADIUS.XS,
+  /** Shared min-height for marketing primary/secondary CTAs (44px). */
+  CTA_MIN_HEIGHT: "2.75rem",
   CTA_PRIMARY_BG: COLORS.ACTION_PRIMARY,
   CTA_PRIMARY_BG_HOVER: COLORS.ACTION_PRIMARY_HOVER,
   CTA_PRIMARY_TEXT: COLORS.WHITE,

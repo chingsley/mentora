@@ -19,11 +19,6 @@ const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
 
-const shimmer = keyframes`
-  0% { transform: translateX(-120%); }
-  100% { transform: translateX(320%); }
-`;
-
 const Root = styled.div<{ $fullViewport: boolean }>`
   display: flex;
   width: 100%;
@@ -112,16 +107,9 @@ const SpinnerArc = styled.div`
   }
 `;
 
-const LabelBlock = styled.div`
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: ${SPACING.TWO};
-`;
-
 const Label = styled.p`
   margin: 0;
+  position: relative;
   font-family: ${FONTS.FAMILY.PRIMARY};
   font-size: ${FONTS.SIZE.XS};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
@@ -129,29 +117,6 @@ const Label = styled.p`
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const ShimmerTrack = styled.div`
-  display: flex;
-  height: ${LAYOUT.PAGE_LOADER.SHIMMER_TRACK_HEIGHT};
-  width: ${LAYOUT.PAGE_LOADER.SHIMMER_TRACK_WIDTH};
-  overflow: hidden;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  background-color: ${COLORS.MUTED};
-`;
-
-const ShimmerBar = styled.div`
-  height: 100%;
-  width: 33%;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  background-color: ${COLORS.ACTION_PRIMARY_RING_45};
-  animation: ${shimmer} ${LAYOUT.PAGE_LOADER.SHIMMER_DURATION} ease-in-out infinite;
-
-  ${LAYOUT.MEDIA.REDUCED_MOTION} {
-    animation: none;
-    width: 100%;
-    opacity: 0.7;
-  }
 `;
 
 export function PageLoader({ className, fullViewport = false }: PageLoaderProps) {
@@ -170,12 +135,7 @@ export function PageLoader({ className, fullViewport = false }: PageLoaderProps)
           <SpinnerTrack />
           <SpinnerArc />
         </SpinnerGrid>
-        <LabelBlock>
-          <Label>Loading</Label>
-          <ShimmerTrack aria-hidden>
-            <ShimmerBar />
-          </ShimmerTrack>
-        </LabelBlock>
+        <Label>Loading</Label>
       </Stack>
     </Root>
   );

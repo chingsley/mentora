@@ -4,6 +4,7 @@ import NextLink from "next/link";
 import styled, { css } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
+import { MARKETING } from "@/constants/marketing.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { SURFACE } from "@/constants/surface.constants";
 
@@ -42,6 +43,42 @@ export const PrimaryLink = styled(NextLink)`
   &:hover {
     background-color: ${COLORS.GRAY_DARK_ALT};
   }
+`;
+
+/** Marketing-style secondary CTA link (homepage “I'm a teacher”, in-app Add class, etc.). */
+export const marketingSecondaryCtaLinkStyles = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: ${MARKETING.CTA_MIN_HEIGHT};
+  padding: 0 ${SPACING.FIVE};
+  border-radius: ${MARKETING.CTA_RADIUS};
+  background-color: ${MARKETING.CTA_SECONDARY_BG};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${MARKETING.CTA_SECONDARY_TEXT};
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: ${MARKETING.CTA_SECONDARY_BG_HOVER};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.ACTION_PRIMARY_RING_28};
+    outline-offset: 2px;
+  }
+`;
+
+export const MarketingSecondaryCtaLink = styled(NextLink)`
+  ${marketingSecondaryCtaLinkStyles}
+`;
+
+export const MarketingSecondaryCtaButton = styled.button`
+  ${marketingSecondaryCtaLinkStyles}
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 `;
 
 export const SecondaryLink = styled(NextLink)`

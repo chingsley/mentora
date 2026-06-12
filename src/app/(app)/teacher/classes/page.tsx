@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { TeacherClassesTableCard } from "@/components/features/teacher/dashboard/TeacherClassesTableCard";
+import { TeacherMyClassesClient } from "@/components/features/teacher/dashboard/TeacherMyClassesClient";
 import { AppPageHeader } from "@/components/layouts/AppPageHeader";
 import { PageWrap } from "@/components/ui/primitives";
 import { requireRole } from "@/lib/auth";
-import { getTeacherClassRows } from "@/server/teacherClasses";
+import { getTeacherClassesPageData } from "@/server/teacherClasses";
 import { PrimaryLink } from "@/components/ui/Link";
 import {
   Card,
@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "My classes" };
 
 export default async function TeacherMyClassesPage() {
   const session = await requireRole("TEACHER");
-  const data = await getTeacherClassRows(session.user.id);
+  const data = await getTeacherClassesPageData(session.user.id);
 
   if (!data) {
     return (
@@ -45,8 +45,12 @@ export default async function TeacherMyClassesPage() {
 
   return (
     <PageWrap>
-      <AppPageHeader title="My classes" subtitle={subtitle} profileImage={data.teacherImage} />
-      <TeacherClassesTableCard rows={data.rows} showAddClassAction />
+      <TeacherMyClassesClient
+        rows={data.rows}
+        subtitle={subtitle}
+        profileImage={data.teacherImage}
+        offeringDialog={data.offeringDialog}
+      />
     </PageWrap>
   );
 }

@@ -110,7 +110,7 @@ export function ReportTeacherDialog({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title={`Report ${teacherName}`}>
+    <Dialog open={open} onClose={onClose} title={`Report ${teacherName}`} placement="right">
       {result?.ok ? (
         <Stack>
           <SuccessText>
