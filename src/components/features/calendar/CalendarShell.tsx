@@ -2,7 +2,7 @@
 
 import type { DayOfWeek } from "@prisma/client";
 import * as React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
@@ -52,12 +52,10 @@ const NavGroup = styled.div`
   gap: ${SPACING.ONE};
 `;
 
-const IconButton = styled.button`
+const toolbarControlChrome = css`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: calc(${SPACING.FOUR} + ${SPACING.TWO});
-  height: calc(${SPACING.FOUR} + ${SPACING.TWO});
   border: 1px solid ${COLORS.BORDER};
   border-radius: ${LAYOUT.RADIUS.MD};
   background-color: ${COLORS.FOREGROUND};
@@ -71,6 +69,11 @@ const IconButton = styled.button`
     background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
     border-color: ${COLORS.SURFACE_NEUTRAL_BORDER_HOVER};
   }
+`;
+
+const IconButton = styled.button`
+  ${toolbarControlChrome}
+  padding: ${SPACING.TWO};
 `;
 
 const RangeButton = styled.button`
@@ -94,27 +97,13 @@ const ViewSelectWrap = styled.div`
 `;
 
 const ViewSelectButton = styled.button`
-  display: inline-flex;
-  align-items: center;
+  ${toolbarControlChrome}
   gap: ${SPACING.TWO};
-  height: calc(${SPACING.FOUR} + ${SPACING.TWO});
-  border: 1px solid ${COLORS.BORDER};
-  border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: ${COLORS.FOREGROUND};
-  padding: 0 ${SPACING.THREE};
+  padding: ${SPACING.TWO} ${SPACING.THREE};
   font-family: ${FONTS.FAMILY.PRIMARY};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
-
-  &:hover {
-    background-color: ${COLORS.SURFACE_NEUTRAL_HOVER};
-    border-color: ${COLORS.SURFACE_NEUTRAL_BORDER_HOVER};
-  }
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
 `;
 
 const ViewMenu = styled.div`
@@ -199,10 +188,10 @@ export function CalendarShell({
       <Toolbar>
         <NavGroup>
           <IconButton type="button" onClick={() => shift(-1)} aria-label="Previous">
-            <ChevronLeft size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.MEDIUM} />
+            <ChevronLeft size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
           </IconButton>
           <IconButton type="button" onClick={() => shift(1)} aria-label="Next">
-            <ChevronRight size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.MEDIUM} />
+            <ChevronRight size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
           </IconButton>
           <Button type="button" variant="secondary" onClick={goToday}>
             Today
@@ -220,9 +209,9 @@ export function CalendarShell({
             aria-expanded={viewMenuOpen}
             onClick={() => setViewMenuOpen((open) => !open)}
           >
-            <CalendarDays size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.NORMAL} />
+            <CalendarDays size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.NORMAL} />
             {activeViewLabel}
-            <ChevronDown size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.NORMAL} />
+            <ChevronDown size={ICON_SIZE.SM} strokeWidth={ICON_STROKE.NORMAL} />
           </ViewSelectButton>
           {viewMenuOpen ? (
             <ViewMenu role="listbox" aria-label="Calendar view">

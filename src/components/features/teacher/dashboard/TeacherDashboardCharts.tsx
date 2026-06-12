@@ -153,7 +153,7 @@ const CHART_VIEWS: ChartViewConfig[] = [
   {
     id: "attendance",
     toggleLabel: "Student attendance",
-    subtitle: "Share of marked student-sessions attended or on time.",
+    subtitle: "Share of marked student-sessions attended.",
     ariaLabel: "Student attendance rate by week for the past eight weeks",
     emptyMessage: "No attendance marked in the past 8 weeks.",
     footer:

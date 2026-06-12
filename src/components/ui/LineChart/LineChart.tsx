@@ -64,6 +64,32 @@ const SvgWrap = styled.div`
   height: 100%;
 `;
 
+const DotsLayer = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+`;
+
+const plotDotCss = `
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+`;
+
+const DotHalo = styled.span`
+  ${plotDotCss}
+  width: ${CHART.POINT_HALO_SIZE};
+  height: ${CHART.POINT_HALO_SIZE};
+  background-color: ${CHART.LINE_POINT_HALO};
+`;
+
+const DotCore = styled.span`
+  ${plotDotCss}
+  width: ${CHART.POINT_SIZE};
+  height: ${CHART.POINT_SIZE};
+  background-color: ${CHART.LINE_POINT};
+`;
+
 const Svg = styled.svg`
   width: 100%;
   height: 100%;
@@ -214,27 +240,21 @@ export function LineChart({
               vectorEffect="non-scaling-stroke"
               strokeLinecap="round"
             />
-            {coords.map((coord, index) => (
-              <circle
-                key={points[index]?.label ?? index}
-                cx={coord.x}
-                cy={coord.y}
-                r="2.6"
-                fill={CHART.LINE_POINT_HALO}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
-            {coords.map((coord, index) => (
-              <circle
-                key={`${points[index]?.label ?? index}-dot`}
-                cx={coord.x}
-                cy={coord.y}
-                r="1.6"
-                fill={CHART.LINE_POINT}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
           </Svg>
+          <DotsLayer aria-hidden>
+            {coords.map((coord, index) => (
+              <DotHalo
+                key={points[index]?.label ?? index}
+                style={{ left: `${coord.x}%`, top: `${coord.y}%` }}
+              />
+            ))}
+            {coords.map((coord, index) => (
+              <DotCore
+                key={`${points[index]?.label ?? index}-dot`}
+                style={{ left: `${coord.x}%`, top: `${coord.y}%` }}
+              />
+            ))}
+          </DotsLayer>
         </SvgWrap>
       </PlotRow>
       <AxisLabels $columns={points.length} aria-hidden>
