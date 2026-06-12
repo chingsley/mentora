@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { offeringCapacity } from "@/lib/offeringCapacity";
+import { recurrenceFromDb } from "@/lib/offeringRecurrence";
 import { assertGuardianHasStudent } from "@/server/guardians";
 import { listEnrollmentsByStudentProfileId } from "@/server/enrollments";
 import { getPolicy } from "@/server/policies";
@@ -59,6 +60,12 @@ export default async function WardProfilePage({ params }: Props) {
       endMinutes: o.endMinutes,
       enrolled: o.enrollments.length,
       effectiveCap: cap.effectiveCap,
+      recurrence: recurrenceFromDb({
+        recurrenceKind: o.recurrenceKind,
+        recurrenceAnchorDate: o.recurrenceAnchorDate,
+        recurrenceOrdinal: o.recurrenceOrdinal,
+        scheduleStartFallback: o.createdAt,
+      }),
     };
   });
 

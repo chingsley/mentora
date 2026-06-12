@@ -89,6 +89,7 @@ interface TeacherProfileForPage {
     recurrenceKind: import("@prisma/client").OfferingRecurrenceKind;
     recurrenceAnchorDate: Date | null;
     recurrenceOrdinal: number | null;
+    createdAt: Date;
     enrollments: { id: string; }[];
     invites: { studentProfileId: string; }[];
     subject: { name: string; };
@@ -169,6 +170,7 @@ export async function TeacherProfilePage({
     recurrenceKind: o.recurrenceKind,
     recurrenceAnchorDate: o.recurrenceAnchorDate,
     recurrenceOrdinal: o.recurrenceOrdinal,
+    createdAt: o.createdAt,
     hourlyRate: o.hourlyRate,
   }));
 

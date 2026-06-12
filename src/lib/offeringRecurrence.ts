@@ -242,12 +242,32 @@ export function recurrenceFromDb(args: {
   recurrenceAnchorDate: Date | null;
   recurrenceOrdinal: number | null;
   recurrenceInterval?: number | null;
+  /** Bounds legacy weekly/monthly rows that have no explicit anchor in the DB. */
+  scheduleStartFallback?: Date | null;
 }): OfferingRecurrence {
+  let anchorDate =
+    args.recurrenceAnchorDate != null
+      ? formatIsoDate(args.recurrenceAnchorDate)
+      : null;
+
+  if (
+    anchorDate == null &&
+    args.scheduleStartFallback != null &&
+    args.recurrenceKind !== "ONCE" &&
+    args.recurrenceKind !== "BIWEEKLY"
+  ) {
+    anchorDate = formatIsoDate(args.scheduleStartFallback);
+  }
+
   return {
     kind: args.recurrenceKind,
+<<<<<<< HEAD
     anchorDate: args.recurrenceAnchorDate
       ? calendarDateFromDb(args.recurrenceAnchorDate)
       : null,
+=======
+    anchorDate,
+>>>>>>> 97abadd (Calendar behaviour fix)
     ordinal: args.recurrenceOrdinal,
     interval:
       args.recurrenceKind === "BIWEEKLY" ? (args.recurrenceInterval ?? 2) : null,
@@ -260,11 +280,16 @@ export function recurrenceToDb(recurrence: OfferingRecurrence): {
   recurrenceOrdinal: number | null;
   recurrenceInterval: number | null;
 } {
-  const needsAnchor = recurrence.kind === "BIWEEKLY" || recurrence.kind === "ONCE";
   return {
     recurrenceKind: recurrence.kind,
+<<<<<<< HEAD
     recurrenceAnchorDate:
       needsAnchor && recurrence.anchorDate ? calendarDateToDb(recurrence.anchorDate) : null,
+=======
+    recurrenceAnchorDate: recurrence.anchorDate
+      ? parseIsoDate(recurrence.anchorDate)
+      : null,
+>>>>>>> 97abadd (Calendar behaviour fix)
     recurrenceOrdinal: recurrence.kind === "MONTHLY_NTH" ? recurrence.ordinal : null,
     recurrenceInterval:
       recurrence.kind === "BIWEEKLY" ? (recurrence.interval ?? 2) : null,
@@ -430,6 +455,12 @@ export function recurrenceToPattern(recurrence: OfferingRecurrenceInput): Recurr
   return "ONCE";
 }
 
+function isOnOrAfterAnchor(recurrence: OfferingRecurrence, day: Date): boolean {
+  if (!recurrence.anchorDate) return true;
+  const anchor = startOfDay(parseIsoDate(recurrence.anchorDate));
+  return day.getTime() >= anchor.getTime();
+}
+
 export function offeringOccursOnDate(
   recurrence: OfferingRecurrence,
   dayOfWeek: DayOfWeek,
@@ -437,6 +468,10 @@ export function offeringOccursOnDate(
 ): boolean {
   const day = startOfDay(date);
   if (dayOfWeekFromDate(day) !== dayOfWeek) return false;
+
+  if (recurrence.kind !== "ONCE" && !isOnOrAfterAnchor(recurrence, day)) {
+    return false;
+  }
 
   switch (recurrence.kind) {
     case "WEEKLY":

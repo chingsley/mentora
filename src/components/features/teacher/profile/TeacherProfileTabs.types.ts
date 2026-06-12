@@ -34,6 +34,7 @@ export interface TeacherProfileScheduleOffering {
   recurrenceKind: OfferingRecurrenceKind;
   recurrenceAnchorDate: Date | null;
   recurrenceOrdinal: number | null;
+  createdAt: Date;
 }
 
 export interface TeacherProfileInviteableStudent {

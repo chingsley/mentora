@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Info, LogOut, UserCircle2 } from "lucide-react";
+import { ChevronDown, Info, LogOut, Settings, UserCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Role } from "@prisma/client";
@@ -145,16 +145,6 @@ const MenuItemLabel = styled.span`
   text-align: left;
 `;
 
-const MenuSectionLabel = styled.div`
-  padding: ${SPACING.TWO} ${SPACING.THREE} ${SPACING.ONE};
-  font-size: ${FONTS.SIZE.META};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${S.MUTED};
-  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-`;
-
 const MenuSheet = styled.div<{ $open: boolean; }>`
   position: absolute;
   bottom: calc(100% + ${S.FOOTER_INSET_INLINE});
@@ -289,21 +279,29 @@ export function SidebarAccountMenu({ user, navCollapsed, onNavigate }: SidebarAc
         aria-labelledby="sidebar-account-trigger"
         id="sidebar-account-menu"
       >
+        <MenuIconLink
+          role="menuitem"
+          href="/profile"
+          $labeled={labeledMenu}
+          aria-label={labeledMenu ? undefined : "Settings"}
+          title={labeledMenu ? undefined : "Settings"}
+          onClick={closeAndNavigate}
+        >
+          <Settings size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
+          {labeledMenu ? <MenuItemLabel>Settings</MenuItemLabel> : null}
+        </MenuIconLink>
         {showProfileLink ? (
-          <>
-            {labeledMenu ? <MenuSectionLabel>Settings</MenuSectionLabel> : null}
-            <MenuIconLink
-              role="menuitem"
-              href="/profile"
-              $labeled={labeledMenu}
-              aria-label={labeledMenu ? undefined : "My profile"}
-              title={labeledMenu ? undefined : "My profile"}
-              onClick={closeAndNavigate}
-            >
-              <UserCircle2 size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
-              {labeledMenu ? <MenuItemLabel>My profile</MenuItemLabel> : null}
-            </MenuIconLink>
-          </>
+          <MenuIconLink
+            role="menuitem"
+            href="/profile"
+            $labeled={labeledMenu}
+            aria-label={labeledMenu ? undefined : "My profile"}
+            title={labeledMenu ? undefined : "My profile"}
+            onClick={closeAndNavigate}
+          >
+            <UserCircle2 size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
+            {labeledMenu ? <MenuItemLabel>My profile</MenuItemLabel> : null}
+          </MenuIconLink>
         ) : null}
         <MenuIconLink
           role="menuitem"

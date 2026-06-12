@@ -26,6 +26,24 @@ describe("offeringRecurrence", () => {
     ).toBe(false);
   });
 
+  it("does not match weekly days before the anchor date", () => {
+    const anchoredWeekly = recurrenceFromInput({
+      kind: "WEEKLY",
+      anchorDate: "2026-06-01",
+      ordinal: "",
+      interval: "",
+    });
+    expect(
+      offeringOccursOnDate(anchoredWeekly, "MON", parseIsoDate("2026-05-25")),
+    ).toBe(false);
+    expect(
+      offeringOccursOnDate(anchoredWeekly, "MON", parseIsoDate("1895-02-04")),
+    ).toBe(false);
+    expect(
+      offeringOccursOnDate(anchoredWeekly, "MON", parseIsoDate("2026-06-01")),
+    ).toBe(true);
+  });
+
   it("matches every other Monday from an anchor", () => {
     const biweekly = recurrenceFromInput({
       kind: "BIWEEKLY",

@@ -98,6 +98,7 @@ export default async function TeacherPage({ params }: Props) {
         recurrenceKind: o.recurrenceKind,
         recurrenceAnchorDate: o.recurrenceAnchorDate,
         recurrenceOrdinal: o.recurrenceOrdinal,
+        scheduleStartFallback: o.createdAt,
       }),
     };
   }
