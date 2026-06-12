@@ -4,7 +4,7 @@ import { MoreHorizontal } from "lucide-react";
 import styled from "styled-components";
 import { AppHyperLink } from "@/components/ui/Link";
 import { DASHBOARD } from "@/constants/dashboard.constants";
-import { ICON_BOX_TYPE, ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
+import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -33,7 +33,7 @@ const Th = styled.th`
   letter-spacing: 0.04em;
   color: ${DASHBOARD.TABLE_HEADER};
   border-bottom: 1px solid ${DASHBOARD.BORDER_SUBTLE};
-  background: ${DASHBOARD.PAGE_BACKGROUND};
+  background: ${DASHBOARD.CARD_BACKGROUND};
 `;
 
 const Td = styled.td`
@@ -66,8 +66,8 @@ const IconDot = styled.span`
   flex-shrink: 0;
   font-size: ${FONTS.SIZE.MICRO};
   font-weight: ${FONTS.WEIGHT.BOLD};
-  background: ${ICON_BOX_TYPE.SECONDARY.background};
-  color: ${ICON_BOX_TYPE.SECONDARY.color};
+  background: ${DASHBOARD.ICON_TILE_BACKGROUND};
+  color: ${DASHBOARD.ICON_TILE_COLOR};
 `;
 
 const ClassTitle = styled.span`

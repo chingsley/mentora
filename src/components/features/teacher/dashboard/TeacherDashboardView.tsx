@@ -19,7 +19,7 @@ const Root = styled.div`
 const StatGrid = styled.div`
   margin-top: 0;
   display: grid;
-  gap: ${SPACING.FOUR};
+  gap: ${SPACING.FIVE};
   grid-template-columns: 1fr;
 
   ${LAYOUT.MEDIA.SM} {
@@ -33,9 +33,9 @@ const StatGrid = styled.div`
 
 const MidGrid = styled.div`
   display: grid;
-  gap: ${SPACING.FIVE};
+  gap: ${SPACING.SIX};
   grid-template-columns: 1fr;
-  margin-top: ${SPACING.TEN};
+  margin-top: ${SPACING.TWELVE};
 
   ${LAYOUT.MEDIA.LG} {
     grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
@@ -57,7 +57,7 @@ const MidColumn = styled.div`
   }
 `;
 
-const STAT_ICONS = [ClipboardList, Users, Wallet, Calendar] as const;
+const STAT_ICONS = [ClipboardList, Users, Calendar, Wallet] as const;
 
 export interface TeacherDashboardViewProps {
   data: TeacherDashboardPayload;

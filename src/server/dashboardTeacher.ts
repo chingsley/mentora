@@ -51,7 +51,19 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
       trendPositive: activeStudentCount > 0,
     },
     {
-      tone: "purple",
+      tone: "orange",
+      label: "Classes held",
+      value: String(earnings?.totalClassesHeld ?? 0),
+      hint: "Completed sessions to date",
+      trend:
+        earnings && earnings.totalClassesHeld > 0
+          ? `↑ ${earnings.grossAmountFormatted} gross`
+          : undefined,
+      trendPositive: (earnings?.totalClassesHeld ?? 0) > 0,
+    },
+    {
+      tone: "blue",
+      accent: true,
       label: "Net earnings",
       value: earnings?.netAmountFormatted ?? formatPrice(0, currency),
       hint:
@@ -64,17 +76,6 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
           : undefined,
       trendPositive: (earnings?.netAmountMinor ?? 0) > 0,
       footerLink: { href: "/earnings", label: "View earnings →" },
-    },
-    {
-      tone: "orange",
-      label: "Classes held",
-      value: String(earnings?.totalClassesHeld ?? 0),
-      hint: "Completed sessions to date",
-      trend:
-        earnings && earnings.totalClassesHeld > 0
-          ? `↑ ${earnings.grossAmountFormatted} gross`
-          : undefined,
-      trendPositive: (earnings?.totalClassesHeld ?? 0) > 0,
     },
   ];
 

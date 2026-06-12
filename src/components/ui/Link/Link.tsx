@@ -8,14 +8,15 @@ import { ICON_THEME } from "@/constants/iconTheme.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 
-/** Shared body/inline navigation link: brand-strong, underline on hover. */
+/** Shared body/inline navigation link: system blue, underline on hover. */
 export const appHyperLinkStyles = css`
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${ICON_THEME.MAJE_BRAND_STRONG};
+  color: ${COLORS.ACTION_PRIMARY};
   text-decoration: none;
 
   &:hover {
+    color: ${COLORS.ACTION_PRIMARY_HOVER};
     text-decoration: underline;
   }
 `;

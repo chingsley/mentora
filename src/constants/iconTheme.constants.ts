@@ -49,6 +49,8 @@ export type IconBoxTypeKey = keyof typeof ICON_BOX_TYPE;
  * one place.
  */
 export const ICON_SIZE = {
+  /** 10px — compact inline icons (half of LG). */
+  COMPACT: 10,
   /** 13px — inline badges (e.g. profile rating chip). */
   XS: 13,
   /** 16px — inline meta icons (chevrons, briefcase, languages). */

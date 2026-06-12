@@ -6,13 +6,14 @@ import styled, { css } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
+import { MARKETING } from "@/constants/marketing.constants";
 import { SPACING } from "@/constants/spacing.constants";
 
 /** Aligns with legacy auth shell mobile breakpoint for the menu control. */
 const MOBILE_NAV = `@media (max-width: 900px)`;
 
 const Header = styled.header<{ $sticky: boolean }>`
-  color: ${COLORS.WHITE};
+  color: ${COLORS.MARKETING_TEXT_PRIMARY};
 
   ${(p) =>
     p.$sticky
@@ -20,32 +21,30 @@ const Header = styled.header<{ $sticky: boolean }>`
           position: sticky;
           top: 0;
           z-index: ${LAYOUT.Z.STICKY};
-          min-height: 4.5rem;
+          min-height: ${MARKETING.HEADER_HEIGHT};
           display: flex;
           align-items: center;
-          background: color-mix(in srgb, ${COLORS.BACKGROUND} 92%, transparent);
-          border-bottom: 1px solid ${COLORS.BORDER};
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          background: ${MARKETING.HEADER_SURFACE};
+          border-bottom: 1px solid ${MARKETING.HEADER_BORDER};
+          backdrop-filter: saturate(180%) blur(20px);
+          -webkit-backdrop-filter: saturate(180%) blur(20px);
         `
-      : ""}
+      : css`
+          background: ${COLORS.TRANSPARENT};
+        `}
 `;
 
 const HeaderInner = styled.div<{ $padForMenuToggle: boolean }>`
   margin: 0 auto;
   display: flex;
   width: 100%;
-  max-width: 72rem;
+  max-width: ${MARKETING.MAX_WIDTH};
   align-items: center;
   justify-content: space-between;
-  gap: ${SPACING.THREE};
+  gap: ${SPACING.FOUR};
   min-width: 0;
-  padding: ${SPACING.FIVE} ${SPACING.FOUR};
-
-  ${LAYOUT.MEDIA.SM} {
-    padding-left: ${SPACING.SIX};
-    padding-right: ${SPACING.SIX};
-  }
+  min-height: ${MARKETING.HEADER_HEIGHT};
+  padding: 0 ${MARKETING.HERO_PADDING_INLINE};
 
   ${(p) =>
     p.$padForMenuToggle
@@ -60,14 +59,18 @@ const HeaderInner = styled.div<{ $padForMenuToggle: boolean }>`
 
 const Brand = styled(Link)`
   flex-shrink: 0;
-  font-size: ${FONTS.SIZE.SM};
+  font-size: ${FONTS.SIZE.BASE};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  letter-spacing: -0.025em;
-  color: ${COLORS.HEADER};
+  letter-spacing: ${FONTS.LETTER_SPACING.TITLE};
+  color: ${COLORS.MARKETING_TEXT_PRIMARY};
   text-decoration: none;
 
+  &:hover {
+    color: ${COLORS.MARKETING_TEXT_PRIMARY};
+  }
+
   &:focus-visible {
-    outline: 2px solid ${COLORS.RING};
+    outline: 2px solid ${COLORS.ACTION_PRIMARY};
     outline-offset: 4px;
     border-radius: ${LAYOUT.RADIUS.MD};
   }
@@ -84,28 +87,54 @@ const NavRow = styled.div`
 const Nav = styled.nav`
   display: flex;
   align-items: center;
-  gap: ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.SM};
+  gap: ${SPACING.TWO};
+
+  ${LAYOUT.MEDIA.SM} {
+    gap: ${SPACING.THREE};
+  }
 `;
 
 const NavLink = styled(Link)`
   border-radius: ${LAYOUT.RADIUS.MD};
   padding: ${SPACING.TWO} ${SPACING.THREE};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: inherit;
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.ACTION_PRIMARY};
   text-decoration: none;
-  background-color: ${COLORS.HEADER};
+  background-color: ${COLORS.TRANSPARENT};
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    opacity: 0.72;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.ACTION_PRIMARY_RING_28};
+    outline-offset: 2px;
+  }
 `;
 
 const NavCta = styled(Link)`
-  border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: ${COLORS.HEADER};
-  padding: ${SPACING.TWO} ${SPACING.THREE};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${MARKETING.CTA_RADIUS};
+  background-color: ${MARKETING.CTA_PRIMARY_BG};
+  padding: ${SPACING.TWO} ${SPACING.FOUR};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: inherit;
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${MARKETING.CTA_PRIMARY_TEXT};
   text-decoration: none;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: ${MARKETING.CTA_PRIMARY_BG_HOVER};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.ACTION_PRIMARY_RING_45};
+    outline-offset: 2px;
+  }
 `;
 
 /** Optional control for future mobile drawer; fixed position matches prior auth shell. */
@@ -114,45 +143,45 @@ export const SiteHeaderMenuToggle = styled.button`
   flex-shrink: 0;
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid ${COLORS.BORDER};
-  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${COLORS.MARKETING_BORDER};
+  border-radius: ${MARKETING.CTA_RADIUS};
   background: ${COLORS.FOREGROUND};
   cursor: pointer;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 0.3125rem;
+  gap: ${SPACING.HALF};
 
   span {
     display: block;
     width: 1.125rem;
-    height: 2px;
-    background: ${COLORS.HEADER};
+    height: 1px;
+    background: ${COLORS.MARKETING_TEXT_PRIMARY};
     border-radius: 1px;
   }
 
   &:focus-visible {
-    outline: 2px solid ${COLORS.RING};
+    outline: 2px solid ${COLORS.ACTION_PRIMARY};
     outline-offset: 2px;
   }
 
   ${MOBILE_NAV} {
     display: flex;
     position: fixed;
-    top: 1rem;
-    right: 1.25rem;
+    top: ${SPACING.FOUR};
+    right: ${SPACING.FIVE};
     z-index: ${LAYOUT.Z.TOAST};
   }
 `;
 
 export interface SiteHeaderProps {
-  /** Sticky blurred bar (e.g. auth layout); default is the flat marketing header. */
+  /** Sticky frosted bar (default for marketing homepage). */
   sticky?: boolean;
   /** Extra controls after the default log in / sign up links (e.g. menu toggle). */
   endAdornment?: ReactNode;
 }
 
-export function SiteHeader({ sticky = false, endAdornment }: SiteHeaderProps) {
+export function SiteHeader({ sticky = true, endAdornment }: SiteHeaderProps) {
   return (
     <Header $sticky={sticky}>
       <HeaderInner $padForMenuToggle={Boolean(endAdornment)}>

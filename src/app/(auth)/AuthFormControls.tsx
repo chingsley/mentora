@@ -1,23 +1,31 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
+import { FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
+import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
+import { MARKETING } from "@/constants/marketing.constants";
+import { SPACING } from "@/constants/spacing.constants";
 
 export const AUTH_THEME = {
-  text: "#0a2540",
-  textMuted: "#3d4d5f",
-  textSoft: "#475569",
-  border: "hsl(214.3 31.8% 91.4%)",
-  inputBorder: "rgba(10, 37, 64, 0.9)",
-  surface: COLORS.WHITE,
-  cta: "#3f4654",
-  ctaHover: "#323945",
+  text: COLORS.MARKETING_TEXT_PRIMARY,
+  textMuted: COLORS.MARKETING_TEXT_SECONDARY,
+  textSoft: COLORS.MARKETING_TEXT_TERTIARY,
+  border: COLORS.MARKETING_BORDER,
+  inputBorder: COLORS.MARKETING_BORDER,
+  inputBorderFocus: COLORS.ACTION_PRIMARY,
+  surface: COLORS.FOREGROUND,
+  cta: COLORS.ACTION_PRIMARY,
+  ctaHover: COLORS.ACTION_PRIMARY_HOVER,
   linkHover: COLORS.ACTION_PRIMARY_HOVER,
-  formError: "#c85848",
+  formError: COLORS.DESTRUCTIVE,
+  calloutBg: COLORS.ACTION_PRIMARY_TINT_10,
+  calloutBorder: COLORS.ACTION_PRIMARY_BORDER_22,
 };
 
 const FLOAT_EASE = "cubic-bezier(0.22, 1, 0.32, 1)";
@@ -34,11 +42,11 @@ export const AuthForm = styled.form`
 `;
 
 export const AuthFeedbackBanner = styled.p<{ $visible: boolean; }>`
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  font-size: ${FONTS.SIZE.MD};
-  line-height: 1.45;
+  margin: 0 0 ${SPACING.FOUR};
+  padding: ${SPACING.THREE} ${SPACING.FOUR};
+  border-radius: ${MARKETING.CTA_RADIUS};
+  font-size: ${FONTS.SIZE.SM};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
   border: 1px solid ${AUTH_THEME.border};
   background: ${AUTH_THEME.surface};
   color: ${AUTH_THEME.text};
@@ -46,9 +54,9 @@ export const AuthFeedbackBanner = styled.p<{ $visible: boolean; }>`
   ${(p) =>
     p.$visible
       ? `
-    border-color: #d14343;
-    color: #5e0b0b;
-    background: #fff4f4;
+    border-color: ${COLORS.DESTRUCTIVE_BORDER_HOVER};
+    color: ${COLORS.DESTRUCTIVE};
+    background: ${COLORS.DESTRUCTIVE_BG_HOVER};
   `
       : `
     display: none;
@@ -56,40 +64,43 @@ export const AuthFeedbackBanner = styled.p<{ $visible: boolean; }>`
 `;
 
 export const AuthFieldGrid = styled.div`
-  display: grid;
-  column-gap: 16px;
-
-  @media (min-width: 560px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  display: flex;
+  flex-direction: column;
 `;
 
 const FieldRow = styled.div`
-  margin-bottom: 22px;
+  margin-bottom: ${SPACING.FIVE};
 `;
 
-const FloatField = styled.div<{ $floating?: boolean; }>`
+const FloatField = styled.div<{ $floating?: boolean; $hasToggle?: boolean; }>`
   position: relative;
-  padding-top: 2px;
+  padding-top: ${SPACING.HALF};
 
   & > input,
   & > select {
     display: block;
     width: 100%;
     margin: 0;
-    padding: 28px 0 8px;
-    border: none;
-    border-bottom: 1px solid ${AUTH_THEME.inputBorder};
-    border-radius: 0;
-    background-color: transparent;
+    padding: ${SPACING.SIX} ${FORM_FIELD.CONTROL_PADDING_INLINE} ${SPACING.TWO};
+    border: ${formFieldControlBorder(false)};
+    border-radius: ${MARKETING.CTA_RADIUS};
+    background-color: ${FORM_FIELD.CONTROL_BACKGROUND};
     box-shadow: none;
     font-family: ${FONTS.FAMILY.PRIMARY};
-    font-size: ${FONTS.SIZE.BASE};
+    font-size: ${FONTS.SIZE.SM};
     color: ${AUTH_THEME.text};
     outline: none;
-    /* Border width and padding stay fixed; only color changes so the line does not jump. */
     transition: border-color 0.2s ${FLOAT_EASE};
   }
+
+  ${(p) =>
+    p.$hasToggle
+      ? `
+    & > input {
+      padding-right: calc(${FORM_FIELD.CONTROL_PADDING_INLINE} + ${SPACING.SIX});
+    }
+  `
+      : ""}
 
   & > input::placeholder {
     color: transparent;
@@ -115,11 +126,11 @@ const FloatField = styled.div<{ $floating?: boolean; }>`
   `
       : `
     & > select + label {
-      top: 2px;
+      top: ${SPACING.TWO};
       bottom: auto;
-      transform: scale(0.8125);
+      transform: scale(0.875);
       transform-origin: left top;
-      font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+      font-weight: ${FONTS.WEIGHT.MEDIUM};
     }
   `}
 
@@ -130,33 +141,33 @@ const FloatField = styled.div<{ $floating?: boolean; }>`
 
   & > input:focus:not([aria-invalid="true"]),
   & > select:focus:not([aria-invalid="true"]) {
-    border-bottom-color: ${AUTH_THEME.text};
+    border-color: ${AUTH_THEME.inputBorderFocus};
   }
 
   & > input[aria-invalid="true"],
   & > select[aria-invalid="true"] {
-    border-bottom-color: ${AUTH_THEME.formError};
+    border-color: ${AUTH_THEME.formError};
   }
 
   & > input:-webkit-autofill,
   & > input:-webkit-autofill:hover,
   & > input:-webkit-autofill:focus,
   & > input:-webkit-autofill:active {
-    border-bottom-color: ${AUTH_THEME.inputBorder};
+    border-color: ${AUTH_THEME.inputBorder};
     -webkit-text-fill-color: ${AUTH_THEME.text};
     transition: background-color 9999s ease-out;
   }
 
   & > label {
     position: absolute;
-    left: 0;
+    left: ${FORM_FIELD.CONTROL_PADDING_INLINE};
     top: auto;
-    bottom: 10px;
+    bottom: ${SPACING.THREE};
     margin: 0;
-    font-size: ${FONTS.SIZE.BASE};
+    font-size: ${FONTS.SIZE.SM};
     font-weight: ${FONTS.WEIGHT.MEDIUM};
     color: ${AUTH_THEME.textSoft};
-    line-height: 1.35;
+    line-height: ${FONTS.LINE_HEIGHT.SNUG};
     pointer-events: none;
     transform: none;
     transform-origin: left bottom;
@@ -169,11 +180,11 @@ const FloatField = styled.div<{ $floating?: boolean; }>`
 
   &:focus-within > label,
   & > input:not(:placeholder-shown) + label {
-    top: 2px;
+    top: ${SPACING.TWO};
     bottom: auto;
-    transform: scale(0.8125);
+    transform: scale(0.875);
     transform-origin: left top;
-    font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+    font-weight: ${FONTS.WEIGHT.MEDIUM};
   }
 
   &:focus-within > input:not([aria-invalid="true"]) + label,
@@ -188,15 +199,15 @@ const FloatField = styled.div<{ $floating?: boolean; }>`
   & > input[aria-invalid="true"] + label,
   & > select[aria-invalid="true"] + label {
     color: ${AUTH_THEME.formError};
-    font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+    font-weight: ${FONTS.WEIGHT.MEDIUM};
   }
 
   & > input:-webkit-autofill + label {
-    top: 2px;
+    top: ${SPACING.TWO};
     bottom: auto;
-    transform: scale(0.8125);
+    transform: scale(0.875);
     transform-origin: left top;
-    font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+    font-weight: ${FONTS.WEIGHT.MEDIUM};
   }
 
   & > input[data-concealed="true"] {
@@ -209,6 +220,34 @@ const FloatField = styled.div<{ $floating?: boolean; }>`
     & > label {
       transition: none;
     }
+  }
+`;
+
+const PasswordVisibilityButton = styled.button`
+  position: absolute;
+  right: ${SPACING.THREE};
+  top: 50%;
+  transform: translateY(-42%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: ${SPACING.SIX};
+  height: ${SPACING.SIX};
+  padding: 0;
+  border: none;
+  border-radius: ${MARKETING.CTA_RADIUS};
+  background: ${COLORS.TRANSPARENT};
+  color: ${AUTH_THEME.textSoft};
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: ${AUTH_THEME.text};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.ACTION_PRIMARY_RING_45};
+    outline-offset: 2px;
   }
 `;
 
@@ -229,68 +268,15 @@ export const AuthHint = styled.p`
 `;
 
 export const AuthCallout = styled.p`
-  margin: 0 0 22px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(29, 78, 216, 0.08); /* Use this color for a light mauve color */
-  border: 1px solid rgba(29, 78, 216, 0.12);
+  margin: 0 0 ${SPACING.FIVE};
+  padding: ${SPACING.THREE} ${SPACING.FOUR};
+  border-radius: ${MARKETING.CTA_RADIUS};
+  background: ${AUTH_THEME.calloutBg};
+  border: 1px solid ${AUTH_THEME.calloutBorder};
   font-size: ${FONTS.SIZE.SM};
-  line-height: 1.45;
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
   color: ${AUTH_THEME.text};
 `;
-
-export const AuthCheckRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  margin: -8px 0 14px;
-  font-size: ${FONTS.SIZE["2XS"]};
-  line-height: 1.35;
-  color: ${AUTH_THEME.textMuted};
-  text-align: left;
-
-  input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    margin: 0;
-    flex-shrink: 0;
-    accent-color: ${AUTH_THEME.cta};
-    cursor: pointer;
-  }
-
-  label {
-    cursor: pointer;
-    user-select: none;
-  }
-`;
-
-export interface AuthPasswordVisibilityCheckboxProps {
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  children: React.ReactNode;
-}
-
-/** Checkbox and label are siblings — one activation path, no double-toggle. */
-export function AuthPasswordVisibilityCheckbox({
-  checked,
-  onCheckedChange,
-  children,
-}: AuthPasswordVisibilityCheckboxProps) {
-  const checkboxId = React.useId();
-
-  return (
-    <AuthCheckRow>
-      <input
-        id={checkboxId}
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onCheckedChange(event.target.checked)}
-      />
-      <label htmlFor={checkboxId}>{children}</label>
-    </AuthCheckRow>
-  );
-}
 
 export const AuthAuxiliaryRow = styled.div`
   display: flex;
@@ -302,123 +288,128 @@ export const AuthAuxiliaryRow = styled.div`
 `;
 
 export const AuthFormActions = styled.div`
-  margin-top: 28px;
+  margin-top: ${SPACING.SIX};
 `;
 
 export const AuthSubmitButton = styled(Button)`
   width: 100%;
   height: auto;
-  padding: 12px 18px;
-  border-radius: 8px;
+  min-height: ${FORM_FIELD.CONTROL_MIN_HEIGHT};
+  padding: ${SPACING.THREE} ${SPACING.FIVE};
+  border-radius: ${MARKETING.CTA_RADIUS};
   background-color: ${AUTH_THEME.cta};
-  font-size: ${FONTS.SIZE.MD};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: #ffffff;
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.WHITE};
   transition:
-    background 0.2s ease,
-    box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.15s ease,
     opacity 0.15s ease;
 
   &:hover:not(:disabled) {
     background-color: ${AUTH_THEME.ctaHover};
-    box-shadow: 0 10px 28px rgba(88, 95, 113, 0.28);
-    // transform: translateY(-2px);
   }
 
-  &:active:not(:disabled) {
-    box-shadow: 0 4px 14px rgba(88, 95, 113, 0.2);
-    transform: translateY(0);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-
-    &:hover:not(:disabled),
-    &:active:not(:disabled) {
-      transform: none;
-    }
+  &:disabled {
+    opacity: 0.55;
   }
 `;
 
 export const AuthFoot = styled.p`
-  margin: 24px 0 0;
-  padding-top: 20px;
+  margin: ${SPACING.SIX} 0 0;
+  padding-top: ${SPACING.FIVE};
   border-top: 1px solid ${AUTH_THEME.border};
   font-size: ${FONTS.SIZE.SM};
-  line-height: 1.5;
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
   color: ${AUTH_THEME.textMuted};
-  text-align: left;
+  text-align: center;
 `;
 
 export const AuthLink = styled(Link)`
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
   color: ${AUTH_THEME.cta};
   text-decoration: none;
 
   &:hover,
   &:focus-visible {
-    color: ${AUTH_THEME.ctaHover};
+    color: ${AUTH_THEME.linkHover};
     text-decoration: underline;
   }
 
   &:focus-visible {
-    outline: 2px solid ${AUTH_THEME.cta};
+    outline: 2px solid ${COLORS.ACTION_PRIMARY_RING_45};
     outline-offset: 2px;
-    border-radius: 6px;
+    border-radius: ${MARKETING.CTA_RADIUS};
   }
 `;
 
 export type AuthRegisterRole = "STUDENT" | "TEACHER" | "GUARDIAN";
 
-const RoleRadioGroupShell = styled.div`
-  margin-bottom: 22px;
+const RoleRadioGroupShell = styled.fieldset`
+  margin: 0 0 ${SPACING.FIVE};
+  padding: 0;
+  border: none;
 `;
 
-const RoleLegend = styled.p`
-  margin: 0 0 8px;
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  font-size: ${FONTS.SIZE.BASE};
-  color: ${AUTH_THEME.text};
-  line-height: 1.35;
+const RoleLegend = styled.legend`
+  display: block;
+  margin-bottom: ${SPACING.THREE};
+  padding: 0;
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${AUTH_THEME.textMuted};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
 `;
 
 const RoleRadioOptions = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  @media (min-width: 560px) {
-    flex-flow: row wrap;
-    column-gap: 24px;
-    row-gap: 10px;
-  }
+  flex-direction: row;
+  gap: ${SPACING.TWO};
 `;
 
 const RoleRadioLabel = styled.label`
-  display: inline-flex;
+  display: flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: ${SPACING.TWO};
+  min-height: ${FORM_FIELD.CONTROL_MIN_HEIGHT};
+  padding: 0 ${SPACING.TWO};
+  border: ${formFieldControlBorder(false)};
+  border-radius: ${MARKETING.CTA_RADIUS};
+  background-color: ${FORM_FIELD.CONTROL_BACKGROUND};
   cursor: pointer;
   font-size: ${FONTS.SIZE.SM};
-  line-height: 1.45;
+  font-weight: ${FONTS.WEIGHT.NORMAL};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
   color: ${AUTH_THEME.text};
   user-select: none;
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:has(input:checked) {
+    border-color: ${AUTH_THEME.inputBorderFocus};
+    background-color: ${AUTH_THEME.calloutBg};
+    font-weight: ${FONTS.WEIGHT.MEDIUM};
+  }
+
+  &:hover {
+    border-color: ${AUTH_THEME.inputBorderFocus};
+  }
 `;
 
-/** Matches Maje teacher-dashboard radios: 24×24px, theme accent, native appearance. */
 const RoleRadioInput = styled.input.attrs({ type: "radio" })`
   flex-shrink: 0;
-  width: 1.5rem;
-  height: 1.5rem;
-  min-width: 1.5rem;
-  min-height: 1.5rem;
+  width: ${SPACING.FOUR};
+  height: ${SPACING.FOUR};
+  min-width: ${SPACING.FOUR};
+  min-height: ${SPACING.FOUR};
   margin: 0;
   accent-color: ${AUTH_THEME.cta};
   cursor: pointer;
-  appearance: auto;
-  -webkit-appearance: auto;
 `;
 
 const ROLE_RADIO_OPTIONS: { value: AuthRegisterRole; label: string; }[] = [
@@ -449,8 +440,6 @@ export function AuthRoleRadioGroup({
     <RoleRadioGroupShell>
       <RoleLegend id={legendId}>{legend}</RoleLegend>
       <RoleRadioOptions
-        role="radiogroup"
-        aria-labelledby={legendId}
         aria-invalid={error ? true : undefined}
         aria-errormessage={error ? errorId : undefined}
       >
@@ -546,36 +535,88 @@ export type AuthPasswordFieldProps = Omit<
   label: string;
   error?: string;
   hint?: string;
-  visible: boolean;
 };
 
-/** Controlled password field; uses CSS masking in Chromium/WebKit, type toggle in Firefox. */
+/** Password field with an inline show/hide toggle (eye icon). */
 export function AuthPasswordField({
-  visible,
+  id,
+  label,
+  error,
+  hint,
+  placeholder,
   value,
   onChange,
-  ...rest
+  "aria-describedby": ariaDescribedBy,
+  ...inputProps
 }: AuthPasswordFieldProps) {
   const canMaskWithCss = useCssTextSecurityMask();
+  const [visible, setVisible] = React.useState(false);
   const [internalValue, setInternalValue] = React.useState("");
+  const generatedId = React.useId();
+  const inputId = id ?? generatedId;
+  const messageId = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined;
   const isControlled = value !== undefined;
   const currentValue = isControlled ? String(value) : internalValue;
   const concealWithCss = canMaskWithCss && !visible;
   const inputType = canMaskWithCss || visible ? "text" : "password";
+  const toggleLabel = visible ? "Hide password" : "Show password";
 
   return (
-    <AuthTextField
-      {...rest}
-      type={inputType}
-      value={currentValue}
-      data-concealed={concealWithCss ? "true" : undefined}
-      onChange={(event) => {
-        if (!isControlled) {
-          setInternalValue(event.target.value);
-        }
-        onChange?.(event);
-      }}
-    />
+    <FieldRow>
+      <FloatField $hasToggle>
+        <input
+          {...inputProps}
+          id={inputId}
+          type={inputType}
+          value={currentValue}
+          placeholder={placeholder ?? "\u00a0"}
+          aria-invalid={error ? true : inputProps["aria-invalid"]}
+          aria-describedby={joinIds(ariaDescribedBy, messageId)}
+          data-concealed={concealWithCss ? "true" : undefined}
+          onChange={(event) => {
+            if (!isControlled) {
+              setInternalValue(event.target.value);
+            }
+            onChange?.(event);
+          }}
+        />
+        <label htmlFor={inputId}>{label}</label>
+        <PasswordVisibilityButton
+          type="button"
+          aria-label={toggleLabel}
+          aria-pressed={visible}
+          onClick={() => {
+            setVisible((current) => !current);
+          }}
+        >
+          {visible ? (
+            <EyeOff
+              size={ICON_SIZE.MD}
+              strokeWidth={ICON_STROKE.MEDIUM}
+              color={ICON_THEME.INLINE_MUTED}
+              aria-hidden
+            />
+          ) : (
+            <Eye
+              size={ICON_SIZE.MD}
+              strokeWidth={ICON_STROKE.MEDIUM}
+              color={ICON_THEME.INLINE_MUTED}
+              aria-hidden
+            />
+          )}
+        </PasswordVisibilityButton>
+      </FloatField>
+      {hint && !error ? (
+        <FieldMessage id={`${inputId}-hint`} $tone="hint">
+          {hint}
+        </FieldMessage>
+      ) : null}
+      {error ? (
+        <FieldMessage id={`${inputId}-error`} $tone="error">
+          {error}
+        </FieldMessage>
+      ) : null}
+    </FieldRow>
   );
 }
 
