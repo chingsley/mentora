@@ -48,6 +48,7 @@ export interface TeacherOfferingCalendarOffering {
   recurrenceAnchorDate: Date | null;
   recurrenceOrdinal: number | null;
   hourlyRate: number;
+  createdAt: Date;
 }
 
 export interface TeacherOfferingCalendarProps {
@@ -88,6 +89,7 @@ function offeringRecurrence(o: TeacherOfferingCalendarOffering) {
     recurrenceKind: o.recurrenceKind,
     recurrenceAnchorDate: o.recurrenceAnchorDate,
     recurrenceOrdinal: o.recurrenceOrdinal,
+    scheduleStartFallback: o.createdAt,
   });
 }
 

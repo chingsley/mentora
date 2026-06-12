@@ -115,6 +115,7 @@ describe("offeringSchedule", () => {
       { dayOfWeek: "THU", startTime: "13:30", endTime: "14:00" },
     ]);
     expect(result.recurrence.kind).toBe("WEEKLY");
+    expect(result.recurrence.anchorDate).toBe("2026-06-02");
   });
 
   it("round-trips bi-weekly schedule editor state", () => {

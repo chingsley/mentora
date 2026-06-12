@@ -86,6 +86,7 @@ export default async function TeacherSchedulePage() {
     recurrenceKind: o.recurrenceKind,
     recurrenceAnchorDate: o.recurrenceAnchorDate,
     recurrenceOrdinal: o.recurrenceOrdinal,
+    createdAt: o.createdAt,
     hourlyRate: o.hourlyRate,
   }));
 

@@ -206,14 +206,17 @@ export function slotsAndRecurrenceFromScheduleEditor(value: OfferingScheduleEdit
       interval: "",
     };
   } else if (value.repeatUnit === "month") {
-    recurrence = frequencyViewToRecurrence(
-      "MONTHLY",
-      value.monthlyPosition,
-      { kind: "WEEKLY", anchorDate: "", ordinal: "", interval: "" },
-      days[0] ?? fallbackDay,
-    );
+    recurrence = {
+      ...frequencyViewToRecurrence(
+        "MONTHLY",
+        value.monthlyPosition,
+        { kind: "WEEKLY", anchorDate: "", ordinal: "", interval: "" },
+        days[0] ?? fallbackDay,
+      ),
+      anchorDate: value.startDate,
+    };
   } else if (value.repeatInterval <= 1) {
-    recurrence = { kind: "WEEKLY", anchorDate: "", ordinal: "", interval: "" };
+    recurrence = { kind: "WEEKLY", anchorDate: value.startDate, ordinal: "", interval: "" };
   } else {
     recurrence = {
       kind: "BIWEEKLY",

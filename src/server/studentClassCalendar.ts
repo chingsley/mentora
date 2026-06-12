@@ -43,6 +43,7 @@ export function buildStudentClassRows(
         recurrenceKind: o.recurrenceKind,
         recurrenceAnchorDate: o.recurrenceAnchorDate,
         recurrenceOrdinal: o.recurrenceOrdinal,
+        scheduleStartFallback: o.createdAt,
       }),
     };
 
@@ -67,6 +68,7 @@ export function buildStudentClassRows(
         recurrenceKind: o.recurrenceKind,
         recurrenceAnchorDate: o.recurrenceAnchorDate,
         recurrenceOrdinal: o.recurrenceOrdinal,
+        scheduleStartFallback: o.createdAt,
       }),
     };
 

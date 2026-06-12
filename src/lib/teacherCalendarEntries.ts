@@ -18,6 +18,7 @@ export interface TeacherOfferingCalendarSource {
   recurrenceKind: OfferingRecurrenceKind;
   recurrenceAnchorDate: Date | null;
   recurrenceOrdinal: number | null;
+  createdAt?: Date | null;
 }
 
 export function buildTeacherOfferingCalendarEntry(args: {
@@ -65,6 +66,7 @@ export function buildTeacherOfferingCalendarEntry(args: {
     recurrenceKind: offering.recurrenceKind,
     recurrenceAnchorDate: offering.recurrenceAnchorDate,
     recurrenceOrdinal: offering.recurrenceOrdinal,
+    scheduleStartFallback: offering.createdAt ?? null,
   });
 
   return {
