@@ -15,8 +15,19 @@ export default async function MyProfilePage({
   const { role, id } = session.user;
   const sp = await searchParams;
   const tab = typeof sp.tab === "string" ? sp.tab : null;
+  const initialSetup = sp.setup === "1";
+  const initialWelcome = sp.welcome === "1";
 
   if (role === "STUDENT") return <StudentProfilePage userId={id} />;
-  if (role === "TEACHER") return <TeacherProfilePage userId={id} initialTab={tab} />;
+  if (role === "TEACHER") {
+    return (
+      <TeacherProfilePage
+        userId={id}
+        initialTab={tab}
+        initialSetup={initialSetup}
+        initialWelcome={initialWelcome}
+      />
+    );
+  }
   redirect("/dashboard");
 }

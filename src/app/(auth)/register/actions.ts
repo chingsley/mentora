@@ -9,6 +9,7 @@ import {
 import { claimGuardianInvite } from "@/server/guardians";
 import { normalizeInviteCode } from "@/lib/inviteCode";
 import { db } from "@/lib/db";
+import { teacherProfileWelcomeHref } from "@/components/features/teacher/profile/teacherProfileSetup.constants";
 
 export type RegisterActionResult =
   | { ok: true; redirectTo: string }
@@ -59,9 +60,11 @@ export async function registerAction(formData: FormData): Promise<RegisterAction
   });
 
   const redirectTo =
-    parsed.data.role === "TEACHER" || parsed.data.role === "STUDENT"
-      ? "/profile"
-      : "/dashboard";
+    parsed.data.role === "TEACHER"
+      ? teacherProfileWelcomeHref()
+      : parsed.data.role === "STUDENT"
+        ? "/profile"
+        : "/dashboard";
   return { ok: true, redirectTo };
 }
 

@@ -59,7 +59,7 @@ const SearchInput = styled.input<{ $hasError: boolean }>`
   transition: border-color 0.15s ease;
 
   &::placeholder {
-    color: ${COLORS.MUTED_FOREGROUND};
+    color: ${COLORS.INPUT_PLACEHOLDER};
   }
 
   &:hover:not(:disabled) {

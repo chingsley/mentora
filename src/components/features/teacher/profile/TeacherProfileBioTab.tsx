@@ -7,127 +7,98 @@ import styled from "styled-components";
 import { saveTeacherBioTabAction, type ActionResult } from "@/app/(app)/profile/actions";
 import { ProfilePhotoForm, type ProfilePhotoFormHandle } from "@/components/features/teacher/ProfilePhotoForm";
 import { TeacherProfileTabFooter } from "./TeacherProfileTabFooter";
-import { Input } from "@/components/ui/Input";
+import {
+  TeacherProfileFormSection,
+  TeacherProfileFormSectionStack,
+} from "./TeacherProfileFormSection";
+import {
+  FormFieldControlSlot,
+  FormFieldError,
+  FormFieldLabel,
+  FormFieldLabelSlot,
+  FormFieldMetaSlot,
+  FormFieldRoot,
+  InlineFormFieldRow,
+} from "@/components/ui/FormField";
+import { SearchCombobox, type SearchComboboxOption } from "@/components/ui/SearchCombobox";
+import { COUNTRIES, getCountryByCode } from "@/constants/countries.constants";
 import { COLORS } from "@/constants/colors.constants";
 import { APP_INPUT_HEIGHT, FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { BOX_SHADOW_INPUTS, LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import {
-  TeacherProfileForm,
-  TEACHER_PROFILE_FORM_SURFACE_PADDING,
-  TEACHER_PROFILE_FORM_SURFACE_PADDING_BOTTOM,
-} from "./TeacherProfileFormSurface";
+import { TeacherProfileForm } from "./TeacherProfileFormSurface";
 import { TEACHER_BIO_FORM_ID } from "./teacherProfileFormIds";
 import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
+import {
+  TEACHER_BIO_MAX_LENGTH,
+  TEACHER_BIO_TEXTAREA_MIN_HEIGHT,
+} from "@/constants/teacherProfile.constants";
+import { useTeacherProfileSetupMode } from "./TeacherProfileSetupContext";
+import { getCitiesForCountry } from "@/lib/locationCities";
+import { resolveTeacherLocationFields } from "@/lib/teacherProfileLocation";
 
-/** Padding inset for the merged profile card (used for negative-margin separators). */
-const BIO_MERGED_CARD_PADDING = TEACHER_PROFILE_FORM_SURFACE_PADDING;
+const BIO_HINT_COLOR = COLORS.SIDEBAR_BRAND;
 
-/** Shared tokens for the merged photo + bio card (screenshot-style sections). */
-const BIO_MERGED_CARD = {
-  padding: TEACHER_PROFILE_FORM_SURFACE_PADDING,
-  /** Extra space below the last block (e.g. form grid) before the card bottom edge */
-  paddingBottom: TEACHER_PROFILE_FORM_SURFACE_PADDING_BOTTOM,
-  radius: LAYOUT.RADIUS.LG,
-  border: `1px solid ${COLORS.BORDER}`,
-  /** Stronger than `COLORS.BORDER` (input chrome) for in-card section rules */
-  separatorColor: COLORS.HEADER_BORDER_15,
-  asideHintColor: COLORS.SIDEBAR_BRAND,
-} as const;
-
-const SectionAsideTitle = styled.h2`
-  margin: 0;
-  font-size: ${FONTS.SIZE.LG};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-`;
-
-const PhotoSection = styled.div`
+const PhotoGuidanceCallout = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: ${SPACING.FOUR};
+  gap: ${SPACING.THREE};
+  align-items: flex-start;
   width: 100%;
-`;
-
-const PhotoGuidanceText = styled.p`
-  display: flex;
-  gap: ${SPACING.TWO};
-  margin-bottom: 1rem;
-  font-size: ${FONTS.SIZE.SM};
-  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  padding: ${SPACING.FOUR};
+  border-radius: ${LAYOUT.RADIUS.MD};
+  background-color: ${COLORS.SURFACE_OFF_WHITE};
+  text-align: left;
+  align-self: stretch;
 `;
 
 const WarningIcon = styled.span`
   display: inline-flex;
   flex-shrink: 0;
-  align-self: baseline;
   line-height: 0;
   color: ${COLORS.DESTRUCTIVE};
 `;
 
-/** Matches Tabs inactive tab label color (Tabs TabButton default state). */
-const PhotoGuidanceSpan = styled.span`
+const PhotoGuidanceCopy = styled.p`
+  margin: 0;
+  font-size: ${FONTS.SIZE.SM};
+  line-height: ${FONTS.LINE_HEIGHT.RELAXED};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
-/** Bio composer beside the studio avatar: row on ≥SM, stacks on narrow viewports. */
-const BioComposerRow = styled.div`
-  display: flex;
-  flex-direction: row;
-  gap: ${SPACING.THREE};
-  width: 100%;
+const PhotoGuidanceLead = styled.strong`
+  display: block;
+  margin-bottom: ${SPACING.ONE};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${COLORS.HEADER};
 `;
-
-const AboutBioSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.FOUR};
-  width: 100%;
-  align-items: flex-start;
-`;
-
-const SectionSeparator = styled.div`
-  height: 1px;
-  // margin: ${SPACING.SIX} calc(-1 * ${BIO_MERGED_CARD_PADDING});
-  margin: 0 0 1.5rem 0;
-  background: ${BIO_MERGED_CARD.separatorColor};
-`;
-
 
 const Field = styled.label`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.TWO};
-  min-width: 8rem;
-`;
-
-/** Matches `Tabs` underline variant selected tab (`TabButton` active). */
-const FieldLabel = styled.span`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-  line-height: 1.4;
+  min-width: 0;
+  width: 100%;
 `;
 
 const Textarea = styled.textarea`
-  min-height: 12rem;
+  min-height: ${TEACHER_BIO_TEXTAREA_MIN_HEIGHT};
   width: 100%;
   border-radius: ${FORM_FIELD.CONTROL_RADIUS};
   border: ${formFieldControlBorder(false)};
   box-shadow: ${BOX_SHADOW_INPUTS};
-  padding: ${SPACING.FOUR};
+  padding: ${SPACING.THREE} ${SPACING.FOUR};
   font-size: ${FONTS.SIZE.SM};
   font-family: ${FONTS.FAMILY.PRIMARY};
   font-weight: ${FONTS.WEIGHT.NORMAL};
   color: ${COLORS.TEXT};
-  line-height: 1.5;
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
   outline: none;
   resize: vertical;
-  background-color: inherit;
+  background-color: ${COLORS.FOREGROUND};
 
   &::placeholder {
-    color: ${COLORS.MUTED_FOREGROUND};
+    color: ${FORM_FIELD.PLACEHOLDER_COLOR};
     font-weight: ${FONTS.WEIGHT.NORMAL};
   }
 
@@ -137,14 +108,15 @@ const Textarea = styled.textarea`
   }
 `;
 
-const Counter = styled.div`
+const BioFieldFooter = styled.div`
   display: flex;
   justify-content: flex-end;
-  margin-top: -1.875rem;
-  padding-right: ${SPACING.THREE};
-  pointer-events: none;
+`;
+
+const CharCounter = styled.span`
+  flex-shrink: 0;
   font-size: ${FONTS.SIZE.XS};
-  color: ${BIO_MERGED_CARD.asideHintColor};
+  color: ${BIO_HINT_COLOR};
 `;
 
 const TagWrap = styled.div`
@@ -157,6 +129,7 @@ const TagWrap = styled.div`
   border: ${formFieldControlBorder(false)};
   box-shadow: ${BOX_SHADOW_INPUTS};
   padding: ${SPACING.TWO};
+  background-color: ${COLORS.FOREGROUND};
 
   &:focus-within {
     border-color: ${COLORS.SIDEBAR_BRAND};
@@ -167,10 +140,10 @@ const TagWrap = styled.div`
 const Tag = styled.span`
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: ${SPACING.ONE};
   border-radius: ${LAYOUT.RADIUS.FULL};
   border: 1px solid ${COLORS.ACTION_PRIMARY_TINT_16};
-  padding: 0.125rem 0.5rem;
+  padding: ${SPACING.ONE} ${SPACING.TWO};
   font-size: ${FONTS.SIZE.XS};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
   color: ${COLORS.ACTION_PRIMARY};
@@ -196,7 +169,7 @@ const TagInput = styled.input`
   flex: 1;
   border: none;
   background: transparent;
-  padding: 0.25rem;
+  padding: ${SPACING.ONE};
   font-size: ${FONTS.SIZE.SM};
   font-family: ${FONTS.FAMILY.PRIMARY};
   font-weight: ${FONTS.WEIGHT.NORMAL};
@@ -204,36 +177,28 @@ const TagInput = styled.input`
   outline: none;
 
   &::placeholder {
-    color: ${COLORS.MUTED_FOREGROUND};
+    color: ${FORM_FIELD.PLACEHOLDER_COLOR};
     font-weight: ${FONTS.WEIGHT.NORMAL};
   }
 `;
 
-const Stack = styled.div`
+const DetailsFields = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${SPACING.FOUR};
+  gap: ${SPACING.FIVE};
   width: 100%;
   min-width: 0;
-  align-items: stretch;
+
+  ${LAYOUT.MEDIA.SM} {
+    gap: ${SPACING.SIX};
+  }
 `;
 
-const FormGrid = styled.div`
-  display: grid;
-  width: 100%;
-  min-width: 0;
-  grid-template-columns: 1fr;
-  row-gap: ${SPACING.FIVE};
+const LocationRow = styled(InlineFormFieldRow)`
+  grid-template-columns: minmax(0, 1fr);
 
   ${LAYOUT.MEDIA.SM} {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: ${SPACING.SIX};
-    row-gap: ${SPACING.SIX};
-    align-items: start;
-  }
-
-  & > * {
-    min-width: 0;
   }
 `;
 
@@ -242,7 +207,30 @@ const ErrorText = styled.p`
   color: ${COLORS.DESTRUCTIVE};
 `;
 
-const BIO_MAX = 2000;
+const BIO_MAX = TEACHER_BIO_MAX_LENGTH;
+
+const COUNTRY_OPTIONS: SearchComboboxOption[] = COUNTRIES.map((country) => ({
+  value: country.code,
+  label: country.name,
+}));
+
+function cityOptionsForCountry(countryCode: string): SearchComboboxOption[] {
+  return getCitiesForCountry(countryCode).map((city) => ({
+    value: city,
+    label: city,
+  }));
+}
+
+function initialCountryOption(countryCode: string): SearchComboboxOption | null {
+  if (!countryCode) return null;
+  const country = getCountryByCode(countryCode);
+  return country ? { value: country.code, label: country.name } : null;
+}
+
+function initialCityOption(city: string): SearchComboboxOption | null {
+  const trimmed = city.trim();
+  return trimmed ? { value: trimmed, label: trimmed } : null;
+}
 
 function parseLanguageTags(raw: string): string[] {
   return raw
@@ -256,9 +244,12 @@ export interface TeacherProfileBioTabProps {
   imageUrl: string | null;
   bio: string;
   spokenLanguages: string;
+  locationCountryCode: string;
+  locationCity: string;
   locationLabel: string;
   onAdvance: () => void;
   onBack: () => void;
+  backDisabled?: boolean;
 }
 
 export function TeacherProfileBioTab({
@@ -266,18 +257,48 @@ export function TeacherProfileBioTab({
   imageUrl,
   bio,
   spokenLanguages,
+  locationCountryCode,
+  locationCity,
   locationLabel,
   onAdvance,
   onBack,
+  backDisabled = false,
 }: TeacherProfileBioTabProps) {
   const router = useRouter();
+  const setupMode = useTeacherProfileSetupMode();
   const photoRef = React.useRef<ProfilePhotoFormHandle>(null);
   const [isSaving, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<ActionResult | null>(null);
 
+  const initialLocation = React.useMemo(
+    () =>
+      resolveTeacherLocationFields({
+        locationCountryCode,
+        locationCity,
+        locationLabel,
+      }),
+    [locationCountryCode, locationCity, locationLabel],
+  );
+
   const [bioLocal, setBioLocal] = React.useState(bio);
   const [tags, setTags] = React.useState<string[]>(() => parseLanguageTags(spokenLanguages));
   const [tagDraft, setTagDraft] = React.useState("");
+  const [country, setCountry] = React.useState<SearchComboboxOption | null>(() =>
+    initialCountryOption(initialLocation.countryCode),
+  );
+  const [city, setCity] = React.useState<SearchComboboxOption | null>(() =>
+    initialCityOption(initialLocation.city),
+  );
+
+  const cityOptions = React.useMemo(
+    () => cityOptionsForCountry(country?.value ?? ""),
+    [country?.value],
+  );
+
+  function onCountryChange(option: SearchComboboxOption | null) {
+    setCountry(option);
+    setCity(null);
+  }
 
   function commitDraft() {
     const next = tagDraft.trim();
@@ -298,6 +319,8 @@ export function TeacherProfileBioTab({
     const fd = new FormData(e.currentTarget);
     fd.set("bio", bioLocal);
     fd.set("spokenLanguages", tags.join(", "));
+    fd.set("locationCountryCode", country?.value ?? "");
+    fd.set("locationCity", city?.value ?? "");
     startTransition(async () => {
       if (photoRef.current?.hasPendingUpload()) {
         const uploadRes = await photoRef.current.uploadIfPending();
@@ -320,9 +343,14 @@ export function TeacherProfileBioTab({
 
   return (
     <TeacherProfileForm id={TEACHER_BIO_FORM_ID} onSubmit={onSubmit}>
-      <PhotoSection aria-labelledby="teacher-bio-photo-heading">
-        <SectionAsideTitle id="teacher-bio-photo-heading">Profile Photo &amp; Bio</SectionAsideTitle>
-        <BioComposerRow>
+      <TeacherProfileFormSectionStack $setup={setupMode}>
+        <TeacherProfileFormSection
+          id="teacher-bio-photo-section"
+          stepLabel="1 of 3"
+          title="Profile photo"
+          hint="Add a clear, recent headshot students will see on your profile."
+          contentAlign="center"
+        >
           <ProfilePhotoForm
             ref={photoRef}
             layout="studio"
@@ -330,75 +358,120 @@ export function TeacherProfileBioTab({
             fallbackInitials={initials}
             hint=""
           />
-          <Field>
-            <FieldLabel>Share your experience, teaching style, and what students can expect.</FieldLabel>
+          <PhotoGuidanceCallout role="note">
+            <WarningIcon aria-hidden>
+              <TriangleAlert size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
+            </WarningIcon>
+            <PhotoGuidanceCopy>
+              <PhotoGuidanceLead>Photo tip</PhotoGuidanceLead>
+              Students use your photo to recognize you before class. Use a recent picture that matches
+              how you look when you teach.
+            </PhotoGuidanceCopy>
+          </PhotoGuidanceCallout>
+        </TeacherProfileFormSection>
+
+        <TeacherProfileFormSection
+          id="teacher-bio-about-section"
+          stepLabel="2 of 3"
+          title="About you"
+          hint="A short note on your experience, teaching style, and what students can expect."
+        >
+          <Field htmlFor="teacher-profile-bio">
             <Textarea
+              id="teacher-profile-bio"
               name="bio"
+              rows={4}
               value={bioLocal}
               maxLength={BIO_MAX}
               onChange={(e) => setBioLocal(e.target.value)}
-              placeholder="Write here"
+              placeholder="e.g. 8 years teaching maths; patient, exam-focused sessions."
             />
-            <Counter>
-              {bioLocal.length} / {BIO_MAX}
-            </Counter>
+            <BioFieldFooter>
+              <CharCounter aria-live="polite">
+                {bioLocal.length} / {BIO_MAX}
+              </CharCounter>
+            </BioFieldFooter>
             {errs?.bio ? <ErrorText>{errs.bio}</ErrorText> : null}
           </Field>
-        </BioComposerRow>
-        <PhotoGuidanceText>
-          <WarningIcon aria-hidden>
-            <TriangleAlert size={ICON_SIZE.LG} strokeWidth={ICON_STROKE.MEDIUM} />
-          </WarningIcon>
-          <PhotoGuidanceSpan>
-            Important: Add a clear, recent photo. Students use this to recognize you before class. Students may leave your class if your appearance does not match your profile photo.
-          </PhotoGuidanceSpan>
-        </PhotoGuidanceText>
-      </PhotoSection>
+        </TeacherProfileFormSection>
 
-      <SectionSeparator aria-hidden />
+        <TeacherProfileFormSection
+          id="teacher-bio-details-section"
+          stepLabel="3 of 3"
+          title="Location and languages"
+          hint="Country, city, and languages appear on your public profile."
+        >
+          <DetailsFields>
+            <LocationRow>
+              <SearchCombobox
+                id="teacher-profile-country"
+                label="Country"
+                value={country}
+                onChange={onCountryChange}
+                options={COUNTRY_OPTIONS}
+                placeholder="Search countries…"
+                error={errs?.locationCountryCode}
+              />
+              <SearchCombobox
+                id="teacher-profile-city"
+                label="City"
+                value={city}
+                onChange={setCity}
+                options={cityOptions}
+                placeholder={country ? "Search cities…" : "Select a country first"}
+                error={errs?.locationCity}
+                disabled={!country}
+                allowCustomValue
+                emptyMessage={country ? "No matching cities" : "Select a country first"}
+              />
+            </LocationRow>
+            <FormFieldRoot $hasLabel>
+              <FormFieldLabelSlot>
+                <FormFieldLabel htmlFor="teacher-profile-languages">Languages spoken</FormFieldLabel>
+              </FormFieldLabelSlot>
+              <FormFieldControlSlot>
+                <TagWrap>
+                  {tags.map((t) => (
+                    <Tag key={t}>
+                      {t}
+                      <TagRemove
+                        type="button"
+                        aria-label={`Remove ${t}`}
+                        onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
+                      >
+                        ×
+                      </TagRemove>
+                    </Tag>
+                  ))}
+                  <TagInput
+                    id="teacher-profile-languages"
+                    aria-label="Add a language"
+                    placeholder="Type a language, press Enter"
+                    value={tagDraft}
+                    onChange={(e) => setTagDraft(e.target.value)}
+                    onKeyDown={onTagKeyDown}
+                    onBlur={commitDraft}
+                  />
+                </TagWrap>
+              </FormFieldControlSlot>
+              <FormFieldMetaSlot>
+                {errs?.spokenLanguages ? (
+                  <FormFieldError>{errs.spokenLanguages}</FormFieldError>
+                ) : null}
+              </FormFieldMetaSlot>
+            </FormFieldRoot>
+          </DetailsFields>
+        </TeacherProfileFormSection>
+      </TeacherProfileFormSectionStack>
 
-      <AboutBioSection aria-labelledby="teacher-bio-about-heading">
-        <Stack>
-          <FormGrid>
-            <Field>
-              <FieldLabel>Languages spoken</FieldLabel>
-              <TagWrap>
-                {tags.map((t) => (
-                  <Tag key={t}>
-                    {t}
-                    <TagRemove
-                      type="button"
-                      aria-label={`Remove ${t}`}
-                      onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
-                    >
-                      ×
-                    </TagRemove>
-                  </Tag>
-                ))}
-                <TagInput
-                  aria-label="Add a language"
-                  placeholder="Type a language, press Enter"
-                  value={tagDraft}
-                  onChange={(e) => setTagDraft(e.target.value)}
-                  onKeyDown={onTagKeyDown}
-                  onBlur={commitDraft}
-                />
-              </TagWrap>
-              {errs?.spokenLanguages ? <ErrorText>{errs.spokenLanguages}</ErrorText> : null}
-            </Field>
-            <Input
-              name="locationLabel"
-              label="Location (display)"
-              placeholder="e.g. Brazil, Lagos, Remote"
-              defaultValue={locationLabel}
-              error={errs?.locationLabel}
-            />
-          </FormGrid>
-        </Stack>
-      </AboutBioSection>
       {result && !result.ok && !result.fieldErrors ? <ErrorText>{result.error}</ErrorText> : null}
 
-      <TeacherProfileTabFooter onBack={onBack} continueAsSubmit isLoading={isSaving} />
+      <TeacherProfileTabFooter
+        onBack={onBack}
+        continueAsSubmit
+        isLoading={isSaving}
+        backDisabled={backDisabled}
+      />
     </TeacherProfileForm>
   );
 }

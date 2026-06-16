@@ -14,13 +14,15 @@ import { APP_NAV } from "./appNavConfig";
 import { AppShellProvider } from "./AppShellContext";
 import { AppSidebarChrome } from "./AppSidebarChrome";
 import { NavigationProgress } from "./NavigationProgress";
+import { TeacherProfileSetupBanner } from "@/components/features/teacher/profile/TeacherProfileSetupBanner";
 import type { WardOption } from "./WardSelector";
+import { Suspense } from "react";
 
 const STORAGE_KEY = "mentora-sidebar-collapsed";
 const LG = "(min-width: 1024px)";
 
 export interface AppShellClientProps {
-  user: { name?: string | null; email?: string | null; role: Role; };
+  user: { name?: string | null; email?: string | null; role: Role; teacherProfileCompleted?: boolean | null; };
   wards?: WardOption[];
   children: React.ReactNode;
 }
@@ -298,7 +300,12 @@ export function AppShellClient({ user, wards, children }: AppShellClientProps) {
         </MobileHeader>
 
         <Main>
-          <AppShellProvider user={user}>{children}</AppShellProvider>
+          <AppShellProvider user={user}>
+            <Suspense fallback={null}>
+              <TeacherProfileSetupBanner />
+            </Suspense>
+            {children}
+          </AppShellProvider>
         </Main>
       </Body>
     </Root>

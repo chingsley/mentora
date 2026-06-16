@@ -6,7 +6,16 @@ import { COLORS } from "@/constants/colors.constants";
 import { APP_INPUT_HEIGHT, FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { BOX_SHADOW_INPUTS } from "@/constants/layout.constants";
-import { SPACING } from "@/constants/spacing.constants";
+import {
+  FormFieldControlSlot,
+  FormFieldError,
+  FormFieldHint,
+  FormFieldLabel,
+  FormFieldLabelNote,
+  FormFieldLabelSlot,
+  FormFieldMetaSlot,
+  FormFieldRoot,
+} from "@/components/ui/FormField";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -16,30 +25,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   hint?: string;
 }
 
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.TWO};
-  width: 100%;
-`;
-
-const Label = styled.label`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: ${SPACING.ONE};
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-`;
-
-const LabelNote = styled.span`
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.NORMAL};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const StyledInput = styled.input<{ $hasError: boolean; }>`
+const StyledInput = styled.input<{ $hasError: boolean }>`
   height: ${APP_INPUT_HEIGHT};
   width: 100%;
   padding: 0 ${FORM_FIELD.CONTROL_PADDING_INLINE};
@@ -48,7 +34,7 @@ const StyledInput = styled.input<{ $hasError: boolean; }>`
   font-weight: ${FONTS.WEIGHT.NORMAL};
   line-height: 1.4;
   color: ${COLORS.TEXT};
-  background-color: inherit;
+  background-color: ${FORM_FIELD.CONTROL_BACKGROUND};
   border-radius: ${FORM_FIELD.CONTROL_RADIUS};
   border: ${(p) => formFieldControlBorder(p.$hasError)};
   box-shadow: ${BOX_SHADOW_INPUTS};
@@ -56,7 +42,7 @@ const StyledInput = styled.input<{ $hasError: boolean; }>`
   transition: border-color 0.15s ease;
 
   &::placeholder {
-    color: ${COLORS.MUTED_FOREGROUND};
+    color: ${FORM_FIELD.PLACEHOLDER_COLOR};
     font-weight: ${FONTS.WEIGHT.NORMAL};
   }
 
@@ -83,40 +69,38 @@ const StyledInput = styled.input<{ $hasError: boolean; }>`
   }
 `;
 
-const HintText = styled.p`
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const ErrorText = styled.p`
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.DESTRUCTIVE};
-`;
-
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
   { label, labelNote, error, hint, id, ...rest },
   ref,
 ) {
   const autoId = React.useId();
   const inputId = id ?? autoId;
+  const hasLabel = Boolean(label);
+
   return (
-    <Field>
-      {label ? (
-        <Label htmlFor={inputId}>
-          {label}
-          {labelNote ? <LabelNote>{labelNote}</LabelNote> : null}
-        </Label>
+    <FormFieldRoot $hasLabel={hasLabel}>
+      {hasLabel ? (
+        <FormFieldLabelSlot>
+          <FormFieldLabel htmlFor={inputId}>
+            {label}
+            {labelNote ? <FormFieldLabelNote>{labelNote}</FormFieldLabelNote> : null}
+          </FormFieldLabel>
+        </FormFieldLabelSlot>
       ) : null}
-      <StyledInput
-        id={inputId}
-        ref={ref}
-        $hasError={!!error}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
-        {...rest}
-      />
-      {hint && !error ? <HintText id={`${inputId}-hint`}>{hint}</HintText> : null}
-      {error ? <ErrorText id={`${inputId}-error`}>{error}</ErrorText> : null}
-    </Field>
+      <FormFieldControlSlot>
+        <StyledInput
+          id={inputId}
+          ref={ref}
+          $hasError={!!error}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
+          {...rest}
+        />
+      </FormFieldControlSlot>
+      <FormFieldMetaSlot>
+        {hint && !error ? <FormFieldHint id={`${inputId}-hint`}>{hint}</FormFieldHint> : null}
+        {error ? <FormFieldError id={`${inputId}-error`}>{error}</FormFieldError> : null}
+      </FormFieldMetaSlot>
+    </FormFieldRoot>
   );
 });

@@ -5,8 +5,8 @@ import type { DayOfWeek } from "@prisma/client";
 import { Repeat, Trash2 } from "lucide-react";
 import styled, { css } from "styled-components";
 import { CalendarDateField } from "@/components/features/calendar";
-import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { TimeInput } from "@/components/ui/TimeInput";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
@@ -96,8 +96,29 @@ const RecurringButton = styled.button<{ $active: boolean }>`
 const RecurrenceRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: start;
   gap: ${SPACING.TWO} ${SPACING.THREE};
+`;
+
+const RecurrenceField = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+  flex: 0 0 auto;
+`;
+
+const RecurrenceFieldLabel = styled.span`
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${COLORS.HEADER};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+`;
+
+const RecurrenceFieldControls = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${SPACING.TWO};
 `;
 
 const InlineLabel = styled.span`
@@ -271,22 +292,20 @@ export function OfferingDaySlotsEditor({
           onChange={(startDate) => patch({ startDate })}
           error={fieldErrors?.["recurrence.anchorDate"]}
         />
-        <Input
-          type="time"
+        <TimeInput
           label="Start time"
           required
           value={schedule.startTime}
           disabled={disabled}
-          onChange={(event) => patch({ startTime: event.target.value })}
+          onChange={(startTime) => patch({ startTime })}
           error={fieldErrors?.["slots.0.startTime"]}
         />
-        <Input
-          type="time"
+        <TimeInput
           label="End time"
           required
           value={schedule.endTime}
           disabled={disabled}
-          onChange={(event) => patch({ endTime: event.target.value })}
+          onChange={(endTime) => patch({ endTime })}
           error={fieldErrors?.["slots.0.endMinutes"]}
         />
       </DateTimeRow>
@@ -310,30 +329,34 @@ export function OfferingDaySlotsEditor({
 
       {schedule.isRecurring ? (
         <RecurrenceRow>
-          <InlineLabel>Repeat every</InlineLabel>
-          <CompactSelectWrap $width="interval">
-            <Select
-              aria-label="Repeat interval"
-              required
-              value={String(schedule.repeatInterval)}
-              disabled={disabled || schedule.repeatUnit === "month"}
-              onChange={(event) =>
-                patch({ repeatInterval: Number.parseInt(event.target.value, 10) || 1 })
-              }
-              options={INTERVAL_OPTIONS}
-              error={recurrenceError}
-            />
-          </CompactSelectWrap>
-          <CompactSelectWrap $width="unit">
-            <Select
-              aria-label="Repeat unit"
-              required
-              value={schedule.repeatUnit}
-              disabled={disabled}
-              onChange={handleRepeatUnitChange}
-              options={[...REPEAT_UNIT_OPTIONS]}
-            />
-          </CompactSelectWrap>
+          <RecurrenceField>
+            <RecurrenceFieldLabel>Repeat every</RecurrenceFieldLabel>
+            <RecurrenceFieldControls>
+              <CompactSelectWrap $width="interval">
+                <Select
+                  aria-label="Repeat interval"
+                  required
+                  value={String(schedule.repeatInterval)}
+                  disabled={disabled || schedule.repeatUnit === "month"}
+                  onChange={(event) =>
+                    patch({ repeatInterval: Number.parseInt(event.target.value, 10) || 1 })
+                  }
+                  options={INTERVAL_OPTIONS}
+                  error={recurrenceError}
+                />
+              </CompactSelectWrap>
+              <CompactSelectWrap $width="unit">
+                <Select
+                  aria-label="Repeat unit"
+                  required
+                  value={schedule.repeatUnit}
+                  disabled={disabled}
+                  onChange={handleRepeatUnitChange}
+                  options={[...REPEAT_UNIT_OPTIONS]}
+                />
+              </CompactSelectWrap>
+            </RecurrenceFieldControls>
+          </RecurrenceField>
 
           {schedule.repeatUnit === "month" ? (
             <>
@@ -359,32 +382,41 @@ export function OfferingDaySlotsEditor({
             </>
           ) : null}
 
-          <DayToggleList role="group" aria-label="Days of the week">
-            {DAY_ORDER.map((day) => (
-              <DayToggle
-                key={day}
-                type="button"
-                $selected={schedule.selectedDays.includes(day)}
-                disabled={disabled}
-                aria-pressed={schedule.selectedDays.includes(day)}
-                aria-label={DAY_LABEL[day]}
-                title={DAY_LABEL[day]}
-                onClick={() => toggleDay(day)}
-              >
-                {DAY_CHIP_LABEL[day]}
-              </DayToggle>
-            ))}
-          </DayToggleList>
+          <RecurrenceField>
+            <RecurrenceFieldLabel>Repeats on</RecurrenceFieldLabel>
+            <RecurrenceFieldControls>
+              <DayToggleList role="group" aria-label="Repeats on">
+                {DAY_ORDER.map((day) => (
+                  <DayToggle
+                    key={day}
+                    type="button"
+                    $selected={schedule.selectedDays.includes(day)}
+                    disabled={disabled}
+                    aria-pressed={schedule.selectedDays.includes(day)}
+                    aria-label={DAY_LABEL[day]}
+                    title={DAY_LABEL[day]}
+                    onClick={() => toggleDay(day)}
+                  >
+                    {DAY_CHIP_LABEL[day]}
+                  </DayToggle>
+                ))}
+              </DayToggleList>
+            </RecurrenceFieldControls>
+          </RecurrenceField>
 
-          <InlineLabel>Until</InlineLabel>
-          <CompactSelectWrap $width="until">
-            <CalendarDateField
-              aria-label="Until date"
-              value={schedule.untilDate}
-              disabled={disabled}
-              onChange={(untilDate) => patch({ untilDate })}
-            />
-          </CompactSelectWrap>
+          <RecurrenceField>
+            <RecurrenceFieldLabel>Until</RecurrenceFieldLabel>
+            <RecurrenceFieldControls>
+              <CompactSelectWrap $width="until">
+                <CalendarDateField
+                  aria-label="Until date"
+                  value={schedule.untilDate}
+                  disabled={disabled}
+                  onChange={(untilDate) => patch({ untilDate })}
+                />
+              </CompactSelectWrap>
+            </RecurrenceFieldControls>
+          </RecurrenceField>
 
           <IconButton
             type="button"

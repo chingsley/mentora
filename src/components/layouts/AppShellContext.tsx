@@ -7,6 +7,8 @@ export interface AppShellUser {
   name?: string | null;
   email?: string | null;
   role: Role;
+  /** Present for teachers — drives setup banner visibility. */
+  teacherProfileCompleted?: boolean | null;
 }
 
 const AppShellContext = React.createContext<AppShellUser | null>(null);

@@ -181,16 +181,25 @@ model TeacherProfile {
   timeZone         String           @default("")
   /// Comma-separated language labels (e.g. English, Portuguese)
   spokenLanguages  String           @default("")
-  /// Free-text location for students (e.g. Brazil); distinct from billing Region on User
+  /// ISO 3166-1 alpha-2 country for public profile location
+  locationCountryCode String        @default("") @db.VarChar(2)
+  /// City within {@link locationCountryCode}
+  locationCity        String        @default("")
+  /// Display label derived from city and country (e.g. Lagos, Nigeria)
   locationLabel    String           @default("")
   avgRating        Float            @default(0)
   ratingsCount     Int              @default(0)
   hoursTaught      Int              @default(0)
+  /// True when photo, bio, languages, courses, schedule, and payout details are complete
   profileCompleted Boolean          @default(false)
-  /// Payout readiness (no bank secrets); optional for profile completion
+  /// Payout readiness (no bank secrets); required for profile completion
   payoutLegalName         String? @db.VarChar(200)
   payoutCountryCode       String? @db.VarChar(2)
   payoutPreferredMethod   String? @db.VarChar(64)
+  payoutBankName            String? @db.VarChar(200)
+  payoutBankBranch          String? @db.VarChar(200)
+  payoutBankAccountNumber   String? @db.VarChar(64)
+  payoutBankRoutingNumber   String? @db.VarChar(64)
   payoutNotes             String? @db.Text
   subjects         TeacherSubject[]
   rates            TeacherRate[]

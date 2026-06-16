@@ -149,7 +149,7 @@ const ReplyTextarea = styled.textarea`
   resize: vertical;
 
   &::placeholder {
-    color: ${COLORS.MUTED_FOREGROUND};
+    color: ${COLORS.INPUT_PLACEHOLDER};
   }
 
   &:focus-visible {

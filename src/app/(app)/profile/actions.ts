@@ -312,7 +312,11 @@ export async function createOfferingAction(formData: FormData): Promise<ActionRe
     await createOfferingSchedule(session.user.id, parsed.data);
   } catch (err) {
     if (err instanceof OfferingScheduleConflictError) {
-      return { ok: false, error: err.message };
+      return {
+        ok: false,
+        error: err.message,
+        fieldErrors: { slots: err.message },
+      };
     }
     if (err instanceof BelowMinimumRateError) {
       return {
@@ -348,7 +352,11 @@ export async function updateOfferingAction(formData: FormData): Promise<ActionRe
     await updateOfferingSchedule(session.user.id, offeringId, parsed.data);
   } catch (err) {
     if (err instanceof OfferingScheduleConflictError) {
-      return { ok: false, error: err.message };
+      return {
+        ok: false,
+        error: err.message,
+        fieldErrors: { slots: err.message },
+      };
     }
     if (err instanceof BelowMinimumRateError) {
       return {
@@ -421,7 +429,8 @@ export async function saveTeacherBioTabAction(formData: FormData): Promise<Actio
   const parsed = saveTeacherBioTabSchema.safeParse({
     bio: formData.get("bio") || "",
     spokenLanguages: formData.get("spokenLanguages"),
-    locationLabel: formData.get("locationLabel") || "",
+    locationCountryCode: formData.get("locationCountryCode") || "",
+    locationCity: formData.get("locationCity") || "",
   });
   if (!parsed.success) {
     return {
@@ -446,6 +455,10 @@ export async function saveTeacherPayoutTabAction(formData: FormData): Promise<Ac
     payoutLegalName: formData.get("payoutLegalName") || "",
     payoutCountryCode: formData.get("payoutCountryCode") || "",
     payoutPreferredMethod: formData.get("payoutPreferredMethod") || "",
+    payoutBankName: formData.get("payoutBankName") || "",
+    payoutBankBranch: formData.get("payoutBankBranch") || "",
+    payoutBankAccountNumber: formData.get("payoutBankAccountNumber") || "",
+    payoutBankRoutingNumber: formData.get("payoutBankRoutingNumber") || "",
     payoutNotes: formData.get("payoutNotes") || "",
   });
   if (!parsed.success) {

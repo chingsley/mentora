@@ -62,10 +62,16 @@ export interface TeacherProfileTabsProps {
   teacherRegionCode: string | null;
   timeZone: string;
   spokenLanguages: string;
+  locationCountryCode: string;
+  locationCity: string;
   locationLabel: string;
   payoutLegalName: string | null;
   payoutCountryCode: string | null;
   payoutPreferredMethod: string | null;
+  payoutBankName: string | null;
+  payoutBankBranch: string | null;
+  payoutBankAccountNumber: string | null;
+  payoutBankRoutingNumber: string | null;
   payoutNotes: string | null;
   allSubjects: { id: string; name: string }[];
   initialSubjects: TeacherProfileInitialSubject[];

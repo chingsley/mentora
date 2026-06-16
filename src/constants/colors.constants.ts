@@ -86,6 +86,8 @@ export const COLORS = {
   // Neutrals
   MUTED: "#e5e5ea",
   MUTED_FOREGROUND: "#48484a",
+  /** Placeholder text in inputs and textareas — lighter than labels and entered values. */
+  INPUT_PLACEHOLDER: "#8e8e93",
   PAGE_LOADER_GRADIENT_END: "rgba(229, 229, 234, 0.35)",
   PAGE_LOADER_TRACK_BORDER: "rgba(72, 72, 74, 0.20)",
   BORDER: "#e5e5ea",

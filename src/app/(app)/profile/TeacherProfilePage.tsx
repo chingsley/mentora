@@ -1,6 +1,6 @@
 import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
 import { notFound } from "next/navigation";
-import { TeacherProfileTabsClient } from "@/components/features/teacher/profile/TeacherProfileTabsClient";
+import { TeacherProfilePageClient } from "@/components/features/teacher/profile/TeacherProfilePageClient";
 import { buildTeacherProfileChecklist } from "@/components/features/teacher/profile/teacherProfileCompleteness";
 import { smallestToMajor } from "@/lib/money";
 import { formatPrice } from "@/lib/time";
@@ -50,10 +50,16 @@ interface TeacherProfileForPage {
   bio: string;
   timeZone: string;
   spokenLanguages: string;
+  locationCountryCode: string;
+  locationCity: string;
   locationLabel: string;
   payoutLegalName: string | null;
   payoutCountryCode: string | null;
   payoutPreferredMethod: string | null;
+  payoutBankName: string | null;
+  payoutBankBranch: string | null;
+  payoutBankAccountNumber: string | null;
+  payoutBankRoutingNumber: string | null;
   payoutNotes: string | null;
   profileCompleted: boolean;
   avgRating: number;
@@ -103,9 +109,13 @@ function initials(first: string, last: string) {
 export async function TeacherProfilePage({
   userId,
   initialTab,
+  initialSetup = false,
+  initialWelcome = false,
 }: {
   userId: string;
   initialTab?: string | null;
+  initialSetup?: boolean;
+  initialWelcome?: boolean;
 }) {
   const [data, subjects, regions, policy, inviteableStudentRows] = await Promise.all([
     getMyTeacherProfile(userId),
@@ -210,11 +220,16 @@ export async function TeacherProfilePage({
     payoutLegalName: profile.payoutLegalName,
     payoutCountryCode: profile.payoutCountryCode,
     payoutPreferredMethod: profile.payoutPreferredMethod,
+    payoutBankName: profile.payoutBankName,
+    payoutBankBranch: profile.payoutBankBranch,
+    payoutBankAccountNumber: profile.payoutBankAccountNumber,
   });
 
   return (
-    <TeacherProfileTabsClient
+    <TeacherProfilePageClient
       initialTab={initialTab}
+      initialSetup={initialSetup}
+      initialWelcome={initialWelcome}
       fullName={fullName}
       initials={initials(firstName, lastName)}
       imageUrl={profile.user.image ?? null}
@@ -233,10 +248,16 @@ export async function TeacherProfilePage({
       teacherRegionCode={profile.user.region?.code ?? null}
       timeZone={profile.timeZone ?? ""}
       spokenLanguages={profile.spokenLanguages ?? ""}
+      locationCountryCode={profile.locationCountryCode ?? ""}
+      locationCity={profile.locationCity ?? ""}
       locationLabel={profile.locationLabel ?? ""}
       payoutLegalName={profile.payoutLegalName}
       payoutCountryCode={profile.payoutCountryCode}
       payoutPreferredMethod={profile.payoutPreferredMethod}
+      payoutBankName={profile.payoutBankName}
+      payoutBankBranch={profile.payoutBankBranch}
+      payoutBankAccountNumber={profile.payoutBankAccountNumber}
+      payoutBankRoutingNumber={profile.payoutBankRoutingNumber}
       payoutNotes={profile.payoutNotes}
       allSubjects={subjects.map((s) => ({ id: s.id, name: s.name }))}
       initialSubjects={profile.subjects.map((s) => ({

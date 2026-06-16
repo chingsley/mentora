@@ -9,6 +9,7 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { TEACHER_BIO_MAX_LENGTH, TEACHER_BIO_TEXTAREA_MIN_HEIGHT } from "@/constants/teacherProfile.constants";
 import { saveBioAction, type ActionResult } from "@/app/(app)/profile/actions";
 
 export interface TeacherBioFormProps {
@@ -34,7 +35,7 @@ const FieldLabel = styled.span`
 `;
 
 const Textarea = styled.textarea`
-  min-height: 7rem;
+  min-height: ${TEACHER_BIO_TEXTAREA_MIN_HEIGHT};
   width: 100%;
   border-radius: ${LAYOUT.RADIUS.MD};
   border: 1px solid ${COLORS.BORDER};
@@ -46,7 +47,7 @@ const Textarea = styled.textarea`
   resize: vertical;
 
   &::placeholder {
-    color: ${COLORS.MUTED_FOREGROUND};
+    color: ${COLORS.INPUT_PLACEHOLDER};
   }
 
   &:hover {
@@ -103,7 +104,7 @@ export function TeacherBioForm({ initial }: TeacherBioFormProps) {
           name="bio"
           rows={5}
           defaultValue={initial.bio}
-          maxLength={2000}
+          maxLength={TEACHER_BIO_MAX_LENGTH}
           placeholder="Tell students about your teaching experience and style."
         />
         {errs?.bio ? <FieldError>{errs.bio}</FieldError> : null}

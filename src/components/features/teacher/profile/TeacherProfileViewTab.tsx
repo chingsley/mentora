@@ -173,8 +173,8 @@ export function TeacherProfileViewTab({
         <SectionDivider aria-hidden />
 
         <CardHeader>
-          <CardTitle>Courses & rates</CardTitle>
-          <CardDescription>Subjects and hourly pricing.</CardDescription>
+          <CardTitle>Courses</CardTitle>
+          <CardDescription>Subjects you teach and class sizes.</CardDescription>
         </CardHeader>
         <CardContent>
           <Muted>

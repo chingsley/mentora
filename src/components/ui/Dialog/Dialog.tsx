@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import * as React from "react";
-import styled, { css } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
@@ -11,7 +11,7 @@ import { SPACING } from "@/constants/spacing.constants";
 import { SURFACE } from "@/constants/surface.constants";
 
 export type DialogSize = "sm" | "md" | "lg" | "xl";
-export type DialogPlacement = "center" | "right";
+export type DialogPlacement = "center" | "right" | "overlay";
 
 export interface DialogProps {
   open: boolean;
@@ -22,9 +22,9 @@ export interface DialogProps {
   children: React.ReactNode;
   className?: string;
   size?: DialogSize;
-  /** `right` slides in from the viewport edge (create/edit flows). Default: center. */
+  /** `right` drawer; `overlay` large centered modal; `center` compact card. Default: center. */
   placement?: DialogPlacement;
-  /** Shows an X control in the panel header. Default: true when `placement` is `right`. */
+  /** Shows an X control in the panel header. Default: true when `placement` is `right` or `overlay`. */
   showCloseButton?: boolean;
 }
 
@@ -34,6 +34,17 @@ const SIZE_MAX_WIDTH: Record<DialogSize, string> = {
   lg: "42rem",
   xl: "56rem",
 };
+
+const overlayEnter = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(${SPACING.TWO}) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+`;
 
 const Backdrop = styled.div<{ $placement: DialogPlacement }>`
   position: fixed;
@@ -51,7 +62,7 @@ const Backdrop = styled.div<{ $placement: DialogPlacement }>`
       : css`
           align-items: center;
           justify-content: center;
-          padding: ${SPACING.FOUR};
+          padding: ${p.$placement === "overlay" ? LAYOUT.MODAL.PAGE_INSET : SPACING.FOUR};
         `}
 `;
 
@@ -78,30 +89,62 @@ const Panel = styled.div<{
   border: 1px solid ${SURFACE.BORDER};
   overflow: hidden;
 
-  ${(p) =>
-    p.$placement === "right"
-      ? css`
-          max-width: min(${SIZE_MAX_WIDTH[p.$size]}, 100vw);
-          height: 100%;
-          max-height: 100dvh;
-          border-radius: 0;
-          border-top: none;
-          border-right: none;
-          border-bottom: none;
-          box-shadow: ${LAYOUT.SHADOW.XL};
-          transform: translateX(${p.$entered ? "0" : "100%"});
-          transition: transform ${LAYOUT.MOTION.DRAWER_DURATION} ${LAYOUT.MOTION.DRAWER_EASING};
+  ${(p) => {
+    if (p.$placement === "right") {
+      return css`
+        max-width: min(${SIZE_MAX_WIDTH[p.$size]}, 100vw);
+        height: 100%;
+        max-height: 100dvh;
+        border-radius: 0;
+        border-top: none;
+        border-right: none;
+        border-bottom: none;
+        box-shadow: ${LAYOUT.SHADOW.XL};
+        transform: translateX(${p.$entered ? "0" : "100%"});
+        transition: transform ${LAYOUT.MOTION.DRAWER_DURATION} ${LAYOUT.MOTION.DRAWER_EASING};
 
-          ${LAYOUT.MEDIA.REDUCED_MOTION} {
-            transition: none;
-            transform: none;
-          }
-        `
-      : css`
-          max-width: ${SIZE_MAX_WIDTH[p.$size]};
-          max-height: calc(100vh - 2rem);
-          border-radius: ${SURFACE.RADIUS};
-        `}
+        ${LAYOUT.MEDIA.REDUCED_MOTION} {
+          transition: none;
+          transform: none;
+        }
+      `;
+    }
+
+    if (p.$placement === "overlay") {
+      return css`
+        max-width: min(
+          ${LAYOUT.MODAL.PAGE_MAX_WIDTH},
+          calc(100vw - 2 * ${LAYOUT.MODAL.PAGE_INSET})
+        );
+        max-height: min(
+          ${LAYOUT.MODAL.PAGE_MAX_HEIGHT},
+          calc(100vh - 2 * ${LAYOUT.MODAL.PAGE_INSET})
+        );
+        height: min(
+          ${LAYOUT.MODAL.PAGE_MAX_HEIGHT},
+          calc(100vh - 2 * ${LAYOUT.MODAL.PAGE_INSET})
+        );
+        border-radius: ${SURFACE.RADIUS};
+        box-shadow: ${LAYOUT.SHADOW.XL};
+        opacity: ${p.$entered ? 1 : 0};
+        transform: translateY(${p.$entered ? "0" : SPACING.TWO}) scale(${p.$entered ? 1 : 0.98});
+        animation: ${p.$entered ? overlayEnter : "none"} ${LAYOUT.MOTION.OVERLAY_DURATION}
+          ${LAYOUT.MOTION.OVERLAY_EASING};
+
+        ${LAYOUT.MEDIA.REDUCED_MOTION} {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+      `;
+    }
+
+    return css`
+      max-width: ${SIZE_MAX_WIDTH[p.$size]};
+      max-height: calc(100vh - 2rem);
+      border-radius: ${SURFACE.RADIUS};
+    `;
+  }}
 `;
 
 const PanelHeader = styled.div`
@@ -177,7 +220,8 @@ export function Dialog({
   placement = "center",
   showCloseButton,
 }: DialogProps) {
-  const resolvedShowCloseButton = showCloseButton ?? placement === "right";
+  const resolvedShowCloseButton =
+    showCloseButton ?? (placement === "right" || placement === "overlay");
   const [entered, setEntered] = React.useState(false);
 
   React.useEffect(() => {

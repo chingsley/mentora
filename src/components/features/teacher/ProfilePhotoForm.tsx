@@ -4,7 +4,7 @@ import Image from "next/image";
 import { CloudUpload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { clearTeacherAvatarAction } from "@/app/(app)/profile/actions";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors.constants";
@@ -73,23 +73,33 @@ const StudioWrap = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.FIVE};
-  max-width: 50%;
+  width: 100%;
+  max-width: 100%;
   align-items: center;
-  justify-content: center;
+
+  ${LAYOUT.MEDIA.MD} {
+    width: auto;
+    max-width: none;
+    align-items: flex-start;
+  }
 `;
 
-const StudioPhotoRow = styled.div`
+const StudioPhotoRow = styled.div<{ $hasSideContent?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: ${SPACING.FIVE};
   width: 100%;
 
-  ${LAYOUT.MEDIA.SM} {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: ${SPACING.SIX};
-  }
+  ${({ $hasSideContent }) =>
+    $hasSideContent &&
+    css`
+      ${LAYOUT.MEDIA.SM} {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: ${SPACING.SIX};
+      }
+    `}
 `;
 
 const StudioChildrenWrap = styled.div`
@@ -109,20 +119,26 @@ const StudioChildrenWrap = styled.div`
   }
 `;
 
-const StudioAvatarColumn = styled.div`
+const StudioAvatarColumn = styled.div<{ $hasSideContent?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: ${SPACING.FOUR};
+  width: 100%;
+  max-width: 100%;
 
-  ${LAYOUT.MEDIA.SM} {
-    /**
-     * Matches the left FormGrid column: avatar + actions centered in that track.
-     */
-    flex: 0 0 ${FORM_GRID_HALF_TRACK_CQI};
-    min-width: 0;
-    max-width: ${FORM_GRID_HALF_TRACK_CQI};
-  }
+  ${({ $hasSideContent }) =>
+    $hasSideContent &&
+    css`
+      ${LAYOUT.MEDIA.SM} {
+        /**
+         * Matches the left FormGrid column: avatar + actions centered in that track.
+         */
+        flex: 0 0 ${FORM_GRID_HALF_TRACK_CQI};
+        min-width: 0;
+        max-width: ${FORM_GRID_HALF_TRACK_CQI};
+      }
+    `}
 `;
 
 const AvatarWithUpload = styled.div`
@@ -172,16 +188,7 @@ const AvatarUploadFab = styled.button`
   }
 `;
 
-const StudioAvatarActions = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: ${SPACING.TWO};
-  width: 100%;
-`;
-
-const Avatar = styled.div<{ $studio?: boolean; }>`
+const Avatar = styled.div<{ $studio?: boolean }>`
   position: relative;
   height: ${(p) => (p.$studio ? "9.75rem" : "7rem")};
   width: ${(p) => (p.$studio ? "9.75rem" : "7rem")};
@@ -440,10 +447,12 @@ export const ProfilePhotoForm = React.forwardRef<ProfilePhotoFormHandle, Profile
     );
 
     if (layout === "studio") {
+      const hasSideContent = Boolean(children);
+
       return (
         <StudioWrap>
-          <StudioPhotoRow>
-            <StudioAvatarColumn>
+          <StudioPhotoRow $hasSideContent={hasSideContent}>
+            <StudioAvatarColumn $hasSideContent={hasSideContent}>
               <HiddenInput ref={inputRef} type="file" accept={ACCEPT} onChange={handleFile} />
               <AvatarWithUpload>
                 <Avatar $studio>
@@ -484,17 +493,6 @@ export const ProfilePhotoForm = React.forwardRef<ProfilePhotoFormHandle, Profile
                   </AvatarUploadFab>
                 )}
               </AvatarWithUpload>
-              <StudioAvatarActions>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleUpload}
-                  disabled={isRemoving || !pendingFile}
-                  isLoading={isUploading}
-                >
-                  Save Upload
-                </Button>
-              </StudioAvatarActions>
             </StudioAvatarColumn>
             {children ? <StudioChildrenWrap>{children}</StudioChildrenWrap> : null}
           </StudioPhotoRow>

@@ -35,7 +35,7 @@ export function LoginForm() {
       const response = await loginAction(formData);
       setResult(response);
       if (response.ok) {
-        router.push("/dashboard");
+        router.push(response.redirectTo);
         router.refresh();
       }
     });

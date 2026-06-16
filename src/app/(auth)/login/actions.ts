@@ -2,7 +2,9 @@
 
 import { z } from "zod";
 import { AuthError } from "next-auth";
-import { signIn } from "@/lib/auth";
+import { auth, signIn } from "@/lib/auth";
+import { getTeacherProfileCompleted } from "@/server/teachers";
+import { teacherProfileWelcomeHref } from "@/components/features/teacher/profile/teacherProfileSetup.constants";
 
 const schema = z.object({
   email: z.string().email(),
@@ -10,7 +12,7 @@ const schema = z.object({
 });
 
 export type LoginActionResult =
-  | { ok: true }
+  | { ok: true; redirectTo: string }
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 export async function loginAction(formData: FormData): Promise<LoginActionResult> {
@@ -36,11 +38,21 @@ export async function loginAction(formData: FormData): Promise<LoginActionResult
       password: parsed.data.password,
       redirect: false,
     });
-    return { ok: true };
   } catch (err) {
     if (err instanceof AuthError) {
       return { ok: false, error: "Invalid email or password." };
     }
     throw err;
   }
+
+  const session = await auth();
+  let redirectTo = "/dashboard";
+  if (session?.user.role === "TEACHER") {
+    const completed = await getTeacherProfileCompleted(session.user.id);
+    if (completed === false) {
+      redirectTo = teacherProfileWelcomeHref();
+    }
+  }
+
+  return { ok: true, redirectTo };
 }

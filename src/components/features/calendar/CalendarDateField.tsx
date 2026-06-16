@@ -3,6 +3,15 @@
 import { CalendarDays, ChevronDown } from "lucide-react";
 import * as React from "react";
 import styled from "styled-components";
+import {
+  FormFieldControlSlot,
+  FormFieldError,
+  FormFieldHint,
+  FormFieldLabel,
+  FormFieldLabelSlot,
+  FormFieldMetaSlot,
+  FormFieldRoot,
+} from "@/components/ui/FormField";
 import { COLORS } from "@/constants/colors.constants";
 import { APP_INPUT_HEIGHT, FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
 import { FONTS } from "@/constants/fonts.constants";
@@ -23,18 +32,7 @@ export interface CalendarDateFieldProps {
   "aria-label"?: string;
 }
 
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.TWO};
-  width: 100%;
-`;
-
-const Label = styled.label`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-`;
+const Field = FormFieldRoot;
 
 const TriggerWrap = styled.div`
   position: relative;
@@ -92,19 +90,9 @@ const TriggerIcons = styled.span`
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
-const Hint = styled.p`
-  margin: 0;
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.MUTED_FOREGROUND};
-  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
-`;
+const Hint = FormFieldHint;
 
-const ErrorText = styled.p`
-  margin: 0;
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.DESTRUCTIVE};
-  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
-`;
+const ErrorText = FormFieldError;
 
 function parseIsoDate(value: string): Date {
   if (!value) return new Date();
@@ -166,15 +154,18 @@ export function CalendarDateField({
   }, [open]);
 
   return (
-    <Field ref={rootRef}>
+    <Field ref={rootRef} $hasLabel={Boolean(label)}>
       {label ? (
-        <Label htmlFor={fieldId}>
-          {label}
-          {required ? " *" : null}
-        </Label>
+        <FormFieldLabelSlot>
+          <FormFieldLabel htmlFor={fieldId}>
+            {label}
+            {required ? " *" : null}
+          </FormFieldLabel>
+        </FormFieldLabelSlot>
       ) : null}
-      <TriggerWrap>
-        <Trigger
+      <FormFieldControlSlot>
+        <TriggerWrap>
+          <Trigger
           id={fieldId}
           type="button"
           $hasError={Boolean(error)}
@@ -202,9 +193,12 @@ export function CalendarDateField({
             }}
           />
         ) : null}
-      </TriggerWrap>
-      {hint && !error ? <Hint id={`${fieldId}-hint`}>{hint}</Hint> : null}
-      {error ? <ErrorText id={`${fieldId}-error`}>{error}</ErrorText> : null}
+        </TriggerWrap>
+      </FormFieldControlSlot>
+      <FormFieldMetaSlot>
+        {hint && !error ? <Hint id={`${fieldId}-hint`}>{hint}</Hint> : null}
+        {error ? <ErrorText id={`${fieldId}-error`}>{error}</ErrorText> : null}
+      </FormFieldMetaSlot>
     </Field>
   );
 }
