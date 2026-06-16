@@ -242,6 +242,8 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
             bio: `Hi, I'm ${firstName}. I've been teaching for several years and love helping students grow.`,
             timeZone: "Africa/Lagos",
             spokenLanguages: "English",
+            locationCountryCode: "NG",
+            locationCity: "",
             locationLabel: "Nigeria",
             avgRating: 4 + ((i % 10) / 10),
             ratingsCount: 5 + i,

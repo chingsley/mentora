@@ -55,7 +55,7 @@ const SearchInput = styled.input`
   outline: none;
 
   &::placeholder {
-    color: ${COLORS.MUTED_FOREGROUND};
+    color: ${COLORS.INPUT_PLACEHOLDER};
   }
 `;
 

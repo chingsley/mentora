@@ -53,15 +53,19 @@ export const marketingSecondaryCtaLinkStyles = css`
   min-height: ${MARKETING.CTA_MIN_HEIGHT};
   padding: 0 ${SPACING.FIVE};
   border-radius: ${MARKETING.CTA_RADIUS};
+  border: 1px solid ${MARKETING.CTA_SECONDARY_BORDER};
   background-color: ${MARKETING.CTA_SECONDARY_BG};
   font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${MARKETING.CTA_SECONDARY_TEXT};
   text-decoration: none;
-  transition: background-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover {
     background-color: ${MARKETING.CTA_SECONDARY_BG_HOVER};
+    border-color: ${COLORS.MARKETING_BORDER_STRONG};
   }
 
   &:focus-visible {

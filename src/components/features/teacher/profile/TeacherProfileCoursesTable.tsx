@@ -97,6 +97,12 @@ const EmptyState = styled.p`
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
+const ActionGroup = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${SPACING.ONE};
+`;
+
 const ActionBtn = styled.button`
   display: inline-flex;
   align-items: center;
@@ -163,7 +169,7 @@ export function TeacherProfileCoursesTable({
             <ThBase scope="col" $textAlign="left">
               Default class limit
             </ThBase>
-            <ThBase scope="colgroup" colSpan={2} $textAlign="center">
+            <ThBase scope="col" $textAlign="left">
               Action
             </ThBase>
           </tr>
@@ -173,23 +179,23 @@ export function TeacherProfileCoursesTable({
             <tr key={subject.id} data-interactive="true">
               <Td>{subject.name}</Td>
               <Td>{formatTeacherClassLimit(subject.defaultCap, globalCap)}</Td>
-              <Td $textAlign="right">
-                <ActionBtn
-                  type="button"
-                  aria-label={`Edit ${subject.name}`}
-                  onClick={() => onEditSubject?.(subject.id)}
-                >
-                  Edit
-                </ActionBtn>
-              </Td>
-              <Td $textAlign="right">
-                <DeleteActionBtn
-                  type="button"
-                  aria-label={`Delete ${subject.name}`}
-                  onClick={() => onDeleteSubject?.(subject.id)}
-                >
-                  Delete
-                </DeleteActionBtn>
+              <Td>
+                <ActionGroup>
+                  <ActionBtn
+                    type="button"
+                    aria-label={`Edit ${subject.name}`}
+                    onClick={() => onEditSubject?.(subject.id)}
+                  >
+                    Edit
+                  </ActionBtn>
+                  <DeleteActionBtn
+                    type="button"
+                    aria-label={`Delete ${subject.name}`}
+                    onClick={() => onDeleteSubject?.(subject.id)}
+                  >
+                    Delete
+                  </DeleteActionBtn>
+                </ActionGroup>
               </Td>
             </tr>
           ))}
@@ -197,7 +203,7 @@ export function TeacherProfileCoursesTable({
         <Tfoot>
           <tr>
             <Tf colSpan={2}>Total courses</Tf>
-            <Tf colSpan={2} $textAlign="right">
+            <Tf $textAlign="right">
               {taughtSubjects.length}
             </Tf>
           </tr>

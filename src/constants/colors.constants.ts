@@ -82,10 +82,23 @@ export const COLORS = {
   MARKETING_SURFACE_SECONDARY: "#f5f5f7",
   /** Frosted marketing header fill (white @ 72%). */
   MARKETING_HEADER_SURFACE: "rgba(255, 255, 255, 0.72)",
+  /** Hero wash and glow accents. */
+  MARKETING_HERO_WASH: "rgba(38, 166, 154, 0.06)",
+  MARKETING_HERO_GLOW: "rgba(38, 166, 154, 0.14)",
+  MARKETING_HERO_GLOW_STRONG: "rgba(38, 166, 154, 0.22)",
+  /** Dark inverse sections (footer, CTA bands). */
+  MARKETING_INVERSE_BG: "#152826",
+  MARKETING_INVERSE_BORDER: "rgba(255, 255, 255, 0.08)",
+  MARKETING_INVERSE_TEXT: "#ffffff",
+  MARKETING_INVERSE_TEXT_MUTED: "rgba(255, 255, 255, 0.72)",
+  MARKETING_INVERSE_TEXT_SUBTLE: "rgba(255, 255, 255, 0.52)",
+  MARKETING_CARD_BORDER: "rgba(44, 44, 46, 0.08)",
 
   // Neutrals
   MUTED: "#e5e5ea",
   MUTED_FOREGROUND: "#48484a",
+  /** Placeholder text in inputs and textareas — lighter than labels and entered values. */
+  INPUT_PLACEHOLDER: "#8e8e93",
   PAGE_LOADER_GRADIENT_END: "rgba(229, 229, 234, 0.35)",
   PAGE_LOADER_TRACK_BORDER: "rgba(72, 72, 74, 0.20)",
   BORDER: "#e5e5ea",

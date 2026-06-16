@@ -11,6 +11,7 @@ import {
   AuthPasswordField,
   AuthSubmitButton,
   AuthTextField,
+  AuthFieldGrid,
 } from "../../AuthFormControls";
 import { guardianRegisterAction, type RegisterActionResult } from "../actions";
 
@@ -57,46 +58,33 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
         minLength={2}
         error={fieldErrors?.name}
       />
-      <AuthTextField
-        name="email"
-        type="email"
-        label="Your email"
-        autoComplete="email"
-        required
-        defaultValue={defaultEmail}
-        hint="Use the same email the student invited."
-        error={fieldErrors?.email}
-      />
-      <AuthTextField
-        name="inviteCode"
-        label="Invite code"
-        placeholder="ABC-DEF-GHJ"
-        required
-        defaultValue={defaultCode}
-        hint="9 characters. Dashes are optional."
-        error={fieldErrors?.inviteCode}
-      />
-      <AuthPasswordField
-        name="password"
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-        label="Password"
-        autoComplete="new-password"
-        required
-        minLength={8}
-        hint="At least 8 characters."
-        error={fieldErrors?.password}
-      />
-      <AuthPasswordField
-        name="confirmPassword"
-        value={confirmPassword}
-        onChange={(event) => setConfirmPassword(event.target.value)}
-        label="Confirm password"
-        autoComplete="new-password"
-        required
-        minLength={8}
-        error={fieldErrors?.confirmPassword}
-      />
+
+      <input name="email" type="hidden" value={defaultEmail} readOnly />
+      <input name="inviteCode" type="hidden" value={defaultCode} readOnly />
+
+      <AuthFieldGrid>
+        <AuthPasswordField
+          name="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          label="Password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+          hint="At least 8 characters."
+          error={fieldErrors?.password}
+        />
+        <AuthPasswordField
+          name="confirmPassword"
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          label="Confirm password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+          error={fieldErrors?.confirmPassword}
+        />
+      </AuthFieldGrid>
 
       <AuthFormActions>
         <AuthSubmitButton type="submit" isLoading={isPending}>

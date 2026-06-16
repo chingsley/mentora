@@ -18,9 +18,11 @@ import { TeacherProfileScheduleTab } from "./TeacherProfileScheduleTab";
 import type { TeacherProfileTabsProps } from "./TeacherProfileTabs.types";
 import { TeacherProfileViewTab } from "./TeacherProfileViewTab";
 import {
+  isTeacherProfileMaintenanceTabId,
   isTeacherProfileTabId,
   nextTabAfterSave,
   previousTabBefore,
+  TEACHER_PROFILE_MAINTENANCE_TABS,
   TEACHER_PROFILE_TAB_LABEL,
 } from "./teacherProfileTabIds";
 import type { TeacherProfileTabId } from "./teacherProfileTabIds";
@@ -49,7 +51,16 @@ const Toolbar = styled.div`
   border-bottom: 1px solid ${COLORS.BORDER};
 `;
 
-function resolveTab(urlTab: string | null, initialTab: string | null | undefined): TeacherProfileTabId {
+function resolveTab(
+  urlTab: string | null,
+  initialTab: string | null | undefined,
+  maintenanceMode: boolean,
+): TeacherProfileTabId {
+  if (maintenanceMode) {
+    if (urlTab && isTeacherProfileMaintenanceTabId(urlTab)) return urlTab;
+    if (initialTab && isTeacherProfileMaintenanceTabId(initialTab)) return initialTab;
+    return "view";
+  }
   if (urlTab && isTeacherProfileTabId(urlTab)) return urlTab;
   if (initialTab && isTeacherProfileTabId(initialTab)) return initialTab;
   return "view";
@@ -65,27 +76,39 @@ function TabsFallback() {
 
 function TeacherProfileTabsInner({
   initialTab,
+  maintenanceMode = false,
   ...props
-}: TeacherProfileTabsProps & { initialTab?: string | null; }) {
+}: TeacherProfileTabsProps & { initialTab?: string | null; maintenanceMode?: boolean; }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const urlTab = params.get("tab");
-  const tab = resolveTab(urlTab, initialTab ?? null);
+  const tab = resolveTab(urlTab, initialTab ?? null, maintenanceMode);
+  const visibleTabIds = maintenanceMode
+    ? [...TEACHER_PROFILE_MAINTENANCE_TABS]
+    : (Object.keys(TAB_LABEL) as TeacherProfileTabId[]);
 
   const setTab = React.useCallback(
     (next: string) => {
       const v: TeacherProfileTabId = isTeacherProfileTabId(next) ? next : "view";
+      if (maintenanceMode && !isTeacherProfileMaintenanceTabId(v)) return;
       router.replace(`${pathname}?tab=${v}`, { scroll: false });
     },
-    [pathname, router],
+    [maintenanceMode, pathname, router],
   );
+
+  React.useEffect(() => {
+    if (!maintenanceMode) return;
+    if (!isTeacherProfileMaintenanceTabId(tab)) {
+      router.replace(`${pathname}?tab=view`, { scroll: false });
+    }
+  }, [maintenanceMode, pathname, router, tab]);
 
   return (
     <Tabs value={tab} onValueChange={setTab} variant="underline">
       <Toolbar>
         <TabsList aria-label="Teacher profile sections">
-          {(Object.keys(TAB_LABEL) as TeacherProfileTabId[]).map((id) => (
+          {visibleTabIds.map((id) => (
             <TabsTrigger key={id} value={id}>
               {TAB_LABEL[id]}
             </TabsTrigger>
@@ -122,17 +145,21 @@ function TeacherProfileTabsInner({
 
       <TabsContent value="bio">
         <TeacherProfileBioTab
-          key={`${props.bio}|${props.spokenLanguages}|${props.imageUrl ?? ""}`}
+          key={`${props.bio}|${props.spokenLanguages}|${props.locationCountryCode}|${props.locationCity}|${props.imageUrl ?? ""}`}
           initials={props.initials}
           imageUrl={props.imageUrl}
           bio={props.bio}
           spokenLanguages={props.spokenLanguages}
+          locationCountryCode={props.locationCountryCode}
+          locationCity={props.locationCity}
           locationLabel={props.locationLabel}
           onAdvance={() => setTab(nextTabAfterSave("bio"))}
           onBack={() => setTab("view")}
         />
       </TabsContent>
 
+      {!maintenanceMode ? (
+        <>
       <TabsContent value="courses">
         <TeacherProfileCoursesTab
           allSubjects={props.allSubjects}
@@ -156,6 +183,9 @@ function TeacherProfileTabsInner({
           globalCap={props.globalCap}
           billingCurrency={props.billingCurrency}
           regionMinHourlyMajor={props.regionMinHourlyMajor}
+          rateRegions={props.rateRegions}
+          rateCells={props.rateCells}
+          teacherRegionCode={props.teacherRegionCode}
           onAdvance={() => setTab(nextTabAfterSave("schedule"))}
           onBack={() => setTab(previousTabBefore("schedule"))}
         />
@@ -166,19 +196,26 @@ function TeacherProfileTabsInner({
           payoutLegalName={props.payoutLegalName}
           payoutCountryCode={props.payoutCountryCode}
           payoutPreferredMethod={props.payoutPreferredMethod}
+          payoutBankName={props.payoutBankName}
+          payoutBankBranch={props.payoutBankBranch}
+          payoutBankAccountNumber={props.payoutBankAccountNumber}
+          payoutBankRoutingNumber={props.payoutBankRoutingNumber}
           payoutNotes={props.payoutNotes}
           onAdvance={() => setTab(nextTabAfterSave("payment"))}
           onBack={() => setTab(previousTabBefore("payment"))}
         />
       </TabsContent>
+        </>
+      ) : null}
     </Tabs>
   );
 }
 
 export function TeacherProfileTabsClient({
   initialTab,
+  maintenanceMode = false,
   ...props
-}: TeacherProfileTabsProps & { initialTab?: string | null; }) {
+}: TeacherProfileTabsProps & { initialTab?: string | null; maintenanceMode?: boolean; }) {
   return (
     <Shell>
       <AppPageHeader
@@ -189,7 +226,11 @@ export function TeacherProfileTabsClient({
         searchPlaceholder="Search students, classes, messages..."
       />
       <Suspense fallback={<TabsFallback />}>
-        <TeacherProfileTabsInner initialTab={initialTab} {...props} />
+        <TeacherProfileTabsInner
+          initialTab={initialTab}
+          maintenanceMode={maintenanceMode}
+          {...props}
+        />
       </Suspense>
     </Shell>
   );

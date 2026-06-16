@@ -29,7 +29,6 @@ const Th = styled.th`
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: ${DASHBOARD.TABLE_HEAD.TEXT};
-  border-top: 1px solid ${DASHBOARD.TABLE_HEAD.BORDER_TOP};
   border-bottom: 1px solid ${DASHBOARD.BORDER_SUBTLE};
   background: ${DASHBOARD.TABLE_HEAD.BACKGROUND};
 `;

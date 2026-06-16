@@ -5,6 +5,7 @@ import * as React from "react";
 import styled from "styled-components";
 import { addTeacherCourseAction, type ActionResult } from "@/app/(app)/profile/actions";
 import { Button } from "@/components/ui/Button";
+import { InlineFormFieldRow } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
@@ -36,15 +37,11 @@ const Form = styled.form`
   gap: ${SPACING.FOUR};
 `;
 
-const FieldsRow = styled.div`
-  display: grid;
+const FieldsRow = styled(InlineFormFieldRow)`
   grid-template-columns: 1fr;
-  gap: ${SPACING.FOUR};
-  align-items: end;
 
   ${LAYOUT.MEDIA.SM} {
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
-    gap: ${SPACING.THREE};
   }
 `;
 
@@ -195,7 +192,8 @@ export function TeacherProfileAddCourseForm({
           </EditBanner>
         ) : null}
         <Banner>
-          Set hourly rates when you schedule each class on your weekly timetable.
+          You&apos;ll set your hourly rate for each class in the next step when you add times to your
+          schedule.
         </Banner>
         <FieldsRow>
           <TeacherProfileSubjectSearch

@@ -3,6 +3,7 @@ import { AppShell } from "@/components/layouts/AppShell";
 import { ToastProvider } from "@/components/ui/Toast";
 import { StudentRemindersHost } from "@/components/features/student/StudentRemindersHost";
 import { listGuardianWards } from "@/server/guardians";
+import { getTeacherProfileCompleted } from "@/server/teachers";
 
 export default async function AppAuthedLayout({
   children,
@@ -16,9 +17,20 @@ export default async function AppAuthedLayout({
   const wards =
     session.user.role === "GUARDIAN" ? await listGuardianWards(session.user.id) : undefined;
 
+  const teacherProfileCompleted =
+    session.user.role === "TEACHER"
+      ? await getTeacherProfileCompleted(session.user.id)
+      : undefined;
+
   return (
     <ToastProvider>
-      <AppShell user={session.user} wards={wards}>
+      <AppShell
+        user={{
+          ...session.user,
+          teacherProfileCompleted,
+        }}
+        wards={wards}
+      >
         {children}
       </AppShell>
       {showReminders ? <StudentRemindersHost studentName={displayName} /> : null}

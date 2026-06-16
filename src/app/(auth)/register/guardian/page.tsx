@@ -14,7 +14,7 @@ export default async function GuardianRegisterPage({ searchParams }: Props) {
   return (
     <AuthPageFrame
       title="Guardian signup"
-      lead="Your student shared an invite code with you. Enter it below to link your account to theirs."
+      lead="A student invited you as their guardian. Enter your full name and choose a password to complete setup and start following their progress."
     >
       <GuardianRegisterForm defaultEmail={email ?? ""} defaultCode={code ?? ""} />
     </AuthPageFrame>

@@ -7,7 +7,7 @@ import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
+import { FORM_FIELD, formFieldControlBorder, formFieldSelectChevronStyles } from "@/constants/formField.constants";
 import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
 import { MARKETING } from "@/constants/marketing.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -108,13 +108,7 @@ const FloatField = styled.div<{ $floating?: boolean; $hasToggle?: boolean; }>`
   }
 
   & > select {
-    padding-right: 22px;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%230a2540' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0 bottom 10px;
-    background-size: 12px 12px;
+    ${formFieldSelectChevronStyles(AUTH_THEME.text)};
   }
 
   ${(p) =>
@@ -343,7 +337,7 @@ export const AuthLink = styled(Link)`
   }
 `;
 
-export type AuthRegisterRole = "STUDENT" | "TEACHER" | "GUARDIAN";
+export type AuthRegisterRole = "STUDENT" | "TEACHER";
 
 const RoleRadioGroupShell = styled.fieldset`
   margin: 0 0 ${SPACING.FIVE};
@@ -415,7 +409,6 @@ const RoleRadioInput = styled.input.attrs({ type: "radio" })`
 const ROLE_RADIO_OPTIONS: { value: AuthRegisterRole; label: string; }[] = [
   { value: "STUDENT", label: "Student" },
   { value: "TEACHER", label: "Teacher" },
-  { value: "GUARDIAN", label: "Guardian" },
 ];
 
 export interface AuthRoleRadioGroupProps {

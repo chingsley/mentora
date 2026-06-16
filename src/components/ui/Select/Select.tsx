@@ -2,32 +2,26 @@
 
 import * as React from "react";
 import styled from "styled-components";
+import {
+  FormFieldControlSlot,
+  FormFieldError,
+  FormFieldLabel,
+  FormFieldLabelSlot,
+  FormFieldMetaSlot,
+  FormFieldRoot,
+} from "@/components/ui/FormField";
 import { COLORS } from "@/constants/colors.constants";
-import { FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
+import { FORM_FIELD, formFieldControlBorder, formFieldSelectChevronStyles } from "@/constants/formField.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { SPACING } from "@/constants/spacing.constants";
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
-  options: Array<{ value: string; label: string; }>;
+  options: Array<{ value: string; label: string }>;
   placeholder?: string;
 }
 
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.TWO};
-  width: 100%;
-`;
-
-const Label = styled.label`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.BOLD};
-  color: ${COLORS.HEADER};
-`;
-
-const StyledSelect = styled.select<{ $hasError: boolean; $isPlaceholder: boolean; }>`
+const StyledSelect = styled.select<{ $hasError: boolean; $isPlaceholder: boolean }>`
   height: ${FORM_FIELD.CONTROL_MIN_HEIGHT};
   width: 100%;
   padding: 0 ${FORM_FIELD.CONTROL_PADDING_INLINE};
@@ -35,12 +29,13 @@ const StyledSelect = styled.select<{ $hasError: boolean; $isPlaceholder: boolean
   font-family: ${FONTS.FAMILY.PRIMARY};
   font-weight: ${FONTS.WEIGHT.NORMAL};
   line-height: 1.4;
-  color: ${(p) => (p.$isPlaceholder ? COLORS.MUTED_FOREGROUND : COLORS.TEXT)};
+  color: ${(p) => (p.$isPlaceholder ? FORM_FIELD.PLACEHOLDER_COLOR : COLORS.TEXT)};
   background-color: ${FORM_FIELD.CONTROL_BACKGROUND};
   border-radius: ${FORM_FIELD.CONTROL_RADIUS};
   border: ${(p) => formFieldControlBorder(p.$hasError)};
   outline: none;
   transition: border-color 0.15s ease;
+  ${formFieldSelectChevronStyles()};
 
   &:hover:not(:disabled) {
     border-color: ${(p) => (p.$hasError ? COLORS.DESTRUCTIVE : COLORS.PRIMARY)};
@@ -48,12 +43,8 @@ const StyledSelect = styled.select<{ $hasError: boolean; $isPlaceholder: boolean
 
   &:disabled {
     opacity: 0.6;
+    cursor: not-allowed;
   }
-`;
-
-const ErrorText = styled.p`
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.DESTRUCTIVE};
 `;
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(function Select(
@@ -70,6 +61,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(function 
   });
   const currentValue = isControlled ? String(rest.value ?? "") : uncontrolledValue;
   const isPlaceholder = !!placeholder && currentValue === "";
+  const hasLabel = Boolean(label);
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     if (!isControlled) setUncontrolledValue(e.currentTarget.value);
@@ -77,29 +69,37 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(function 
   }
 
   return (
-    <Field>
-      {label ? <Label htmlFor={selectId}>{label}</Label> : null}
-      <StyledSelect
-        id={selectId}
-        ref={ref}
-        $hasError={!!error}
-        $isPlaceholder={isPlaceholder}
-        aria-invalid={error ? true : undefined}
-        {...rest}
-        onChange={handleChange}
-      >
-        {placeholder ? (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        ) : null}
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </StyledSelect>
-      {error ? <ErrorText>{error}</ErrorText> : null}
-    </Field>
+    <FormFieldRoot $hasLabel={hasLabel}>
+      {hasLabel ? (
+        <FormFieldLabelSlot>
+          <FormFieldLabel htmlFor={selectId}>{label}</FormFieldLabel>
+        </FormFieldLabelSlot>
+      ) : null}
+      <FormFieldControlSlot>
+        <StyledSelect
+          id={selectId}
+          ref={ref}
+          $hasError={!!error}
+          $isPlaceholder={isPlaceholder}
+          aria-invalid={error ? true : undefined}
+          {...rest}
+          onChange={handleChange}
+        >
+          {placeholder ? (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          ) : null}
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </StyledSelect>
+      </FormFieldControlSlot>
+      <FormFieldMetaSlot>
+        {error ? <FormFieldError>{error}</FormFieldError> : null}
+      </FormFieldMetaSlot>
+    </FormFieldRoot>
   );
 });

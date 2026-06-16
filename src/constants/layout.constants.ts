@@ -38,6 +38,14 @@ export const LAYOUT = {
   MOTION: {
     DRAWER_DURATION: "0.28s",
     DRAWER_EASING: "cubic-bezier(0.32, 0.72, 0, 1)",
+    OVERLAY_DURATION: "0.24s",
+    OVERLAY_EASING: "cubic-bezier(0.32, 0.72, 0, 1)",
+  },
+  /** Large centered modal (onboarding, full-page forms). */
+  MODAL: {
+    PAGE_MAX_WIDTH: "88rem",
+    PAGE_MAX_HEIGHT: "90dvh",
+    PAGE_INSET: SPACING.FOUR,
   },
   /** Shared `PageLoader` geometry and motion (App Router `loading.tsx`). */
   PAGE_LOADER: {
@@ -103,6 +111,8 @@ export const LAYOUT = {
   MAX_WIDTH: {
     /** Teacher profile Photo & bio form (~800px at 16px root); full width below `MEDIA.SM`. */
     TEACHER_PROFILE_BIO_FORM: "60rem",
+    /** Onboarding wizard column — consistent width across every setup step. */
+    TEACHER_PROFILE_SETUP: "60rem",
   },
   MEDIA: {
     SM: "@media (min-width: 640px)",

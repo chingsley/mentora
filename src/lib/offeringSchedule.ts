@@ -266,6 +266,106 @@ export function recurrenceFromOfferingSeed(seed: OfferingDialogSeed): OfferingRe
   });
 }
 
+export type SetupScheduleFrequency = "ONCE" | "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+
+export function setupFrequencyFromScheduleEditor(
+  value: OfferingScheduleEditorValue,
+): SetupScheduleFrequency {
+  if (!value.isRecurring) return "ONCE";
+  if (value.repeatUnit === "month") return "MONTHLY";
+  if (value.repeatInterval >= 2) return "BIWEEKLY";
+  if (uniqueDaysOfWeek(value.selectedDays).length === DAY_ORDER.length) return "DAILY";
+  return "WEEKLY";
+}
+
+export function applySetupFrequencyToScheduleEditor(
+  value: OfferingScheduleEditorValue,
+  frequency: SetupScheduleFrequency,
+): OfferingScheduleEditorValue {
+  switch (frequency) {
+    case "ONCE":
+      return { ...value, isRecurring: false };
+    case "DAILY":
+      return {
+        ...value,
+        isRecurring: true,
+        repeatUnit: "week",
+        repeatInterval: 1,
+        selectedDays: [...DAY_ORDER],
+      };
+    case "WEEKLY":
+      return {
+        ...value,
+        isRecurring: true,
+        repeatUnit: "week",
+        repeatInterval: 1,
+        selectedDays:
+          value.selectedDays.length > 0 ? uniqueDaysOfWeek(value.selectedDays) : [value.selectedDays[0] ?? "TUE"],
+      };
+    case "BIWEEKLY":
+      return {
+        ...value,
+        isRecurring: true,
+        repeatUnit: "week",
+        repeatInterval: 2,
+        selectedDays:
+          value.selectedDays.length > 0 ? uniqueDaysOfWeek(value.selectedDays) : [value.selectedDays[0] ?? "TUE"],
+      };
+    case "MONTHLY":
+      return {
+        ...value,
+        isRecurring: true,
+        repeatUnit: "month",
+        repeatInterval: 1,
+        selectedDays: [value.selectedDays[0] ?? dayOfWeekFromDate(parseIsoDate(value.startDate || formatIsoDate(new Date())))],
+      };
+  }
+}
+
+export interface OfferingScheduleFormFields {
+  subjectId: string;
+  title: string;
+  description?: string;
+  hourlyRateMajor: string;
+  teacherCap: string;
+  periodType: OfferingPeriodType;
+  schedule: OfferingScheduleEditorValue;
+  offeringId?: string;
+  invitedStudentProfileIds?: string[];
+}
+
+export function appendOfferingScheduleFormData(
+  formData: FormData,
+  fields: OfferingScheduleFormFields,
+): void {
+  formData.set("subjectId", fields.subjectId);
+  formData.set("title", fields.title);
+  if (fields.description) formData.set("description", fields.description);
+  formData.set("hourlyRateMajor", fields.hourlyRateMajor);
+  formData.set("teacherCap", fields.teacherCap);
+  formData.set("periodType", fields.periodType);
+
+  const { slots, recurrence } = slotsAndRecurrenceFromScheduleEditor(fields.schedule);
+  formData.set("recurrenceKind", recurrence.kind);
+  if (recurrence.anchorDate) formData.set("recurrenceAnchorDate", recurrence.anchorDate);
+  if (recurrence.ordinal !== "") formData.set("recurrenceOrdinal", String(recurrence.ordinal));
+  if (recurrence.interval !== "") formData.set("recurrenceInterval", String(recurrence.interval));
+
+  slots.forEach((slot, index) => {
+    formData.set(`slots[${index}].dayOfWeek`, slot.dayOfWeek);
+    formData.set(`slots[${index}].startTime`, slot.startTime);
+    formData.set(`slots[${index}].endTime`, slot.endTime);
+  });
+
+  if (fields.offeringId) formData.set("offeringId", fields.offeringId);
+
+  if (fields.periodType === "RESERVED" && fields.invitedStudentProfileIds) {
+    fields.invitedStudentProfileIds.forEach((id) => {
+      formData.append("invitedStudentProfileIds", id);
+    });
+  }
+}
+
 export function buildOfferingDialogInitial(
   target: OfferingDialogSeed,
   allOfferings: OfferingDialogSeed[],

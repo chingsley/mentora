@@ -6,18 +6,18 @@ import { RegisterForm } from "./RegisterForm";
 export const metadata: Metadata = { title: "Create account" };
 
 interface RegisterPageProps {
-  searchParams: Promise<{ role?: string; }>;
+  searchParams: Promise<{ role?: string }>;
 }
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
   const { role } = await searchParams;
   const defaultRole: AuthRegisterRole =
-    role === "TEACHER" || role === "STUDENT" || role === "GUARDIAN" ? role : "STUDENT";
+    role === "TEACHER" || role === "STUDENT" ? role : "STUDENT";
 
   return (
     <AuthPageFrame
       title="Register"
-      lead="Join as a student, teacher, or guardian. It only takes a minute."
+      lead="Join as a student or teacher. It only takes a minute."
     >
       <RegisterForm defaultRole={defaultRole} />
     </AuthPageFrame>

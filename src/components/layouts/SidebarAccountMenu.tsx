@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Info, LogOut, Settings, UserCircle2 } from "lucide-react";
+import { ChevronDown, LogOut, Settings, UserCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Role } from "@prisma/client";
@@ -12,6 +12,7 @@ import { FONTS } from "@/constants/fonts.constants";
 import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { SURFACE } from "@/constants/surface.constants";
 import { signOutAction } from "./actions";
 
 const S = LAYOUT.APP_SHELL.SIDEBAR;
@@ -35,7 +36,7 @@ const TriggerButton = styled(Button) <{ $collapsed: boolean; }>`
     gap: ${SPACING.THREE};
   }
 
-  border-radius: ${LAYOUT.RADIUS.FULL};
+  border-radius: ${(p) => (p.$collapsed ? LAYOUT.RADIUS.FULL : SURFACE.RADIUS)};
   padding: ${(p) => (p.$collapsed ? SPACING.TWO : `${SPACING.TWO} ${SPACING.FOUR}`)};
   min-height: ${SPACING.TEN};
 `;
@@ -303,17 +304,6 @@ export function SidebarAccountMenu({ user, navCollapsed, onNavigate }: SidebarAc
             {labeledMenu ? <MenuItemLabel>My profile</MenuItemLabel> : null}
           </MenuIconLink>
         ) : null}
-        <MenuIconLink
-          role="menuitem"
-          href="/"
-          $labeled={labeledMenu}
-          aria-label={labeledMenu ? undefined : "About us"}
-          title={labeledMenu ? undefined : "About us"}
-          onClick={closeAndNavigate}
-        >
-          <Info size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
-          {labeledMenu ? <MenuItemLabel>About us</MenuItemLabel> : null}
-        </MenuIconLink>
         <SignOutWrap role="none">
           <MenuSignOutIconButton
             type="button"

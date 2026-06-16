@@ -5,7 +5,12 @@ import { DayOfWeek } from "@prisma/client";
 import { db } from "@/lib/db";
 import { clampTeacherCap } from "@/lib/capacity";
 import { majorToSmallest } from "@/lib/money";
-import { isTeacherCoursesPhaseComplete } from "@/lib/teacherCoursesCompleteness";
+import { isTeacherProfileSetupComplete } from "@/lib/teacherProfileSetup";
+import { TEACHER_PAYOUT_METHOD } from "@/constants/teacherPayout.constants";
+import {
+  formatTeacherLocationLabel,
+  getTeacherLocationCountryName,
+} from "@/lib/teacherProfileLocation";
 import { assertAtLeastMinRate } from "@/lib/pricing";
 import { intervalsOverlapHalfOpen } from "@/lib/scheduleOverlap";
 import { minutesToTime } from "@/lib/time";
@@ -19,6 +24,7 @@ import {
   recurrenceToDb,
 } from "@/lib/offeringRecurrence";
 import { TEACHER_PROFILE_ADD_COURSE } from "@/constants/teacherProfileCourse.constants";
+import { TEACHER_BIO_MAX_LENGTH } from "@/constants/teacherProfile.constants";
 import { getPolicy } from "./policies";
 
 export interface TeacherSearchFilters {
@@ -231,11 +237,9 @@ export async function getMyTeacherProfile(teacherUserId: string): Promise<{
   return { profile, studentsPerSubject, activeStudentCount: activeStudents.size };
 }
 
-// ---------- Bio ----------
-
 export const updateBioSchema = z.object({
   headline: z.string().trim().min(3).max(120),
-  bio: z.string().trim().max(2000).optional().default(""),
+  bio: z.string().trim().max(TEACHER_BIO_MAX_LENGTH).optional().default(""),
 });
 
 export const setTeacherRegionSchema = z.object({
@@ -251,9 +255,14 @@ export function normalizeSpokenLanguages(raw: string): string {
 }
 
 export const saveTeacherBioTabSchema = z.object({
-  bio: z.string().trim().max(2000).optional().default(""),
+  bio: z.string().trim().max(TEACHER_BIO_MAX_LENGTH).optional().default(""),
   spokenLanguages: z.string().trim().min(2, "Add languages you speak (e.g. English, Portuguese)").max(500),
-  locationLabel: z.string().trim().max(120).optional().default(""),
+  locationCountryCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{2}$/, "Select a country"),
+  locationCity: z.string().trim().min(1, "Enter your city").max(120),
 });
 
 export type SaveTeacherBioTabInput = z.infer<typeof saveTeacherBioTabSchema>;
@@ -261,11 +270,15 @@ export type SaveTeacherBioTabInput = z.infer<typeof saveTeacherBioTabSchema>;
 export async function saveTeacherBioTab(teacherUserId: string, input: SaveTeacherBioTabInput) {
   const teacher = await requireTeacher(teacherUserId);
   const languages = normalizeSpokenLanguages(input.spokenLanguages);
+  const countryName = getTeacherLocationCountryName(input.locationCountryCode);
+  const locationLabel = formatTeacherLocationLabel(input.locationCity, countryName);
 
   const teacherProfileBioData = {
     bio: input.bio ?? "",
     spokenLanguages: languages,
-    locationLabel: input.locationLabel ?? "",
+    locationCountryCode: input.locationCountryCode,
+    locationCity: input.locationCity,
+    locationLabel,
   } as Prisma.TeacherProfileUncheckedUpdateInput;
 
   await db.teacherProfile.update({
@@ -276,27 +289,62 @@ export async function saveTeacherBioTab(teacherUserId: string, input: SaveTeache
   await recomputeProfileCompleted(teacher.id);
 }
 
-export const saveTeacherPayoutTabSchema = z.object({
-  payoutLegalName: z.string().trim().max(200).optional().default(""),
-  payoutCountryCode: z
-    .string()
-    .trim()
-    .max(2)
-    .optional()
-    .default("")
-    .transform((s) => (s.length === 2 ? s.toUpperCase() : "")),
-  payoutPreferredMethod: z.string().trim().max(64).optional().default(""),
-  payoutNotes: z.string().trim().max(5000).optional().default(""),
-});
+export const saveTeacherPayoutTabSchema = z
+  .object({
+    payoutLegalName: z.string().trim().max(200).optional().default(""),
+    payoutCountryCode: z
+      .string()
+      .trim()
+      .max(2)
+      .optional()
+      .default("")
+      .transform((s) => (s.length === 2 ? s.toUpperCase() : "")),
+    payoutPreferredMethod: z.string().trim().max(64).optional().default(""),
+    payoutBankName: z.string().trim().max(200).optional().default(""),
+    payoutBankBranch: z.string().trim().max(200).optional().default(""),
+    payoutBankAccountNumber: z.string().trim().max(64).optional().default(""),
+    payoutBankRoutingNumber: z.string().trim().max(64).optional().default(""),
+    payoutNotes: z.string().trim().max(5000).optional().default(""),
+  })
+  .superRefine((value, ctx) => {
+    if (value.payoutPreferredMethod !== TEACHER_PAYOUT_METHOD.BANK_TRANSFER) return;
+
+    if (!value.payoutBankName.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter your bank name",
+        path: ["payoutBankName"],
+      });
+    }
+    if (!value.payoutBankBranch.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter your branch",
+        path: ["payoutBankBranch"],
+      });
+    }
+    if (!value.payoutBankAccountNumber.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter your account number",
+        path: ["payoutBankAccountNumber"],
+      });
+    }
+  });
 
 export type SaveTeacherPayoutTabInput = z.infer<typeof saveTeacherPayoutTabSchema>;
 
 export async function saveTeacherPayoutTab(teacherUserId: string, input: SaveTeacherPayoutTabInput) {
   const teacher = await requireTeacher(teacherUserId);
+  const usesBankTransfer = input.payoutPreferredMethod === TEACHER_PAYOUT_METHOD.BANK_TRANSFER;
   const payoutData = {
     payoutLegalName: input.payoutLegalName || null,
     payoutCountryCode: input.payoutCountryCode || null,
     payoutPreferredMethod: input.payoutPreferredMethod?.trim() || null,
+    payoutBankName: usesBankTransfer ? input.payoutBankName.trim() || null : null,
+    payoutBankBranch: usesBankTransfer ? input.payoutBankBranch.trim() || null : null,
+    payoutBankAccountNumber: usesBankTransfer ? input.payoutBankAccountNumber.trim() || null : null,
+    payoutBankRoutingNumber: usesBankTransfer ? input.payoutBankRoutingNumber.trim() || null : null,
     payoutNotes: input.payoutNotes || null,
   } as Prisma.TeacherProfileUncheckedUpdateInput;
 
@@ -304,6 +352,7 @@ export async function saveTeacherPayoutTab(teacherUserId: string, input: SaveTea
     where: { id: teacher.id },
     data: payoutData,
   });
+  await recomputeProfileCompleted(teacher.id);
 }
 
 export async function updateTeacherBio(
@@ -1266,28 +1315,38 @@ async function requireTeacher(teacherUserId: string) {
   return teacher;
 }
 
+export async function getTeacherProfileCompleted(userId: string): Promise<boolean | null> {
+  const profile = await db.teacherProfile.findUnique({
+    where: { userId },
+    select: { profileCompleted: true },
+  });
+  return profile?.profileCompleted ?? null;
+}
+
 export async function recomputeProfileCompleted(teacherProfileId: string) {
   const profile = await db.teacherProfile.findUnique({
     where: { id: teacherProfileId },
     include: {
-      user: { select: { image: true, region: { select: { code: true } } } },
+      user: { select: { image: true } },
       subjects: { select: { subjectId: true } },
-      rates: { select: { subjectId: true, region: { select: { code: true } } } },
       offerings: { select: { id: true } },
     },
   });
   if (!profile) return;
 
-  const coursesComplete = isTeacherCoursesPhaseComplete({
+  const complete = isTeacherProfileSetupComplete({
+    image: profile.user.image,
+    bio: profile.bio,
+    spokenLanguages: String((profile as { spokenLanguages?: string | null }).spokenLanguages ?? ""),
     subjectIds: profile.subjects.map((s) => s.subjectId),
+    offeringsCount: profile.offerings.length,
+    payoutLegalName: profile.payoutLegalName,
+    payoutCountryCode: profile.payoutCountryCode,
+    payoutPreferredMethod: profile.payoutPreferredMethod,
+    payoutBankName: profile.payoutBankName,
+    payoutBankBranch: profile.payoutBankBranch,
+    payoutBankAccountNumber: profile.payoutBankAccountNumber,
   });
-  const complete =
-    Boolean(profile.user.image) &&
-    coursesComplete &&
-    profile.offerings.length > 0 &&
-    profile.bio.trim().length > 0 &&
-    String((profile as { spokenLanguages?: string | null; }).spokenLanguages ?? "").trim().length >
-    0;
   if (profile.profileCompleted !== complete) {
     await db.teacherProfile.update({
       where: { id: teacherProfileId },

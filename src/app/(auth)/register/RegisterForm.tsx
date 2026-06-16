@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import {
-  AuthCallout,
   AuthFeedbackBanner,
   AuthFoot,
   AuthForm,
@@ -62,13 +61,6 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
         error={fieldErrors?.role}
       />
 
-      {role === "GUARDIAN" ? (
-        <AuthCallout>
-          Guardians need an invite from a student.{" "}
-          <AuthLink href="/register/guardian">Use the guardian signup page</AuthLink> with your
-          invite code.
-        </AuthCallout>
-      ) : null}
       <AuthTextField
         name="name"
         label="Full name"
@@ -112,20 +104,6 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
           error={fieldErrors?.confirmPassword}
         />
       </AuthFieldGrid>
-
-      {/* {role === "STUDENT" ? (
-        <AuthCallout>
-          Right after sign-up you&apos;ll set up your profile: photo, a short bio,
-          and the subjects you want to learn.
-        </AuthCallout>
-      ) : null} */}
-
-      {/* {role === "TEACHER" ? (
-        <AuthCallout>
-          After sign-up you&apos;ll finish your teacher profile: photo, teaching region,
-          subjects, rates, and weekly schedule.
-        </AuthCallout>
-      ) : null} */}
 
       <AuthFormActions>
         <AuthSubmitButton type="submit" isLoading={isPending}>

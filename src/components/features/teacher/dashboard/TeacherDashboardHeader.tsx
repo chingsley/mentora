@@ -132,7 +132,7 @@ const SearchInput = styled.input`
   outline: none;
 
   &::placeholder {
-    color: ${DASHBOARD.TEXT_MUTED};
+    color: ${COLORS.INPUT_PLACEHOLDER};
   }
 `;
 
