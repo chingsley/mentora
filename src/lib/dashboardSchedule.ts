@@ -1,5 +1,17 @@
-import type { DayOfWeek } from "@prisma/client";
-import { DAY_LABEL, DAY_ORDER } from "@/lib/time";
+import type { DayOfWeek, OfferingRecurrenceKind } from "@prisma/client";
+import { nextOccurrence } from "@/lib/recurrence";
+import { recurrenceFromDb } from "@/lib/offeringRecurrence";
+import { DAY_LABEL } from "@/lib/time";
+
+export interface OfferingScheduleFields {
+  dayOfWeek: DayOfWeek;
+  startMinutes: number;
+  recurrenceKind: OfferingRecurrenceKind;
+  recurrenceAnchorDate: Date | null;
+  recurrenceOrdinal: number | null;
+  recurrenceInterval?: number | null;
+  createdAt: Date;
+}
 
 export function formatTimeAmPm(minutes: number): string {
   const h = Math.floor(minutes / 60);
@@ -13,24 +25,39 @@ export function sessionLabel(day: DayOfWeek, startMinutes: number): string {
   return `${DAY_LABEL[day]} · ${formatTimeAmPm(startMinutes)}`;
 }
 
-export function nextOccurrenceParts(day: DayOfWeek, startMinutes: number): { monthShort: string; day: string } {
-  const targetIdx = DAY_ORDER.indexOf(day);
-  const now = new Date();
-  const currentMondayFirst = (now.getDay() + 6) % 7;
-  const addDays = (targetIdx - currentMondayFirst + 7) % 7;
-  const at = new Date(now);
-  at.setHours(0, 0, 0, 0);
-  at.setDate(at.getDate() + addDays);
-  const startH = Math.floor(startMinutes / 60);
-  const startM = startMinutes % 60;
-  at.setHours(startH, startM, 0, 0);
-  if (at.getTime() <= now.getTime()) {
-    at.setDate(at.getDate() + 7);
-  }
+export function nextOfferingOccurrenceAt(
+  offering: OfferingScheduleFields,
+  from: Date = new Date(),
+): Date {
+  const recurrence = recurrenceFromDb({
+    recurrenceKind: offering.recurrenceKind,
+    recurrenceAnchorDate: offering.recurrenceAnchorDate,
+    recurrenceOrdinal: offering.recurrenceOrdinal,
+    recurrenceInterval: offering.recurrenceInterval,
+    scheduleStartFallback: offering.createdAt,
+  });
+  return nextOccurrence(offering.dayOfWeek, offering.startMinutes, from, recurrence);
+}
+
+export function occurrenceDisplayParts(at: Date): { monthShort: string; day: string } {
   return {
     monthShort: at.toLocaleString("en-US", { month: "short" }).toUpperCase(),
     day: String(at.getDate()),
   };
+}
+
+export function nextOccurrenceParts(day: DayOfWeek, startMinutes: number): { monthShort: string; day: string } {
+  return occurrenceDisplayParts(nextOccurrence(day, startMinutes));
+}
+
+export function sortByNextOccurrence<T extends OfferingScheduleFields>(
+  items: T[],
+  from: Date = new Date(),
+): T[] {
+  return [...items].sort(
+    (a, b) =>
+      nextOfferingOccurrenceAt(a, from).getTime() - nextOfferingOccurrenceAt(b, from).getTime(),
+  );
 }
 
 export function daysAgo(date: Date): string {

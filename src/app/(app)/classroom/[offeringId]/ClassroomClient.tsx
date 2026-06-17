@@ -141,7 +141,7 @@ interface JitsiApiOptions {
   width?: string | number;
   height?: string | number;
   jwt?: string;
-  userInfo?: { displayName?: string };
+  userInfo?: { displayName?: string; };
   configOverwrite?: Record<string, unknown>;
   interfaceConfigOverwrite?: Record<string, unknown>;
 }
@@ -300,7 +300,7 @@ function JitsiRoom({
   return <VideoFrame ref={containerRef} />;
 }
 
-function LiveClassroom({ access }: { access: ClassroomAccess }) {
+function LiveClassroom({ access }: { access: ClassroomAccess; }) {
   const router = useRouter();
   const [leaving, setLeaving] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -451,7 +451,7 @@ function StudentWaiting({
   );
 }
 
-function Forbidden({ reason }: { reason: string }) {
+function Forbidden({ reason }: { reason: string; }) {
   return (
     <Wrap>
       <Panel>
@@ -468,7 +468,7 @@ function Forbidden({ reason }: { reason: string }) {
   );
 }
 
-export function ClassroomClient({ view }: { view: ClassroomView }) {
+export function ClassroomClient({ view }: { view: ClassroomView; }) {
   switch (view.kind) {
     case "live":
       return <LiveClassroom access={view.access} />;

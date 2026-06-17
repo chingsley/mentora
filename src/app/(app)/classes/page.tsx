@@ -9,9 +9,15 @@ import { NotificationPermissionBanner } from "@/components/features/student/Noti
 
 export const metadata: Metadata = { title: "My classes" };
 
-export default async function MyClassesPage() {
+export default async function MyClassesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ class?: string }>;
+}) {
   const session = await requireRole("STUDENT");
   const { rows, occurrenceMap } = await getStudentClassCalendarData(session.user.id);
+  const sp = await searchParams;
+  const initialClassId = typeof sp.class === "string" ? sp.class : null;
 
   return (
     <PageWrap>
@@ -39,6 +45,7 @@ export default async function MyClassesPage() {
           rows={rows}
           occurrenceMap={occurrenceMap}
           studentDisplayName={session.user.name ?? "You"}
+          initialClassId={initialClassId}
         />
       )}
     </PageWrap>

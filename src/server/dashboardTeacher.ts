@@ -4,7 +4,9 @@ import { db } from "@/lib/db";
 import {
   daysAgo,
   formatTimeAmPm,
-  nextOccurrenceParts,
+  nextOfferingOccurrenceAt,
+  occurrenceDisplayParts,
+  sortByNextOccurrence,
 } from "@/lib/dashboardSchedule";
 import { formatPrice } from "@/lib/time";
 import type {
@@ -75,18 +77,25 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
     },
   ];
 
-  const upcomingSessions: TeacherDashboardUpcomingSession[] = activeOfferings.slice(0, 6).map((o) => {
-    const parts = nextOccurrenceParts(o.dayOfWeek, o.startMinutes);
-    const titleShort = o.title.length > 52 ? `${o.title.slice(0, 52)}…` : o.title;
-    return {
-      id: o.id,
-      monthShort: parts.monthShort,
-      day: parts.day,
-      subjectName: o.subject.name,
-      subtitle: titleShort,
-      timeRange: `${formatTimeAmPm(o.startMinutes)} – ${formatTimeAmPm(o.endMinutes)}`,
-    };
-  });
+  const now = new Date();
+  const upcomingSessions: TeacherDashboardUpcomingSession[] = sortByNextOccurrence(
+    activeOfferings,
+    now,
+  )
+    .slice(0, 6)
+    .map((o) => {
+      const at = nextOfferingOccurrenceAt(o, now);
+      const parts = occurrenceDisplayParts(at);
+      const titleShort = o.title.length > 52 ? `${o.title.slice(0, 52)}…` : o.title;
+      return {
+        id: o.id,
+        monthShort: parts.monthShort,
+        day: parts.day,
+        subjectName: o.subject.name,
+        subtitle: titleShort,
+        timeRange: `${formatTimeAmPm(o.startMinutes)} – ${formatTimeAmPm(o.endMinutes)}`,
+      };
+    });
 
   const recentEnrollments = await db.enrollment.findMany({
     where: {

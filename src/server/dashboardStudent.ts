@@ -5,8 +5,10 @@ import {
   daysAgo,
   formatDueLabel,
   formatTimeAmPm,
-  nextOccurrenceParts,
+  nextOfferingOccurrenceAt,
+  occurrenceDisplayParts,
   sessionLabel,
+  sortByNextOccurrence,
 } from "@/lib/dashboardSchedule";
 import { listAssignmentsForStudentUser } from "@/server/assignments";
 import { listStudentEnrollments } from "@/server/enrollments";
@@ -101,19 +103,27 @@ export async function getStudentDashboardPayload(
     };
   });
 
-  const upcomingSessions: StudentDashboardUpcomingSession[] = enrollments.slice(0, 6).map((e) => {
-    const o = e.offering;
-    const parts = nextOccurrenceParts(o.dayOfWeek, o.startMinutes);
-    const titleShort = o.title.length > 52 ? `${o.title.slice(0, 52)}…` : o.title;
-    return {
-      id: e.id,
-      monthShort: parts.monthShort,
-      day: parts.day,
-      subjectName: o.subject.name,
-      subtitle: `${titleShort} · ${o.teacherProfile.user.name}`,
-      timeRange: `${formatTimeAmPm(o.startMinutes)} – ${formatTimeAmPm(o.endMinutes)}`,
-    };
-  });
+  const now = new Date();
+  const enrollmentByOfferingId = new Map(enrollments.map((e) => [e.offering.id, e]));
+  const upcomingSessions: StudentDashboardUpcomingSession[] = sortByNextOccurrence(
+    enrollments.map((e) => e.offering),
+    now,
+  )
+    .slice(0, 6)
+    .map((o) => {
+      const enrollment = enrollmentByOfferingId.get(o.id)!;
+      const at = nextOfferingOccurrenceAt(o, now);
+      const parts = occurrenceDisplayParts(at);
+      const titleShort = o.title.length > 52 ? `${o.title.slice(0, 52)}…` : o.title;
+      return {
+        id: enrollment.id,
+        monthShort: parts.monthShort,
+        day: parts.day,
+        subjectName: o.subject.name,
+        subtitle: `${titleShort} · ${o.teacherProfile.user.name}`,
+        timeRange: `${formatTimeAmPm(o.startMinutes)} – ${formatTimeAmPm(o.endMinutes)}`,
+      };
+    });
 
   const teacherByOffering = new Map(
     enrollments.map((e) => [e.offering.id, e.offering.teacherProfile.user.name]),

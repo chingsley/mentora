@@ -73,6 +73,17 @@ const ClassTitle = styled.span`
   color: ${DASHBOARD.TEXT_PRIMARY};
 `;
 
+const ClassMeta = styled.span`
+  display: block;
+  margin-top: ${SPACING.HALF};
+  font-size: ${FONTS.SIZE.XS};
+  color: ${DASHBOARD.TEXT_MUTED};
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 const CountCell = styled.span`
   display: inline-flex;
   align-items: center;
@@ -122,7 +133,7 @@ export function TeacherClassesTableCard({ rows }: TeacherClassesTableCardProps) 
               </thead>
               <tbody>
                 {rows.map((row) => {
-                  const initials = row.subjectName.slice(0, 2).toUpperCase();
+                  const initials = row.title.slice(0, 2).toUpperCase();
                   return (
                     <Tr key={row.id}>
                       <Td>
@@ -130,7 +141,10 @@ export function TeacherClassesTableCard({ rows }: TeacherClassesTableCardProps) 
                           <IconDot aria-hidden>
                             {initials}
                           </IconDot>
-                          <ClassTitle>{row.subjectName}</ClassTitle>
+                          <div>
+                            <ClassTitle>{row.title}</ClassTitle>
+                            <ClassMeta>{row.subjectName}</ClassMeta>
+                          </div>
                         </ClassCell>
                       </Td>
                       <Td>

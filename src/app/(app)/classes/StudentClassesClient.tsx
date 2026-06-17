@@ -35,6 +35,8 @@ export interface StudentClassesClientProps {
   rows: StudentClassRow[];
   occurrenceMap: Record<string, SessionOccurrenceSnapshot>;
   studentDisplayName: string;
+  /** When set, opens the class details dialog for this offering on load. */
+  initialClassId?: string | null;
 }
 
 const Wrap = styled.div`
@@ -181,11 +183,13 @@ export function StudentClassesClient({
   rows,
   occurrenceMap,
   studentDisplayName,
+  initialClassId = null,
 }: StudentClassesClientProps) {
   const router = useRouter();
   const [tab, setTab] = React.useState<TabKey>("timetable");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
+  const openedFromQuery = React.useRef(false);
   const [isPending, startTransition] = React.useTransition();
   const [message, setMessage] = React.useState<
     { tone: "success" | "error"; text: string } | null
@@ -216,10 +220,21 @@ export function StudentClassesClient({
       ? getOccurrenceSnapshot(occurrenceMap, selectedEntry, selectedDate)
       : null;
 
+  React.useEffect(() => {
+    if (!initialClassId || !detailsByOfferingId[initialClassId]) return;
+    setSelectedId(initialClassId);
+    setSelectedDate(null);
+    openedFromQuery.current = true;
+  }, [initialClassId, detailsByOfferingId]);
+
   function onClose() {
     setSelectedId(null);
     setSelectedDate(null);
     setMessage(null);
+    if (openedFromQuery.current) {
+      openedFromQuery.current = false;
+      router.replace("/classes", { scroll: false });
+    }
   }
 
   function handleDrop(id: string) {

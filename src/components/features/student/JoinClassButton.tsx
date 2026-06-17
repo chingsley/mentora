@@ -6,13 +6,22 @@ import * as React from "react";
 import { Button } from "@/components/ui/Button";
 import { isClassLive } from "@/lib/classSession";
 import type { OfferingRecurrence } from "@/lib/offeringRecurrence";
-import {
-  DEFAULT_OFFERING_RECURRENCE,
-  formatRecurrenceLabel,
-} from "@/lib/offeringRecurrence";
+import { DEFAULT_OFFERING_RECURRENCE } from "@/lib/offeringRecurrence";
+import { nextOccurrence } from "@/lib/recurrence";
 import { minutesToTime } from "@/lib/time";
 
 const LIVE_REFRESH_MS = 30_000;
+
+export function formatJoinClassLabel(
+  dayOfWeek: DayOfWeek,
+  startMinutes: number,
+  recurrence: OfferingRecurrence = DEFAULT_OFFERING_RECURRENCE,
+  from: Date = new Date(),
+): string {
+  const at = nextOccurrence(dayOfWeek, startMinutes, from, recurrence);
+  const dayShort = at.toLocaleDateString("en-US", { weekday: "short" });
+  return `Join Class (${dayShort}, ${minutesToTime(startMinutes)})`;
+}
 
 export interface JoinClassButtonProps {
   offeringId: string;
@@ -38,6 +47,7 @@ export function JoinClassButton({
   }, []);
 
   const live = isClassLive({ dayOfWeek, startMinutes, endMinutes, recurrence });
+  const joinLabel = formatJoinClassLabel(dayOfWeek, startMinutes, recurrence);
 
   if (live) {
     return (
@@ -49,7 +59,7 @@ export function JoinClassButton({
 
   return (
     <Button type="button" variant="secondary" disabled>
-      Opens {formatRecurrenceLabel(recurrence, dayOfWeek)} at {minutesToTime(startMinutes)}
+      {joinLabel}
     </Button>
   );
 }

@@ -5,7 +5,9 @@ import * as React from "react";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { AUTH } from "@/constants/auth.constants";
 import { COLORS } from "@/constants/colors.constants";
+import { FORM_FIELD } from "@/constants/formField.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -20,16 +22,18 @@ const Wrap = styled.div`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: ${SPACING.THREE};
-
-  ${LAYOUT.MEDIA.SM} {
-    flex-direction: row;
-    align-items: flex-end;
-  }
+  gap: ${SPACING.ONE};
+  width: 100%;
+  max-width: ${AUTH.CARD_MAX_WIDTH};
 `;
 
 const Field = styled.div`
-  flex: 1;
+  width: 100%;
+`;
+
+const SubmitButton = styled(Button)`
+  width: 100%;
+  min-height: ${FORM_FIELD.CONTROL_MIN_HEIGHT};
 `;
 
 const Callout = styled.div`
@@ -107,9 +111,9 @@ export function InviteForm() {
             error={err}
           />
         </Field>
-        <Button type="submit" isLoading={isPending}>
-          Send invite
-        </Button>
+        <SubmitButton type="submit" isLoading={isPending}>
+          Send Invite
+        </SubmitButton>
       </Form>
 
       {result?.ok ? (

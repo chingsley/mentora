@@ -1,12 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
+import * as React from "react";
 import styled from "styled-components";
 import { Chip } from "@/components/ui/Chip";
 import { AppHyperLink } from "@/components/ui/Link";
+import { COLORS } from "@/constants/colors.constants";
 import { DASHBOARD } from "@/constants/dashboard.constants";
 import { ICON_BOX_TYPE, ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
 import { FONTS } from "@/constants/fonts.constants";
+import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import type { StudentDashboardClassRow } from "@/types/studentDashboard";
 import {
@@ -41,6 +45,14 @@ const Td = styled.td`
   border-bottom: 1px solid ${DASHBOARD.BORDER_SUBTLE};
   color: ${DASHBOARD.TEXT_PRIMARY};
   vertical-align: middle;
+`;
+
+const ThActions = styled(Th)`
+  text-align: right;
+`;
+
+const TdActions = styled(Td)`
+  text-align: right;
 `;
 
 const Tr = styled.tr`
@@ -103,14 +115,105 @@ const GhostBtn = styled.button`
     background: ${DASHBOARD.ROW_HOVER};
     color: ${DASHBOARD.TEXT_PRIMARY};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.RING};
+    outline-offset: 2px;
+  }
 `;
 
-const RowActions = styled.div`
+const ActionsRoot = styled.div`
+  position: relative;
   display: flex;
-  align-items: center;
+  width: 100%;
   justify-content: flex-end;
-  gap: ${SPACING.TWO};
 `;
+
+const ActionMenu = styled.div<{ $open: boolean }>`
+  position: absolute;
+  bottom: calc(100% + ${SPACING.ONE});
+  right: 0;
+  z-index: ${LAYOUT.Z.STICKY};
+  display: ${(p) => (p.$open ? "flex" : "none")};
+  flex-direction: column;
+  min-width: 10rem;
+  padding: ${SPACING.ONE};
+  border-radius: ${DASHBOARD.CARD_RADIUS};
+  border: 1px solid ${DASHBOARD.CARD_BORDER};
+  background-color: ${DASHBOARD.CARD_BACKGROUND};
+  box-shadow: ${DASHBOARD.CARD_SHADOW};
+`;
+
+const ActionMenuLink = styled(Link)`
+  display: block;
+  padding: ${SPACING.TWO} ${SPACING.THREE};
+  border-radius: ${LAYOUT.RADIUS.SM};
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${DASHBOARD.TEXT_PRIMARY};
+  text-decoration: none;
+
+  &:hover {
+    background: ${DASHBOARD.ROW_HOVER};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.RING};
+    outline-offset: 2px;
+  }
+`;
+
+interface StudentClassRowActionsProps {
+  offeringId: string;
+}
+
+function StudentClassRowActions({ offeringId }: StudentClassRowActionsProps) {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const menuId = React.useId();
+  const classHref = `/classes?class=${offeringId}`;
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    function onDocMouseDown(event: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("mousedown", onDocMouseDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocMouseDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <ActionsRoot ref={rootRef}>
+      <GhostBtn
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-controls={menuId}
+        aria-label="More actions"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <MoreHorizontal size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
+      </GhostBtn>
+      <ActionMenu $open={open} id={menuId} role="menu" aria-label="Class actions">
+        <ActionMenuLink href={classHref} role="menuitem" onClick={() => setOpen(false)}>
+          View class
+        </ActionMenuLink>
+      </ActionMenu>
+    </ActionsRoot>
+  );
+}
 
 const Empty = styled.p`
   margin: 0;
@@ -149,15 +252,12 @@ export function StudentClassesTableCard({ rows }: StudentClassesTableCardProps) 
                   <Th scope="col">Teacher</Th>
                   <Th scope="col">Next session</Th>
                   <Th scope="col">Status</Th>
-                  <Th scope="col" style={{ textAlign: "right" }}>
-                    Actions
-                  </Th>
+                  <ThActions scope="col">Actions</ThActions>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => {
                   const initials = row.subjectName.slice(0, 2).toUpperCase();
-                  const assignmentsHref = `/classes/${row.offeringId}/assignments`;
                   return (
                     <Tr key={row.id}>
                       <Td>
@@ -174,14 +274,9 @@ export function StudentClassesTableCard({ rows }: StudentClassesTableCardProps) 
                       <Td>
                         <Chip tone="active">Active</Chip>
                       </Td>
-                      <Td>
-                        <RowActions>
-                          <AppHyperLink href={assignmentsHref}>Open</AppHyperLink>
-                          <GhostBtn type="button" aria-label="More actions">
-                            <MoreHorizontal size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
-                          </GhostBtn>
-                        </RowActions>
-                      </Td>
+                      <TdActions>
+                        <StudentClassRowActions offeringId={row.offeringId} />
+                      </TdActions>
                     </Tr>
                   );
                 })}

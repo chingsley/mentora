@@ -36,7 +36,7 @@ export interface ClassDetail {
   effectiveCap: number;
   enrolled: number;
   periodType?: OfferingPeriodType;
-  hourlyRate: { amount: number; currency: string } | null;
+  hourlyRate: { amount: number; currency: string; } | null;
   rules: string;
   description?: string | null;
   recurrence?: OfferingRecurrence;
@@ -49,7 +49,7 @@ export interface ClassDetailsDialogProps {
   viewerRole: Role;
   enrollmentId: string | null;
   isBusy?: boolean;
-  message?: { tone: "success" | "error"; text: string } | null;
+  message?: { tone: "success" | "error"; text: string; } | null;
   sessionSnapshot?: SessionOccurrenceSnapshot | null;
   studentDisplayName?: string;
   onEnrol?: (offeringId: string) => void | Promise<void>;
@@ -110,7 +110,7 @@ const StatLabel = styled.dt`
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
-const StatValue = styled.dd<{ $emphasised?: boolean }>`
+const StatValue = styled.dd<{ $emphasised?: boolean; }>`
   margin-top: 0.125rem;
   font-size: ${FONTS.SIZE.SM};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
@@ -166,7 +166,7 @@ const RulesList = styled.ul`
   color: rgba(2, 8, 23, 0.8);
 `;
 
-const Message = styled.p<{ $tone: "success" | "error" }>`
+const Message = styled.p<{ $tone: "success" | "error"; }>`
   margin-top: ${SPACING.FOUR};
   font-size: ${FONTS.SIZE.SM};
   color: ${(p) => (p.$tone === "success" ? COLORS.SUCCESS : COLORS.DESTRUCTIVE)};
@@ -212,9 +212,9 @@ export function ClassDetailsDialog({
   const classPrice =
     detail.hourlyRate && durationMinutes > 0
       ? formatPrice(
-          Math.round(detail.hourlyRate.amount * (durationMinutes / 60)),
-          detail.hourlyRate.currency,
-        )
+        Math.round(detail.hourlyRate.amount * (durationMinutes / 60)),
+        detail.hourlyRate.currency,
+      )
       : null;
   const slotsRemaining = Math.max(0, detail.effectiveCap - detail.enrolled);
   const ruleLines = detail.rules
@@ -338,7 +338,7 @@ export function ClassDetailsDialog({
               isLoading={isBusy}
               onClick={() => enrollmentId && onDrop?.(enrollmentId)}
             >
-              Leave class
+              Drop Class
             </Button>
           </>
         ) : null}

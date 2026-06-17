@@ -247,7 +247,7 @@ export function recurrenceFromDb(args: {
 }): OfferingRecurrence {
   let anchorDate =
     args.recurrenceAnchorDate != null
-      ? formatIsoDate(args.recurrenceAnchorDate)
+      ? calendarDateFromDb(args.recurrenceAnchorDate)
       : null;
 
   if (
@@ -261,13 +261,7 @@ export function recurrenceFromDb(args: {
 
   return {
     kind: args.recurrenceKind,
-<<<<<<< HEAD
-    anchorDate: args.recurrenceAnchorDate
-      ? calendarDateFromDb(args.recurrenceAnchorDate)
-      : null,
-=======
     anchorDate,
->>>>>>> 97abadd (Calendar behaviour fix)
     ordinal: args.recurrenceOrdinal,
     interval:
       args.recurrenceKind === "BIWEEKLY" ? (args.recurrenceInterval ?? 2) : null,
@@ -282,14 +276,9 @@ export function recurrenceToDb(recurrence: OfferingRecurrence): {
 } {
   return {
     recurrenceKind: recurrence.kind,
-<<<<<<< HEAD
-    recurrenceAnchorDate:
-      needsAnchor && recurrence.anchorDate ? calendarDateToDb(recurrence.anchorDate) : null,
-=======
     recurrenceAnchorDate: recurrence.anchorDate
-      ? parseIsoDate(recurrence.anchorDate)
+      ? calendarDateToDb(recurrence.anchorDate)
       : null,
->>>>>>> 97abadd (Calendar behaviour fix)
     recurrenceOrdinal: recurrence.kind === "MONTHLY_NTH" ? recurrence.ordinal : null,
     recurrenceInterval:
       recurrence.kind === "BIWEEKLY" ? (recurrence.interval ?? 2) : null,

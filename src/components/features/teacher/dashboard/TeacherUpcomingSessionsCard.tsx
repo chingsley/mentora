@@ -131,12 +131,15 @@ const Body = styled.div`
   min-width: 0;
 `;
 
-const Subject = styled.p<{ $featured?: boolean }>`
+const SessionTitle = styled.p<{ $featured?: boolean }>`
   margin: 0;
   font-size: ${(p) => (p.$featured ? FONTS.SIZE.MD : FONTS.SIZE.SM)};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
   color: ${DASHBOARD.TEXT_PRIMARY};
   line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const Time = styled.p`
@@ -207,8 +210,10 @@ function SessionRow({
         <Day>{session.day}</Day>
       </DateComponent>
       <Body>
-        <Subject $featured={featured}>{session.subjectName}</Subject>
-        <Time>{session.timeRange}</Time>
+        <SessionTitle $featured={featured}>{session.subtitle}</SessionTitle>
+        <Time>
+          {session.subjectName} · {session.timeRange}
+        </Time>
       </Body>
       <CamComponent href={sessionLinkHref} aria-label={sessionLinkAriaLabel}>
         <Video size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
