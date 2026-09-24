@@ -12,20 +12,32 @@ import { FONTS } from "@/constants/fonts.constants";
 import { ICON_SIZE, ICON_STROKE, ICON_THEME } from "@/constants/iconTheme.constants";
 import { BOX_SHADOW_INPUTS, LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { formatSubjectShortLabel } from "@/lib/subjectShortLabel";
 import { DAY_LABEL, DAY_ORDER } from "@/lib/time";
 
 const Toolbar = styled.div`
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: ${SPACING.THREE};
   margin-bottom: ${SPACING.FIVE};
 `;
 
+const FilterBlock = styled.div`
+  display: inline-grid;
+  grid-template-columns: minmax(0, max-content);
+  gap: ${SPACING.THREE};
+  max-width: 100%;
+`;
+
 const SearchForm = styled.form`
+  grid-row: 1;
+  grid-column: 1;
   display: flex;
   align-items: center;
   gap: ${SPACING.TWO};
   width: 100%;
+  min-width: 0;
   min-height: ${FORM_FIELD.CONTROL_MIN_HEIGHT};
   padding: 0 ${SPACING.FOUR};
   border-radius: ${LAYOUT.RADIUS.FULL};
@@ -76,10 +88,14 @@ const SearchSubmit = styled.button`
 `;
 
 const ChipRow = styled.div`
+  grid-row: 2;
+  grid-column: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: ${SPACING.TWO};
+  width: max-content;
+  max-width: 100%;
 `;
 
 const ChipWrap = styled.div`
@@ -92,7 +108,7 @@ const chipActiveStyles = css`
   color: ${COLORS.ACTION_PRIMARY};
 `;
 
-const ChipButton = styled.button<{ $active: boolean }>`
+const ChipButton = styled.button<{ $active: boolean; }>`
   display: inline-flex;
   align-items: center;
   gap: ${SPACING.ONE};
@@ -158,7 +174,7 @@ const PanelList = styled.ul`
   list-style: none;
 `;
 
-const PanelOption = styled.button<{ $selected: boolean }>`
+const PanelOption = styled.button<{ $selected: boolean; }>`
   display: flex;
   width: 100%;
   align-items: center;
@@ -185,7 +201,7 @@ const DayGrid = styled.div`
   gap: ${SPACING.ONE};
 `;
 
-const DayChip = styled.button<{ $selected: boolean }>`
+const DayChip = styled.button<{ $selected: boolean; }>`
   border-radius: ${LAYOUT.RADIUS.FULL};
   border: 1px solid ${COLORS.BORDER};
   background-color: ${(p) => (p.$selected ? COLORS.ACTION_PRIMARY_TINT_10 : COLORS.FOREGROUND)};
@@ -268,9 +284,9 @@ export interface TeachersFiltersProps {
   max?: string;
   day?: string;
   rating?: string;
-  subjects: Array<{ id: string; slug: string; name: string }>;
-  regions: Array<{ id: string; code: string; name: string; currency: string }>;
-  maxRegion: { currency: string } | undefined;
+  subjects: Array<{ id: string; slug: string; name: string; }>;
+  regions: Array<{ id: string; code: string; name: string; currency: string; }>;
+  maxRegion: { currency: string; } | undefined;
 }
 
 function buildTeachersHref(values: {
@@ -325,7 +341,10 @@ export function TeachersFilters({
   }, []);
 
   const currency = maxRegion?.currency ?? "USD";
-  const subjectName = subjects.find((s) => s.slug === subject)?.name;
+  const subjectRecord = subjects.find((s) => s.slug === subject);
+  const subjectSummary = subjectRecord
+    ? formatSubjectShortLabel(subjectRecord.name)
+    : undefined;
   const regionName = regions.find((r) => r.code === region)?.name;
   const ratingLabel =
     rating === "4.5" ? "4.5+ stars" : rating === "4" ? "4+ stars" : rating === "3" ? "3+ stars" : null;
@@ -373,6 +392,7 @@ export function TeachersFilters({
 
   return (
     <Toolbar ref={toolbarRef}>
+      <FilterBlock>
       <SearchForm onSubmit={onSearchSubmit} role="search" aria-label="Search teachers">
         <Search
           size={ICON_SIZE.SM}
@@ -400,7 +420,7 @@ export function TeachersFilters({
       <ChipRow role="group" aria-label="Filter teachers">
         <FilterChip
           label="Subject"
-          summary={subjectName}
+          summary={subjectSummary}
           active={Boolean(subject)}
           open={openMenu === "subject"}
           onToggle={() => toggleMenu("subject")}
@@ -415,9 +435,10 @@ export function TeachersFilters({
               <li key={s.id}>
                 <PanelOption
                   $selected={subject === s.slug}
+                  title={s.name}
                   onClick={() => navigate({ subject: s.slug })}
                 >
-                  {s.name}
+                  {formatSubjectShortLabel(s.name)}
                 </PanelOption>
               </li>
             ))}
@@ -524,6 +545,7 @@ export function TeachersFilters({
 
         {hasActiveFilters ? <ClearLink href="/teachers">Clear filters</ClearLink> : null}
       </ChipRow>
+      </FilterBlock>
     </Toolbar>
   );
 }

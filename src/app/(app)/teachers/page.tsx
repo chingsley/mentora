@@ -38,12 +38,10 @@ function toCardProps(t: TeacherRow) {
     id: t.id,
     displayId: t.displayId,
     name: t.user.name,
-    headline: t.headline || "Tutor on Mentora",
     image: t.user.image,
     rating: t.avgRating,
     ratingsCount: t.ratingsCount,
     subjectNames: t.subjects.map((s) => s.subject.name),
-    regionCode: t.user.region?.code ?? null,
     minRate:
       minOfferingRate != null ? { hourlyRate: minOfferingRate, currency } : null,
     daysTaught: days,

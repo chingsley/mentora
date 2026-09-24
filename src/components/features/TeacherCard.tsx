@@ -5,21 +5,21 @@ import Link from "next/link";
 import type { DayOfWeek } from "@prisma/client";
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
+import { DASHBOARD } from "@/constants/dashboard.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { LAYOUT } from "@/constants/layout.constants";
+import { ICON_THEME } from "@/constants/iconTheme.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { formatSubjectShortLabel } from "@/lib/subjectShortLabel";
 import { DAY_LABEL, formatPrice } from "@/lib/time";
 
 export interface TeacherCardProps {
   id: string;
   displayId?: string | null;
   name: string;
-  headline: string;
   image?: string | null;
   rating: number;
   ratingsCount: number;
   subjectNames: string[];
-  regionCode?: string | null;
   minRate?: { hourlyRate: number; currency: string } | null;
   daysTaught?: DayOfWeek[];
 }
@@ -33,18 +33,20 @@ const Card = styled(Link)`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.THREE};
-  border-radius: ${LAYOUT.RADIUS.XL};
-  background-color: ${COLORS.FOREGROUND};
+  border-radius: ${DASHBOARD.CARD_RADIUS};
+  background-color: ${DASHBOARD.CARD_BACKGROUND};
   padding: ${SPACING.FIVE};
-  box-shadow: ${LAYOUT.SHADOW.SM};
-  outline: 1px solid ${COLORS.RING_BLACK_5};
-  outline-offset: -1px;
-  transition: outline 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: ${DASHBOARD.CARD_SHADOW};
+  border: 1px solid ${DASHBOARD.CARD_BORDER};
   text-decoration: none;
   color: inherit;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
   &:hover {
-    outline-color: rgba(23, 32, 51, 0.2);
+    background-color: ${DASHBOARD.ROW_HOVER};
   }
 
   &:focus-visible {
@@ -59,15 +61,69 @@ const Top = styled.div`
   gap: ${SPACING.THREE};
 `;
 
-const Avatar = styled.div`
+const TitleRow = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+const TitleBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.ONE};
+`;
+
+const TitleLine = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: ${SPACING.TWO};
+`;
+
+const Name = styled.h3`
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${DASHBOARD.TEXT_PRIMARY};
+`;
+
+const RatingBadge = styled.span`
+  flex-shrink: 0;
+  border-radius: ${ICON_THEME.METRIC_ICON_BOX_RADIUS};
+  background-color: ${DASHBOARD.ICON_TILE_BACKGROUND};
+  padding: ${SPACING.HALF} ${SPACING.TWO};
+  font-size: ${FONTS.SIZE.XS};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${DASHBOARD.ICON_TILE_COLOR};
+`;
+
+const RatingCount = styled.span`
+  margin-left: ${SPACING.ONE};
+  color: ${DASHBOARD.TEXT_MUTED};
+`;
+
+const DisplayId = styled.p`
+  margin: 0;
+  font-family: ${FONTS.FAMILY.MONO};
+  font-size: ${FONTS.SIZE.META};
+  color: ${DASHBOARD.TEXT_MUTED};
+`;
+
+const Avatar = styled.div<{ $hasPhoto?: boolean }>`
   position: relative;
-  height: 3.5rem;
-  width: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: ${ICON_THEME.METRIC_ICON_BOX_SIZE};
+  height: ${ICON_THEME.METRIC_ICON_BOX_SIZE};
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  background-color: ${COLORS.MUTED};
-  outline: 1px solid ${COLORS.BORDER};
+  border-radius: ${ICON_THEME.METRIC_ICON_BOX_RADIUS};
+  background-color: ${(p) =>
+    p.$hasPhoto ? COLORS.MUTED : DASHBOARD.ICON_TILE_BACKGROUND};
+  outline: ${(p) => (p.$hasPhoto ? `1px solid ${DASHBOARD.CARD_BORDER}` : "none")};
   outline-offset: -1px;
 `;
 
@@ -77,75 +133,25 @@ const AvatarFallback = styled.div`
   width: 100%;
   align-items: center;
   justify-content: center;
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const TitleRow = styled.div`
-  min-width: 0;
-  flex: 1;
-`;
-
-const TitleLine = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${SPACING.TWO};
-`;
-
-const Name = styled.h3`
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-`;
-
-const RatingBadge = styled.span`
-  flex-shrink: 0;
-  border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: rgba(23, 32, 51, 0.05);
-  padding: 0.125rem ${SPACING.TWO};
   font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-`;
-
-const RatingCount = styled.span`
-  margin-left: ${SPACING.ONE};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const Headline = styled.p`
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const DisplayId = styled.p`
-  margin-top: 0.125rem;
-  font-family: ${FONTS.FAMILY.MONO};
-  font-size: ${FONTS.SIZE.META};
-  color: ${COLORS.MUTED_FOREGROUND};
+  font-weight: ${FONTS.WEIGHT.BOLD};
+  color: ${DASHBOARD.ICON_TILE_COLOR};
 `;
 
 const Subjects = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
+  gap: ${SPACING.ONE};
+  margin-top: ${SPACING.TWO};
 `;
 
 const SubjectPill = styled.span<{ $muted?: boolean }>`
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  border: 1px solid ${COLORS.BORDER};
-  padding: 0.125rem 0.625rem;
+  border-radius: ${DASHBOARD.CHIP_RADIUS};
+  border: 1px solid ${DASHBOARD.CARD_BORDER};
+  padding: ${SPACING.HALF} ${SPACING.TWO};
   font-size: ${FONTS.SIZE.XS};
-  color: ${(p) => (p.$muted ? COLORS.MUTED_FOREGROUND : "rgba(2, 8, 23, 0.8)")};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${(p) => (p.$muted ? DASHBOARD.TEXT_MUTED : DASHBOARD.TEXT_PRIMARY)};
 `;
 
 const DayRow = styled.div`
@@ -155,40 +161,31 @@ const DayRow = styled.div`
   gap: ${SPACING.ONE};
 `;
 
-const DayLabel = styled.span`
-  font-size: ${FONTS.SIZE.META};
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
 const DayPill = styled.span`
-  border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: ${COLORS.BACKGROUND};
-  padding: 0.125rem 0.375rem;
+  border-radius: ${DASHBOARD.CHIP_RADIUS};
+  background-color: ${DASHBOARD.ROW_HOVER};
+  padding: ${SPACING.HALF} ${SPACING.TWO};
   font-size: ${FONTS.SIZE.META};
   font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
+  color: ${DASHBOARD.TEXT_PRIMARY};
 `;
 
-const Footer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.MUTED_FOREGROUND};
+const Footer = styled.p`
+  margin: 0;
+  margin-top: ${SPACING.TWO};
+  font-size: ${DASHBOARD.SECONDARY_TEXT.FONT_SIZE};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${DASHBOARD.LINK_COLOR};
 `;
 
 export function TeacherCard({
   id,
   displayId,
   name,
-  headline,
   image,
   rating,
   ratingsCount,
   subjectNames,
-  regionCode,
   minRate,
   daysTaught,
 }: TeacherCardProps) {
@@ -199,13 +196,13 @@ export function TeacherCard({
   return (
     <Card href={`/teachers/${id}`}>
       <Top>
-        <Avatar>
+        <Avatar $hasPhoto={Boolean(image)}>
           {image ? (
             <Image
               src={image}
               alt={`${name} profile photo`}
               fill
-              sizes="56px"
+              sizes={ICON_THEME.METRIC_ICON_BOX_SIZE}
               style={{ objectFit: "cover" }}
               unoptimized
             />
@@ -214,28 +211,34 @@ export function TeacherCard({
           )}
         </Avatar>
         <TitleRow>
-          <TitleLine>
-            <Name>{name}</Name>
-            <RatingBadge>
-              <span aria-hidden>★</span> {rating.toFixed(1)}
-              <RatingCount>({ratingsCount})</RatingCount>
-            </RatingBadge>
-          </TitleLine>
-          <Headline>{headline}</Headline>
-          {displayId ? <DisplayId>{displayId}</DisplayId> : null}
+          <TitleBlock>
+            <TitleLine>
+              <Name>{name}</Name>
+              <RatingBadge>
+                <span aria-hidden>★</span> {rating.toFixed(1)}
+                <RatingCount>({ratingsCount})</RatingCount>
+              </RatingBadge>
+            </TitleLine>
+            {displayId ? <DisplayId>{displayId}</DisplayId> : null}
+          </TitleBlock>
         </TitleRow>
       </Top>
 
       <Subjects>
         {visibleSubjects.map((s) => (
-          <SubjectPill key={s}>{s}</SubjectPill>
+          <SubjectPill key={s} title={s}>
+            {formatSubjectShortLabel(s)}
+          </SubjectPill>
         ))}
-        {extraSubjects > 0 ? <SubjectPill $muted>+{extraSubjects} more</SubjectPill> : null}
+        {extraSubjects > 0 ? (
+          <SubjectPill $muted title={`${extraSubjects} more subjects`}>
+            +{extraSubjects} more
+          </SubjectPill>
+        ) : null}
       </Subjects>
 
       {uniqueDays.length > 0 ? (
         <DayRow>
-          <DayLabel>Teaches</DayLabel>
           {uniqueDays.map((d) => (
             <DayPill key={d} title={DAY_LABEL[d]}>
               {DAY_LABEL[d].slice(0, 3)}
@@ -244,10 +247,11 @@ export function TeacherCard({
         </DayRow>
       ) : null}
 
-      <Footer>
-        <span>{regionCode ?? "Global"}</span>
-        {minRate ? <span>from {formatPrice(minRate.hourlyRate, minRate.currency)}/hr</span> : null}
-      </Footer>
+      {minRate ? (
+        <Footer>
+          From {formatPrice(minRate.hourlyRate, minRate.currency)}/hr
+        </Footer>
+      ) : null}
     </Card>
   );
 }

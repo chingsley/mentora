@@ -13,7 +13,7 @@ import { GuardianTeacherView } from "./GuardianTeacherView";
 export const metadata: Metadata = { title: "Teacher profile" };
 
 interface Props {
-  params: Promise<{ studentId: string; teacherId: string }>;
+  params: Promise<{ studentId: string; teacherId: string; }>;
 }
 
 function initials(name: string) {
@@ -43,7 +43,7 @@ export default async function GuardianTeacherPage({ params }: Props) {
 
   const topRate = teacher.rates[0];
   const priceLabel = topRate
-    ? `from ${formatPrice(topRate.hourlyRate, topRate.region.currency)}/hr`
+    ? `From ${formatPrice(topRate.hourlyRate, topRate.region.currency)}/hr`
     : null;
 
   return (

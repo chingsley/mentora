@@ -1,194 +1,171 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import styled from "styled-components";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
-import { AppPageHeader } from "@/components/layouts/AppPageHeader";
-import { PageWrap } from "@/components/ui/primitives";
-import { ProfilePhotoForm } from "@/components/features/teacher/ProfilePhotoForm";
 import { StudentBioForm } from "@/components/features/student/StudentBioForm";
 import { StudentInterestsForm } from "@/components/features/student/StudentInterestsForm";
-import { COLORS } from "@/constants/colors.constants";
+import { DashboardCard } from "@/components/features/teacher/dashboard/TeacherDashboardCard";
+import { AppPageHeader } from "@/components/layouts/AppPageHeader";
+import { PageWrap } from "@/components/ui/primitives";
+import { CHIP, CHIP_TONE, type ChipTone } from "@/constants/chip.constants";
+import { DASHBOARD } from "@/constants/dashboard.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+const ProfileLayout = styled.div`
+  display: grid;
+  gap: ${SPACING.FIVE};
+  grid-template-columns: 1fr;
 
-const HeroCard = styled(Card)`
-  overflow: hidden;
+  ${LAYOUT.MEDIA.LG} {
+    grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr);
+    align-items: start;
+  }
 `;
 
-const HeroRow = styled.div`
+const SideStack = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${SPACING.SIX};
-
-  ${LAYOUT.MEDIA.SM} {
-    flex-direction: row;
-    align-items: center;
-  }
+  gap: ${SPACING.FIVE};
+  min-width: 0;
 `;
 
-const Avatar = styled.div`
+const SummaryCard = styled(DashboardCard)`
+  padding: 0;
+`;
+
+const PhotoBanner = styled.div`
   position: relative;
-  height: 6rem;
-  width: 6rem;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  background-color: ${COLORS.MUTED};
-  outline: 2px solid rgba(23, 32, 51, 0.1);
-  outline-offset: -2px;
-
-  ${LAYOUT.MEDIA.SM} {
-    height: 7rem;
-    width: 7rem;
-  }
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 16rem;
+  background-color: ${DASHBOARD.ICON_TILE_BACKGROUND};
 `;
 
-const AvatarImg = styled(Image)`
-  object-fit: cover;
-`;
-
-const AvatarFallback = styled.div`
+const BannerFallback = styled.div`
   display: flex;
   height: 100%;
   width: 100%;
   align-items: center;
   justify-content: center;
-  font-size: ${FONTS.SIZE["2XL"]};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.MUTED_FOREGROUND};
+  font-size: ${FONTS.SIZE.PAGE_HEADER};
+  font-weight: ${FONTS.WEIGHT.BOLD};
+  color: ${DASHBOARD.ICON_TILE_COLOR};
 `;
 
-const HeroBody = styled.div`
+const SummaryBody = styled.div`
   display: flex;
-  min-width: 0;
-  flex: 1;
   flex-direction: column;
-  gap: ${SPACING.TWO};
-`;
-
-const TitleRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${SPACING.TWO};
-`;
-
-const Name = styled.h1`
-  font-size: ${FONTS.SIZE["2XL"]};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
+  gap: ${SPACING.FOUR};
+  padding: ${SPACING.FIVE};
 
   ${LAYOUT.MEDIA.SM} {
-    font-size: ${FONTS.SIZE["3XL"]};
+    padding: ${SPACING.SIX};
   }
 `;
 
-const StatusPill = styled.span<{ $tone: "success" | "warning"; }>`
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  padding: 0.125rem 0.625rem;
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  background-color: ${(p) => (p.$tone === "success" ? "rgba(22, 163, 74, 0.1)" : "#fef3c7")};
-  color: ${(p) => (p.$tone === "success" ? COLORS.SUCCESS : "#78350f")};
-`;
-
-const Bio = styled.p`
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const KpiRow = styled.div`
+const SummaryHead = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${SPACING.FOUR};
-  padding-top: ${SPACING.ONE};
-  font-size: ${FONTS.SIZE.SM};
-`;
-
-const KpiBox = styled.div`
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  line-height: ${FONTS.LINE_HEIGHT.TIGHT};
-`;
-
-const KpiValue = styled.span`
-  font-size: ${FONTS.SIZE.LG};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-`;
-
-const KpiLabel = styled.span`
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const InterestRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  padding-top: ${SPACING.ONE};
-`;
-
-const InterestPill = styled.span`
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.BACKGROUND};
-  padding: 0.125rem 0.625rem;
-  font-size: ${FONTS.SIZE.XS};
-  color: rgba(2, 8, 23, 0.8);
-`;
-
-const CtaBar = styled.div`
-  margin-top: ${SPACING.FIVE};
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: ${SPACING.THREE};
-  border-radius: ${LAYOUT.RADIUS.LG};
-  background-color: ${COLORS.BACKGROUND};
-  padding: ${SPACING.THREE};
 `;
 
-const CtaText = styled.p`
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const CtaLink = styled(Link)`
-  display: inline-flex;
-  height: 2.25rem;
-  align-items: center;
-  border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: ${COLORS.HEADER};
-  padding: 0 ${SPACING.THREE};
-  font-size: ${FONTS.SIZE.SM};
+const SummaryTitle = styled.h2`
+  margin: 0;
+  font-size: ${FONTS.SIZE.CARD_TITLE};
   font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.WHITE};
-  text-decoration: none;
+  color: ${DASHBOARD.TEXT_PRIMARY};
+  letter-spacing: -0.02em;
+`;
 
-  &:hover {
-    background-color: rgba(23, 32, 51, 0.9);
+const StatusPill = styled.span<{ $tone: ChipTone }>`
+  flex-shrink: 0;
+  border-radius: ${CHIP.RADIUS};
+  padding: ${CHIP.PADDING_BLOCK} ${CHIP.PADDING_INLINE};
+  font-size: ${CHIP.FONT_SIZE};
+  font-weight: ${CHIP.FONT_WEIGHT};
+  border: 1px solid ${(p) => CHIP_TONE[p.$tone].border};
+  background-color: ${(p) => CHIP_TONE[p.$tone].background};
+  color: ${(p) => CHIP_TONE[p.$tone].color};
+`;
+
+const FieldList = styled.dl`
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+`;
+
+const FieldRow = styled.div`
+  padding: ${SPACING.THREE} 0;
+  border-bottom: 1px solid ${DASHBOARD.BORDER_SUBTLE};
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  &:first-child {
+    padding-top: 0;
   }
 `;
 
-function Kpi({ label, value }: { label: string; value: string; }) {
+const FieldLabel = styled.dt`
+  margin: 0;
+  font-size: ${FONTS.SIZE.META};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${DASHBOARD.TEXT_MUTED};
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+`;
+
+const FieldValue = styled.dd`
+  margin: ${SPACING.ONE} 0 0;
+  font-size: ${FONTS.SIZE.SM};
+  font-weight: ${FONTS.WEIGHT.MEDIUM};
+  color: ${DASHBOARD.TEXT_PRIMARY};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+`;
+
+const PanelCard = styled(DashboardCard)`
+  padding: 0;
+  overflow: hidden;
+`;
+
+const PanelHeader = styled.div`
+  padding: ${SPACING.FIVE} ${SPACING.FIVE} ${SPACING.FOUR};
+  border-bottom: 1px solid ${DASHBOARD.BORDER_SUBTLE};
+`;
+
+const PanelTitle = styled.h2`
+  margin: 0;
+  font-size: ${FONTS.SIZE.CARD_TITLE};
+  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+  color: ${DASHBOARD.TEXT_PRIMARY};
+  letter-spacing: -0.02em;
+`;
+
+const PanelDescription = styled.p`
+  margin: ${SPACING.ONE} 0 0;
+  font-size: ${DASHBOARD.SECONDARY_TEXT.FONT_SIZE};
+  color: ${DASHBOARD.SECONDARY_TEXT.COLOR};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+`;
+
+const PanelBody = styled.div`
+  padding: ${SPACING.FIVE};
+
+  ${LAYOUT.MEDIA.SM} {
+    padding: ${SPACING.SIX};
+  }
+`;
+
+function ProfileField({ label, value }: { label: string; value: string }) {
   return (
-    <KpiBox>
-      <KpiValue>{value}</KpiValue>
-      <KpiLabel>{label}</KpiLabel>
-    </KpiBox>
+    <FieldRow>
+      <FieldLabel>{label}</FieldLabel>
+      <FieldValue>{value}</FieldValue>
+    </FieldRow>
   );
 }
 
@@ -204,7 +181,7 @@ export interface StudentProfileViewProps {
   interestSubjectIds: string[];
   interestNames: string[];
   regionName: string | null;
-  allSubjects: { id: string; name: string; }[];
+  allSubjects: { id: string; name: string }[];
 }
 
 export function StudentProfileView({
@@ -215,7 +192,6 @@ export function StudentProfileView({
   bio,
   activeClassCount,
   interestSubjectIds,
-  interestNames,
   regionName,
   allSubjects,
 }: StudentProfileViewProps) {
@@ -223,102 +199,83 @@ export function StudentProfileView({
     <PageWrap>
       <AppPageHeader
         title="My profile"
-        subtitle="Update your photo, bio, and subject interests."
+        subtitle="Review your summary and update your bio and subject interests."
         profileImage={imageUrl}
         profileDisplayName={fullName}
       />
-      <HeroCard>
-        <HeroRow>
-          <Avatar>
+
+      <ProfileLayout>
+        <SummaryCard>
+          <PhotoBanner>
             {imageUrl ? (
-              <AvatarImg
+              <Image
                 src={imageUrl}
                 alt={`${fullName} profile photo`}
                 fill
-                sizes="112px"
+                sizes="(min-width: 1024px) 22rem, 100vw"
+                style={{ objectFit: "cover" }}
                 unoptimized
               />
             ) : (
-              <AvatarFallback>{initials}</AvatarFallback>
+              <BannerFallback>{initials}</BannerFallback>
             )}
-          </Avatar>
-          <HeroBody>
-            <TitleRow>
-              <Name>{fullName}</Name>
-              {hasInterests ? (
-                <StatusPill $tone="success">Profile ready</StatusPill>
-              ) : (
-                <StatusPill $tone="warning">Pick your interests</StatusPill>
-              )}
-            </TitleRow>
-            <Bio>
-              {bio?.trim()
-                ? bio
-                : "Add a short bio so teachers know more about you."}
-            </Bio>
-            <KpiRow>
-              <Kpi label="Active classes" value={activeClassCount.toString()} />
-              <Kpi label="Interests" value={interestSubjectIds.length.toString()} />
-              {regionName ? <Kpi label="Region" value={regionName} /> : null}
-            </KpiRow>
-            {interestNames.length > 0 ? (
-              <InterestRow>
-                {interestNames.map((name) => (
-                  <InterestPill key={name}>{name}</InterestPill>
-                ))}
-              </InterestRow>
-            ) : null}
-          </HeroBody>
-        </HeroRow>
-        <CtaBar>
-          <CtaText>
-            Ready to find a teacher? Filter by the subjects you just picked.
-          </CtaText>
-          <CtaLink href="/teachers">Browse teachers</CtaLink>
-        </CtaBar>
-      </HeroCard>
+          </PhotoBanner>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile photo</CardTitle>
-          <CardDescription>
-            A clear photo helps your teachers recognise you in class.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ProfilePhotoForm
-            currentImage={imageUrl}
-            fallbackInitials={initials}
-            hint="PNG, JPEG, or WebP · up to 2 MB. Optional but recommended."
-          />
-        </CardContent>
-      </Card>
+          <SummaryBody>
+            <SummaryHead>
+              <SummaryTitle>My profile</SummaryTitle>
+              <StatusPill $tone={hasInterests ? "success" : "warning"}>
+                {hasInterests ? "Profile ready" : "Pick interests"}
+              </StatusPill>
+            </SummaryHead>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>About you</CardTitle>
-          <CardDescription>Share a bit so teachers know your goals.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <StudentBioForm initial={{ bio: bio ?? "" }} />
-        </CardContent>
-      </Card>
+            <FieldList>
+              <ProfileField label="Name" value={fullName} />
+              <ProfileField
+                label="Active classes"
+                value={activeClassCount.toString()}
+              />
+              <ProfileField
+                label="Subject interests"
+                value={interestSubjectIds.length.toString()}
+              />
+              {regionName ? (
+                <ProfileField label="Region" value={regionName} />
+              ) : null}
+            </FieldList>
+          </SummaryBody>
+        </SummaryCard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Subjects I want to learn</CardTitle>
-          <CardDescription>
-            We use these to recommend teachers and classes that match your
-            interests.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <StudentInterestsForm
-            allSubjects={allSubjects}
-            initialSubjectIds={interestSubjectIds}
-          />
-        </CardContent>
-      </Card>
+        <SideStack>
+          <PanelCard>
+            <PanelHeader>
+              <PanelTitle>About you</PanelTitle>
+              <PanelDescription>
+                Share a bit so teachers know your goals.
+              </PanelDescription>
+            </PanelHeader>
+            <PanelBody>
+              <StudentBioForm initial={{ bio: bio ?? "" }} />
+            </PanelBody>
+          </PanelCard>
+
+          <PanelCard>
+            <PanelHeader>
+              <PanelTitle>Subjects I want to learn</PanelTitle>
+              <PanelDescription>
+                We use these to recommend teachers and classes that match your
+                interests.
+              </PanelDescription>
+            </PanelHeader>
+            <PanelBody>
+              <StudentInterestsForm
+                allSubjects={allSubjects}
+                initialSubjectIds={interestSubjectIds}
+              />
+            </PanelBody>
+          </PanelCard>
+        </SideStack>
+      </ProfileLayout>
     </PageWrap>
   );
 }

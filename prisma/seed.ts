@@ -34,7 +34,7 @@ const DEMO_RULES = [
 
 const DAYS: DayOfWeek[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-const SUBJECT_POOL: Array<{ slug: string; name: string }> = [
+const SUBJECT_POOL: Array<{ slug: string; name: string; }> = [
   { slug: "math", name: "Mathematics" },
   { slug: "english", name: "English" },
   { slug: "physics", name: "Physics" },
@@ -61,7 +61,7 @@ const TEACHER_NAMES: ReadonlyArray<readonly [string, string]> = [
 ];
 
 const STUDENT_NAMES: ReadonlyArray<readonly [string, string]> = [
-  ["Ada", "Nwankwo"],
+  ["Adanna", "Eneja"],
   ["Chioma", "Okeke"],
   ["Ebuka", "Okafor"],
   ["Ifeoma", "Agbo"],
@@ -117,7 +117,7 @@ function pickName(
 function slotFor(
   teacherIdx: number,
   courseIdx: number,
-): { day: DayOfWeek; startMinutes: number; endMinutes: number } {
+): { day: DayOfWeek; startMinutes: number; endMinutes: number; } {
   const day = DAYS[(teacherIdx + courseIdx * 2) % DAYS.length] ?? "MON";
   const startHour = 8 + (courseIdx % 5) * 2; // 8, 10, 12, 14, 16
   return {
@@ -146,7 +146,7 @@ async function seedPolicy(): Promise<void> {
 }
 
 async function seedRegions(): Promise<Region[]> {
-  const regionData: Array<{ code: string; name: string; currency: string; minRate: number }> = [
+  const regionData: Array<{ code: string; name: string; currency: string; minRate: number; }> = [
     { code: "NG", name: "Nigeria", currency: "NGN", minRate: 350_000 },
     { code: "US", name: "United States", currency: "USD", minRate: 1500 },
     { code: "EU", name: "Europe", currency: "EUR", minRate: 1500 },
@@ -716,7 +716,7 @@ async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
     data: { status: "DROPPED" },
   });
 
-  const enrollments: Array<{ id: string; studentProfileId: string }> = [];
+  const enrollments: Array<{ id: string; studentProfileId: string; }> = [];
   for (const email of cfg.studentEmails) {
     const student = students.find((s) => s.email === email);
     const profileId = student?.studentProfile?.id;
@@ -778,17 +778,17 @@ async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
     source: "AUTO_JOIN" | "TEACHER";
     joined: boolean;
   }> = [
-    { status: "PRESENT", source: "AUTO_JOIN", joined: true },
-    { status: "LATE", source: "AUTO_JOIN", joined: true },
-    { status: "PRESENT", source: "AUTO_JOIN", joined: true },
-    { status: "ABSENT", source: "AUTO_JOIN", joined: false },
-    { status: "EXCUSED", source: "TEACHER", joined: false },
-    { status: "PRESENT", source: "AUTO_JOIN", joined: true },
-    { status: "ABSENT", source: "AUTO_JOIN", joined: false },
-    { status: "LATE", source: "AUTO_JOIN", joined: true },
-    { status: "EXCUSED", source: "TEACHER", joined: false },
-    { status: "PRESENT", source: "AUTO_JOIN", joined: true },
-  ];
+      { status: "PRESENT", source: "AUTO_JOIN", joined: true },
+      { status: "LATE", source: "AUTO_JOIN", joined: true },
+      { status: "PRESENT", source: "AUTO_JOIN", joined: true },
+      { status: "ABSENT", source: "AUTO_JOIN", joined: false },
+      { status: "EXCUSED", source: "TEACHER", joined: false },
+      { status: "PRESENT", source: "AUTO_JOIN", joined: true },
+      { status: "ABSENT", source: "AUTO_JOIN", joined: false },
+      { status: "LATE", source: "AUTO_JOIN", joined: true },
+      { status: "EXCUSED", source: "TEACHER", joined: false },
+      { status: "PRESENT", source: "AUTO_JOIN", joined: true },
+    ];
 
   for (let i = 0; i < enrollments.length; i += 1) {
     const enrollment = enrollments[i]!;
@@ -928,7 +928,7 @@ async function seedTeacher1DashboardChartDemo(): Promise<void> {
     orderBy: { email: "asc" },
   });
 
-  const enrollments: Array<{ id: string; studentProfileId: string; offeringId: string }> = [];
+  const enrollments: Array<{ id: string; studentProfileId: string; offeringId: string; }> = [];
   for (const email of cfg.studentEmails) {
     const student = students.find((s) => s.email === email);
     const profileId = student?.studentProfile?.id;

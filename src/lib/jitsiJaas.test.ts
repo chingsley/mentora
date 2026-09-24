@@ -53,7 +53,7 @@ describe("JaaS JWT signing", () => {
       apiKey: "test-api-key",
       roomName: "vpaas-magic-cookie-test/mentora-abc123",
       userId: "user-1",
-      displayName: "Ada Lovelace",
+      displayName: "Adanna Lovelace",
       isModerator: true,
     });
 
@@ -68,13 +68,13 @@ describe("JaaS JWT signing", () => {
       aud: string;
       sub: string;
       room: string;
-      context: { user: { moderator: string; name: string } };
+      context: { user: { moderator: string; name: string; }; };
     };
 
     expect(payload.aud).toBe("jitsi");
     expect(payload.sub).toBe("vpaas-magic-cookie-test");
     expect(payload.room).toBe("*");
-    expect(payload.context.user.name).toBe("Ada Lovelace");
+    expect(payload.context.user.name).toBe("Adanna Lovelace");
     expect(payload.context.user.moderator).toBe("true");
     expect(publicKey).toContain("BEGIN PUBLIC KEY");
   });
