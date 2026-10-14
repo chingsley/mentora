@@ -1,6 +1,4 @@
-import { PageLoader } from "@/components/ui/PageLoader";
-
-/** Instant loading UI while the root segment resolves (initial load + navigations). */
+/** Route loading UI is handled globally by `NavigationLoadingProvider`. */
 export default function RootLoading() {
-  return <PageLoader fullViewport />;
+  return null;
 }

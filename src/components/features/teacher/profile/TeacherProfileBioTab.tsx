@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import { TriangleAlert } from "lucide-react";
 import styled from "styled-components";
 import { saveTeacherBioTabAction, type ActionResult } from "@/app/(app)/profile/actions";
@@ -267,7 +268,7 @@ export function TeacherProfileBioTab({
   const router = useRouter();
   const setupMode = useTeacherProfileSetupMode();
   const photoRef = React.useRef<ProfilePhotoFormHandle>(null);
-  const [isSaving, startTransition] = React.useTransition();
+  const [isSaving, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
 
   const initialLocation = React.useMemo(

@@ -13,7 +13,6 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { APP_NAV } from "./appNavConfig";
 import { AppShellProvider } from "./AppShellContext";
 import { AppSidebarChrome } from "./AppSidebarChrome";
-import { NavigationProgress } from "./NavigationProgress";
 import { TeacherProfileSetupBanner } from "@/components/features/teacher/profile/TeacherProfileSetupBanner";
 import type { WardOption } from "./WardSelector";
 import { Suspense } from "react";
@@ -58,9 +57,9 @@ const Sidebar = styled.aside<{ $open: boolean; $collapsed: boolean; }>`
     transform: none;
     box-shadow: none;
     width: ${(p) =>
-      p.$collapsed
-        ? LAYOUT.APP_SHELL.SIDEBAR.WIDTH_COLLAPSED
-        : LAYOUT.APP_SHELL.SIDEBAR.WIDTH};
+    p.$collapsed
+      ? LAYOUT.APP_SHELL.SIDEBAR.WIDTH_COLLAPSED
+      : LAYOUT.APP_SHELL.SIDEBAR.WIDTH};
     transition: width 0.2s ease-out;
 
     ${LAYOUT.MEDIA.REDUCED_MOTION} {
@@ -90,9 +89,9 @@ const Body = styled.div<{ $navCollapsed: boolean; }>`
 
   ${LAYOUT.MEDIA.LG} {
     margin-left: ${(p) =>
-      p.$navCollapsed
-        ? LAYOUT.APP_SHELL.SIDEBAR.WIDTH_COLLAPSED
-        : LAYOUT.APP_SHELL.SIDEBAR.WIDTH};
+    p.$navCollapsed
+      ? LAYOUT.APP_SHELL.SIDEBAR.WIDTH_COLLAPSED
+      : LAYOUT.APP_SHELL.SIDEBAR.WIDTH};
     transition: margin-left 0.2s ease-out;
 
     ${LAYOUT.MEDIA.REDUCED_MOTION} {
@@ -254,7 +253,6 @@ export function AppShellClient({ user, wards, children }: AppShellClientProps) {
 
   return (
     <Root>
-      <NavigationProgress />
       <Sidebar
         id="app-mobile-sidebar"
         $open={mobileOpen}

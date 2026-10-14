@@ -3,6 +3,7 @@
 import { OfferingPeriodType } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled, { css } from "styled-components";
 import {
   createOfferingAction,
@@ -239,7 +240,7 @@ export function TeacherProfileScheduleSetupForm({
   onBack,
 }: TeacherProfileScheduleSetupFormProps) {
   const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [globalError, setGlobalError] = React.useState<string | null>(null);
   const [fieldErrorsBySubject, setFieldErrorsBySubject] = React.useState<
     Record<string, Record<string, string>>

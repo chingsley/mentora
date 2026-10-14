@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { saveTeacherRegionAction, type ActionResult } from "@/app/(app)/profile/actions";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +29,7 @@ const ErrorText = styled.p`
 
 export function TeacherRegionForm({ options, defaultRegionCode }: TeacherRegionFormProps) {
   const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {

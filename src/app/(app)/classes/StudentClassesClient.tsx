@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { AppCalendar } from "@/components/features/calendar";
@@ -185,12 +186,12 @@ export function StudentClassesClient({
   studentDisplayName,
   initialClassId = null,
 }: StudentClassesClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [tab, setTab] = React.useState<TabKey>("timetable");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
   const openedFromQuery = React.useRef(false);
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [message, setMessage] = React.useState<
     { tone: "success" | "error"; text: string } | null
   >(null);

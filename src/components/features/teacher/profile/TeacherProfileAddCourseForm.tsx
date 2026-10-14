@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { addTeacherCourseAction, type ActionResult } from "@/app/(app)/profile/actions";
 import { Button } from "@/components/ui/Button";
@@ -113,7 +114,7 @@ export function TeacherProfileAddCourseForm({
 }: TeacherProfileAddCourseFormProps) {
   const router = useRouter();
   const formRef = React.useRef<HTMLFormElement>(null);
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
   const [subject, setSubject] = React.useState<TeacherProfileSubjectOption | null>(null);
   const [classLimit, setClassLimit] = React.useState(String(defaultClassLimit(globalCap)));

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import styled from "styled-components";
 import { TeacherProfileSetupNav } from "./TeacherProfileSetupNav";
 import { TeacherProfileSetupProvider } from "./TeacherProfileSetupContext";
@@ -148,7 +149,7 @@ function resolveSetupStep(
 }
 
 export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileSetupWizardProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const urlTab = params.get("tab");

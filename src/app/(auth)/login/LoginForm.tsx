@@ -1,7 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useNavigationLoading } from "@/components/layouts/NavigationLoadingProvider";
+import { useActionPending } from "@/hooks/useActionPending";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import {
   AuthAuxiliaryRow,
   AuthFeedbackBanner,
@@ -16,10 +18,11 @@ import {
 import { loginAction, type LoginActionResult } from "./actions";
 
 export function LoginForm() {
-  const router = useRouter();
+  const router = useAppRouter();
+  const { beginNavigation, endNavigation } = useNavigationLoading();
   const emailId = React.useId();
   const passwordId = React.useId();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<LoginActionResult | null>(null);
   const [password, setPassword] = React.useState("");
 
@@ -30,13 +33,20 @@ export function LoginForm() {
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    beginNavigation();
     const formData = new FormData(event.currentTarget);
     startTransition(async () => {
-      const response = await loginAction(formData);
-      setResult(response);
-      if (response.ok) {
-        router.push(response.redirectTo);
-        router.refresh();
+      try {
+        const response = await loginAction(formData);
+        setResult(response);
+        if (response.ok) {
+          router.push(response.redirectTo);
+          router.refresh();
+        } else {
+          endNavigation();
+        }
+      } catch {
+        endNavigation();
       }
     });
   }
@@ -74,8 +84,8 @@ export function LoginForm() {
       </AuthAuxiliaryRow>
 
       <AuthFormActions>
-        <AuthSubmitButton type="submit" isLoading={isPending}>
-          {isPending ? "Signing in…" : "Sign in"}
+        <AuthSubmitButton type="submit" disabled={isPending}>
+          Sign in
         </AuthSubmitButton>
       </AuthFormActions>
 

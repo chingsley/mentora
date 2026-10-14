@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { appSans } from "@/lib/app-font";
+import { AppProviders } from "@/components/layouts/AppProviders";
 import { StyledComponentsRegistry } from "@/lib/registry";
 import { GlobalStyles } from "@/styles/GlobalStyles";
 
@@ -26,7 +27,7 @@ export default function RootLayout({
       <body>
         <StyledComponentsRegistry>
           <GlobalStyles />
-          {children}
+          <AppProviders>{children}</AppProviders>
         </StyledComponentsRegistry>
       </body>
     </html>

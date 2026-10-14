@@ -43,6 +43,8 @@ export const COLORS = {
    * Applied once on `<Main>` in `AppShellClient`.
    */
   APP_MAIN_BACKGROUND: "#ffffff",
+  /** Full-screen scrim behind the global route/action loading overlay. */
+  NAVIGATION_LOADING_SCRIM: "rgba(255, 255, 255, 0.88)",
 
   // —— 30% gray structure ——
   /** Dark gray — sidebars, nav bars, headings. */

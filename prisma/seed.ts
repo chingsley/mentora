@@ -20,8 +20,9 @@ const CONFIG = {
   MIN_ENROLLMENTS_PER_STUDENT: 2,
   MAX_ENROLLMENTS_PER_STUDENT: 3,
   NUM_ASSIGNMENTS: 20,
-  DEFAULT_PASSWORD: "ChangeMe123!",
-  HOURLY_RATE_KOBO: 500_000, // NGN 5,000 per hour (smallest unit)
+  DEFAULT_PASSWORD: "Password123@",
+  /** Seeded class & teacher rates in smallest currency units (e.g. CAD cents). */
+  SEED_HOURLY_RATE_MINOR: 2000, // CAD 20.00 per hour
   TEACHER_CAP: 10,
 } as const;
 
@@ -147,9 +148,10 @@ async function seedPolicy(): Promise<void> {
 
 async function seedRegions(): Promise<Region[]> {
   const regionData: Array<{ code: string; name: string; currency: string; minRate: number; }> = [
-    { code: "NG", name: "Nigeria", currency: "NGN", minRate: 350_000 },
-    { code: "US", name: "United States", currency: "USD", minRate: 1500 },
-    { code: "EU", name: "Europe", currency: "EUR", minRate: 1500 },
+    { code: "CA", name: "Canada", currency: "CAD", minRate: 1800 }, // $18/hr floor
+    { code: "US", name: "United States", currency: "USD", minRate: 2000 }, // $20/hr floor
+    { code: "EU", name: "Europe", currency: "EUR", minRate: 1800 }, // €18/hr floor
+    { code: "NG", name: "Nigeria", currency: "NGN", minRate: 500_000 }, // ₦5,000/hr floor
   ];
 
   const regions: Region[] = [];
@@ -182,7 +184,7 @@ async function seedSubjects(): Promise<Subject[]> {
   return subjects;
 }
 
-async function seedAdmin(ng: Region): Promise<void> {
+async function seedAdmin(primaryRegion: Region): Promise<void> {
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@mentora.local";
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? CONFIG.DEFAULT_PASSWORD;
   await db.user.upsert({
@@ -194,7 +196,7 @@ async function seedAdmin(ng: Region): Promise<void> {
       lastName: "Admin",
       passwordHash: await bcrypt.hash(adminPassword, 10),
       role: "ADMIN",
-      regionId: ng.id,
+      regionId: primaryRegion.id,
     },
     update: {},
   });
@@ -209,7 +211,7 @@ interface SeededTeacher {
   offeringIds: string[]; // order matches subjects
 }
 
-async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeacher[]> {
+async function seedTeachers(primaryRegion: Region, subjects: Subject[]): Promise<SeededTeacher[]> {
   if (CONFIG.COURSES_PER_TEACHER > subjects.length) {
     throw new Error(
       `COURSES_PER_TEACHER (${CONFIG.COURSES_PER_TEACHER}) exceeds available subjects (${subjects.length}).`,
@@ -221,7 +223,7 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
 
   for (let i = 0; i < CONFIG.NUM_TEACHERS; i += 1) {
     const [firstName, lastName] = pickName(TEACHER_NAMES, i, "Teacher");
-    const email = `teacher${i + 1}@mentora.local`;
+    const email = `user${i + 1}@teacher.com`;
     // Stable displayId that won't clash with runtime-generated IDs (uses date 2000-01-01).
     const displayId = `T-000101-${String(Math.floor(i / 26) + 1).padStart(2, "0")}${String.fromCharCode(65 + (i % 26))}`;
 
@@ -234,17 +236,17 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
         lastName,
         passwordHash,
         role: "TEACHER",
-        regionId: ng.id,
+        regionId: primaryRegion.id,
         teacherProfile: {
           create: {
             displayId,
             headline: `Experienced tutor — ${firstName} ${lastName}`,
             bio: `Hi, I'm ${firstName}. I've been teaching for several years and love helping students grow.`,
-            timeZone: "Africa/Lagos",
+            timeZone: "America/Toronto",
             spokenLanguages: "English",
-            locationCountryCode: "NG",
+            locationCountryCode: "CA",
             locationCity: "",
-            locationLabel: "Nigeria",
+            locationLabel: "Canada",
             avgRating: 4 + ((i % 10) / 10),
             ratingsCount: 5 + i,
             profileCompleted: true,
@@ -296,16 +298,16 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
           teacherProfileId_subjectId_regionId: {
             teacherProfileId: teacherProfile.id,
             subjectId: subj.id,
-            regionId: ng.id,
+            regionId: primaryRegion.id,
           },
         },
         create: {
           teacherProfileId: teacherProfile.id,
           subjectId: subj.id,
-          regionId: ng.id,
-          hourlyRate: CONFIG.HOURLY_RATE_KOBO,
+          regionId: primaryRegion.id,
+          hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR,
         },
-        update: { hourlyRate: CONFIG.HOURLY_RATE_KOBO },
+        update: { hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR },
       });
     }
 
@@ -330,10 +332,15 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
             startMinutes: slot.startMinutes,
             endMinutes: slot.endMinutes,
             teacherCap: CONFIG.TEACHER_CAP,
-            hourlyRate: CONFIG.HOURLY_RATE_KOBO,
+            hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR,
             rules: DEMO_RULES,
           },
           select: { id: true },
+        });
+      } else {
+        await db.classOffering.update({
+          where: { id: offering.id },
+          data: { hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR },
         });
       }
       offeringIds.push(offering.id);
@@ -359,13 +366,13 @@ interface SeededStudent {
   name: string;
 }
 
-async function seedStudents(ng: Region): Promise<SeededStudent[]> {
+async function seedStudents(primaryRegion: Region): Promise<SeededStudent[]> {
   const passwordHash = await bcrypt.hash(CONFIG.DEFAULT_PASSWORD, 10);
   const result: SeededStudent[] = [];
 
   for (let i = 0; i < CONFIG.NUM_STUDENTS; i += 1) {
     const [firstName, lastName] = pickName(STUDENT_NAMES, i, "Student");
-    const email = `student${i + 1}@mentora.local`;
+    const email = `user${i + 1}@student.com`;
 
     const user = await db.user.upsert({
       where: { email },
@@ -376,7 +383,7 @@ async function seedStudents(ng: Region): Promise<SeededStudent[]> {
         lastName,
         passwordHash,
         role: "STUDENT",
-        regionId: ng.id,
+        regionId: primaryRegion.id,
         studentProfile: { create: {} },
       },
       update: {},
@@ -399,7 +406,7 @@ async function seedStudents(ng: Region): Promise<SeededStudent[]> {
   return result;
 }
 
-async function seedGuardians(ng: Region, students: SeededStudent[]): Promise<void> {
+async function seedGuardians(primaryRegion: Region, students: SeededStudent[]): Promise<void> {
   if (CONFIG.NUM_GUARDIANS * CONFIG.WARDS_PER_GUARDIAN > students.length) {
     throw new Error(
       `NUM_GUARDIANS * WARDS_PER_GUARDIAN (${CONFIG.NUM_GUARDIANS * CONFIG.WARDS_PER_GUARDIAN}) exceeds NUM_STUDENTS (${students.length}).`,
@@ -410,7 +417,7 @@ async function seedGuardians(ng: Region, students: SeededStudent[]): Promise<voi
 
   for (let i = 0; i < CONFIG.NUM_GUARDIANS; i += 1) {
     const [firstName, lastName] = pickName(GUARDIAN_NAMES, i, "Guardian");
-    const email = `guardian${i + 1}@mentora.local`;
+    const email = `user${i + 1}@guardian.com`;
 
     const user = await db.user.upsert({
       where: { email },
@@ -421,7 +428,7 @@ async function seedGuardians(ng: Region, students: SeededStudent[]): Promise<voi
         lastName,
         passwordHash,
         role: "GUARDIAN",
-        regionId: ng.id,
+        regionId: primaryRegion.id,
         guardianProfile: { create: {} },
       },
       update: {},
@@ -614,7 +621,7 @@ async function seedAssignments(
 // ---------------------------------------------------------------------------
 
 const TEACHER5_PAST_CLASS_DEMO = {
-  teacherEmail: "teacher5@mentora.local",
+  teacherEmail: "user5@teacher.com",
   offeringTitle: "test meeting",
   dayOfWeek: "WED" as DayOfWeek,
   startMinutes: 7 * 60 + 30,
@@ -623,7 +630,7 @@ const TEACHER5_PAST_CLASS_DEMO = {
   sessionCalendarDate: "2026-06-03",
   studentEmails: Array.from(
     { length: 10 },
-    (_, i) => `student${i + 1}@mentora.local`,
+    (_, i) => `user${i + 1}@student.com`,
   ),
 } as const;
 
@@ -674,7 +681,7 @@ async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
         startMinutes: cfg.startMinutes,
         endMinutes: cfg.endMinutes,
         teacherCap: CONFIG.TEACHER_CAP,
-        hourlyRate: CONFIG.HOURLY_RATE_KOBO,
+        hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR,
         periodType: "OPEN",
         rules: DEMO_RULES,
       },
@@ -687,6 +694,7 @@ async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
         startMinutes: cfg.startMinutes,
         endMinutes: cfg.endMinutes,
         teacherCap: CONFIG.TEACHER_CAP,
+        hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR,
         periodType: "OPEN",
         active: true,
       },
@@ -849,10 +857,10 @@ function sessionDateOnWeek(
 }
 
 const TEACHER1_CHART_DEMO = {
-  teacherEmail: "teacher1@mentora.local",
+  teacherEmail: "user1@teacher.com",
   /** Indices into teacher1's seeded offerings (MON/TUE/WED/THU/FRI spread). */
   offeringIndices: [0, 1, 2, 3, 4],
-  studentEmails: Array.from({ length: 8 }, (_, i) => `student${i + 1}@mentora.local`),
+  studentEmails: Array.from({ length: 8 }, (_, i) => `user${i + 1}@student.com`),
   /** Held sessions per offering per week (index 0 = oldest of past 8 weeks). */
   sessionsPerOfferingByWeek: [
     [0, 0, 0, 0, 0],
@@ -1055,25 +1063,25 @@ async function main(): Promise<void> {
 
   console.log("Seeding regions...");
   const regions = await seedRegions();
-  const ng = regions.find((r) => r.code === "NG");
-  if (!ng) throw new Error("Nigeria region missing after seedRegions");
+  const ca = regions.find((r) => r.code === "CA");
+  if (!ca) throw new Error("Canada region missing after seedRegions");
 
   console.log("Seeding subjects...");
   const subjects = await seedSubjects();
 
   console.log("Seeding admin user...");
-  await seedAdmin(ng);
+  await seedAdmin(ca);
 
   console.log(`Seeding ${CONFIG.NUM_TEACHERS} teachers × ${CONFIG.COURSES_PER_TEACHER} courses...`);
-  const teachers = await seedTeachers(ng, subjects);
+  const teachers = await seedTeachers(ca, subjects);
 
   console.log(`Seeding ${CONFIG.NUM_STUDENTS} students...`);
-  const students = await seedStudents(ng);
+  const students = await seedStudents(ca);
 
   console.log(
     `Seeding ${CONFIG.NUM_GUARDIANS} guardians × ${CONFIG.WARDS_PER_GUARDIAN} wards each...`,
   );
-  await seedGuardians(ng, students);
+  await seedGuardians(ca, students);
 
   console.log(
     `Seeding enrollments (${CONFIG.MIN_ENROLLMENTS_PER_STUDENT}-${CONFIG.MAX_ENROLLMENTS_PER_STUDENT} per student)...`,
@@ -1091,7 +1099,7 @@ async function main(): Promise<void> {
 
   console.log("Seed complete.");
   console.log(
-    `  Login with: admin@mentora.local, teacher1..${CONFIG.NUM_TEACHERS}@mentora.local, student1..${CONFIG.NUM_STUDENTS}@mentora.local, guardian1..${CONFIG.NUM_GUARDIANS}@mentora.local`,
+    `  Login with: admin@mentora.local, user1..${CONFIG.NUM_TEACHERS}@teacher.com, user1..${CONFIG.NUM_STUDENTS}@student.com, user1..${CONFIG.NUM_GUARDIANS}@guardian.com`,
   );
   console.log(`  Default password: ${CONFIG.DEFAULT_PASSWORD}`);
 }

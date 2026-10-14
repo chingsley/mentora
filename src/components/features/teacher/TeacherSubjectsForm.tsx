@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { saveSubjectsAction, type ActionResult } from "@/app/(app)/profile/actions";
@@ -254,7 +255,7 @@ export function TeacherSubjectsForm({
   onSaved,
 }: TeacherSubjectsFormProps) {
   const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
 
   const [rows, setRows] = React.useState<Record<string, Row>>(() =>

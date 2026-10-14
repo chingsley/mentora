@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
@@ -121,7 +122,7 @@ export function TeacherProfilePaymentTab({
 }: TeacherProfilePaymentTabProps) {
   const router = useRouter();
   const setupMode = useTeacherProfileSetupMode();
-  const [isSaving, startTransition] = React.useTransition();
+  const [isSaving, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
   const [preferredMethod, setPreferredMethod] = React.useState(payoutPreferredMethod ?? "");
   const isBankTransfer = preferredMethod === TEACHER_PAYOUT_METHOD.BANK_TRANSFER;

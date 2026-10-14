@@ -3,6 +3,7 @@
 import { ArrowRight, Pencil, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
@@ -317,7 +318,7 @@ export function SessionStudentCommentPanel({
   const [draft, setDraft] = React.useState(snapshot.studentNote ?? "");
   const [isEditing, setIsEditing] = React.useState(!hasComment);
   const [error, setError] = React.useState<string | null>(null);
-  const [pending, startTransition] = React.useTransition();
+  const [pending, startTransition] = useActionPending();
 
   React.useEffect(() => {
     const note = snapshot.studentNote ?? "";

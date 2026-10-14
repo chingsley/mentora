@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import { AppCalendar } from "@/components/features/calendar";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 
@@ -10,7 +10,7 @@ export interface WardTimetableProps {
 }
 
 export function WardTimetable({ entries, studentId }: WardTimetableProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   return (
     <AppCalendar
       entries={entries}

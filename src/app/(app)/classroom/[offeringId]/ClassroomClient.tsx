@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import * as React from "react";
 import styled from "styled-components";
 import { ArrowLeft, Radio, Video } from "lucide-react";
@@ -301,7 +301,7 @@ function JitsiRoom({
 }
 
 function LiveClassroom({ access }: { access: ClassroomAccess; }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [leaving, setLeaving] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
 
@@ -373,7 +373,7 @@ function TeacherIdle({
   offeringTitle: string;
   canStart: boolean;
 }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [starting, setStarting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -422,7 +422,7 @@ function StudentWaiting({
   offeringTitle: string;
   teacherName: string;
 }) {
-  const router = useRouter();
+  const router = useAppRouter();
 
   React.useEffect(() => {
     const id = setInterval(() => router.refresh(), WAITING_POLL_MS);

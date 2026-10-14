@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { AppCalendar } from "@/components/features/calendar";
 import type { CalendarOccurrenceLookup } from "@/components/features/calendar/types";
@@ -99,7 +100,7 @@ export function TeacherDetailStudentSchedule({
     setMessage(null);
   }
 
-  const [, startTransition] = React.useTransition();
+  const [, startTransition] = useActionPending();
 
   function handleDrop(id: string, offeringId: string) {
     setPendingOfferingId(offeringId);
