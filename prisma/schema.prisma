@@ -202,11 +202,26 @@ model TeacherProfile {
   payoutBankRoutingNumber   String? @db.VarChar(64)
   payoutNotes             String? @db.Text
   subjects         TeacherSubject[]
+  workExperiences  TeacherWorkExperience[]
   rates            TeacherRate[]
   offerings        ClassOffering[]
   assignments      Assignment[]
   reports          TeacherReport[]
   createdAt        DateTime         @default(now())
+}
+
+model TeacherWorkExperience {
+  id               String         @id @default(cuid())
+  teacherProfileId String
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  company          String         @db.VarChar(200)
+  role             String         @db.VarChar(200)
+  startDate        DateTime
+  endDate          DateTime?
+  sortOrder        Int            @default(0)
+  createdAt        DateTime       @default(now())
+
+  @@index([teacherProfileId])
 }
 
 model StudentProfile {

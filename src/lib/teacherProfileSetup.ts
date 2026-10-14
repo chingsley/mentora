@@ -1,15 +1,37 @@
 import { isTeacherCoursesPhaseComplete } from "@/lib/teacherCoursesCompleteness";
 import { TEACHER_PAYOUT_METHOD } from "@/constants/teacherPayout.constants";
 
-/** Matches `TEACHER_PROFILE_EDIT_TABS` in teacherProfileTabIds.ts */
-export const TEACHER_PROFILE_SETUP_PHASES = ["bio", "courses", "schedule", "payment"] as const;
+/** Onboarding steps (includes location, which is edited under Profile View). */
+export const TEACHER_PROFILE_SETUP_PHASES = [
+  "bio",
+  "location",
+  "courses",
+  "schedule",
+  "payment",
+] as const;
 
 export type TeacherProfileSetupPhase = (typeof TEACHER_PROFILE_SETUP_PHASES)[number];
+
+export function isTeacherProfileSetupStepId(v: string): v is TeacherProfileSetupPhase {
+  return (TEACHER_PROFILE_SETUP_PHASES as readonly string[]).includes(v);
+}
+
+export function nextTeacherProfileSetupPhase(
+  current: TeacherProfileSetupPhase,
+): TeacherProfileSetupPhase {
+  const idx = TEACHER_PROFILE_SETUP_PHASES.indexOf(current);
+  if (idx === -1 || idx === TEACHER_PROFILE_SETUP_PHASES.length - 1) {
+    return TEACHER_PROFILE_SETUP_PHASES[TEACHER_PROFILE_SETUP_PHASES.length - 1]!;
+  }
+  return TEACHER_PROFILE_SETUP_PHASES[idx + 1]!;
+}
 
 export interface TeacherProfileSetupInput {
   image: string | null;
   bio: string;
   spokenLanguages: string;
+  locationCountryCode: string;
+  locationCity: string;
   subjectIds: string[];
   offeringsCount: number;
   payoutLegalName: string | null;
@@ -26,12 +48,18 @@ function phaseDone(flags: boolean[]): boolean {
 
 export function isTeacherProfileBioPhaseComplete(input: Pick<
   TeacherProfileSetupInput,
-  "image" | "bio" | "spokenLanguages"
+  "image" | "bio"
 >): boolean {
+  return phaseDone([Boolean(input.image), input.bio.trim().length > 0]);
+}
+
+export function isTeacherProfileLocationPhaseComplete(
+  input: Pick<TeacherProfileSetupInput, "spokenLanguages" | "locationCountryCode" | "locationCity">,
+): boolean {
   return phaseDone([
-    Boolean(input.image),
     Boolean(String(input.spokenLanguages ?? "").trim()),
-    input.bio.trim().length > 0,
+    /^[A-Z]{2}$/.test(String(input.locationCountryCode ?? "").trim().toUpperCase()),
+    Boolean(String(input.locationCity ?? "").trim()),
   ]);
 }
 
@@ -75,13 +103,14 @@ export function teacherProfileSetupPhaseComplete(
 ): Record<TeacherProfileSetupPhase, boolean> {
   return {
     bio: isTeacherProfileBioPhaseComplete(input),
+    location: isTeacherProfileLocationPhaseComplete(input),
     courses: isTeacherCoursesPhaseComplete({ subjectIds: input.subjectIds }),
     schedule: isTeacherProfileSchedulePhaseComplete(input),
     payment: isTeacherProfilePaymentPhaseComplete(input),
   };
 }
 
-/** True when all onboarding phases (bio, courses, schedule, payment) are satisfied. */
+/** True when all onboarding phases are satisfied. */
 export function isTeacherProfileSetupComplete(input: TeacherProfileSetupInput): boolean {
   const phases = teacherProfileSetupPhaseComplete(input);
   return TEACHER_PROFILE_SETUP_PHASES.every((tab) => phases[tab]);

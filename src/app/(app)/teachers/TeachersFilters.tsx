@@ -3,7 +3,7 @@
 import type { DayOfWeek } from "@prisma/client";
 import { ChevronDown, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import * as React from "react";
 import styled, { css } from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
@@ -316,7 +316,7 @@ export function TeachersFilters({
   regions,
   maxRegion,
 }: TeachersFiltersProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [openMenu, setOpenMenu] = React.useState<MenuId | null>(null);
   const [searchDraft, setSearchDraft] = React.useState(q ?? "");
   const [maxDraft, setMaxDraft] = React.useState(max ?? "");

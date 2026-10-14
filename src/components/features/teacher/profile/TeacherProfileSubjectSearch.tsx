@@ -2,6 +2,14 @@
 
 import * as React from "react";
 import styled from "styled-components";
+import {
+  FormFieldControlSlot,
+  FormFieldError,
+  FormFieldLabel,
+  FormFieldLabelSlot,
+  FormFieldMetaSlot,
+  FormFieldRoot,
+} from "@/components/ui/FormField";
 import { COLORS } from "@/constants/colors.constants";
 import { APP_INPUT_HEIGHT, FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
 import { FONTS } from "@/constants/fonts.constants";
@@ -22,20 +30,6 @@ export interface TeacherProfileSubjectSearchProps {
   error?: string;
   disabled?: boolean;
 }
-
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.TWO};
-  width: 100%;
-  position: relative;
-`;
-
-const Label = styled.label`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-`;
 
 const InputWrap = styled.div`
   position: relative;
@@ -115,12 +109,6 @@ const EmptyHint = styled.li`
   padding: ${SPACING.TWO} ${SPACING.THREE};
   font-size: ${FONTS.SIZE.SM};
   color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const ErrorText = styled.p`
-  margin: 0;
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.DESTRUCTIVE};
 `;
 
 function normalizeQuery(q: string): string {
@@ -209,9 +197,12 @@ export function TeacherProfileSubjectSearch({
   const showList = open && !disabled;
 
   return (
-    <Field ref={wrapRef}>
-      <Label htmlFor={inputId}>{label}</Label>
-      <InputWrap>
+    <FormFieldRoot ref={wrapRef} $hasLabel>
+      <FormFieldLabelSlot>
+        <FormFieldLabel htmlFor={inputId}>{label}</FormFieldLabel>
+      </FormFieldLabelSlot>
+      <FormFieldControlSlot>
+        <InputWrap>
         <SearchInput
           id={inputId}
           type="search"
@@ -252,8 +243,11 @@ export function TeacherProfileSubjectSearch({
             )}
           </Listbox>
         ) : null}
-      </InputWrap>
-      {error ? <ErrorText id={`${inputId}-error`}>{error}</ErrorText> : null}
-    </Field>
+        </InputWrap>
+      </FormFieldControlSlot>
+      <FormFieldMetaSlot>
+        {error ? <FormFieldError id={`${inputId}-error`}>{error}</FormFieldError> : null}
+      </FormFieldMetaSlot>
+    </FormFieldRoot>
   );
 }

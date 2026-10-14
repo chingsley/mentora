@@ -2,13 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import { dropAction } from "@/app/(app)/classes/actions";
 import { enrollAction } from "./actions";
 
 export function useTeacherOfferingEnrollment() {
   const router = useRouter();
   const [selectedOfferingId, setSelectedOfferingId] = React.useState<string | null>(null);
-  const [, startTransition] = React.useTransition();
+  const [, startTransition] = useActionPending();
   const [pendingOfferingId, setPendingOfferingId] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<
     { tone: "success" | "error"; text: string } | null

@@ -12,14 +12,11 @@ import { offeringCapacity } from "@/lib/offeringCapacity";
 import { buildTeacherOfferingCalendarEntry } from "@/lib/teacherCalendarEntries";
 import { offeringHourlyRateDisplay, teacherBillingCurrency } from "@/lib/offeringHourlyRate";
 import { recurrenceFromDb } from "@/lib/offeringRecurrence";
-import {
-  buildTeacherSubjectRateRows,
-  formatTeacherPriceSummary,
-  minVisibleOfferingHourlyRate,
-} from "@/lib/teacherSubjectRateRows";
+import { buildTeacherSubjectRateRows } from "@/lib/teacherSubjectRateRows";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import type { ClassDetail } from "@/components/features/class/ClassDetailsDialog";
 import { getStudentClassCalendarData } from "@/server/studentClassCalendar";
+import { mapTeacherWorkExperiencesForPublicProfile } from "@/lib/mapTeacherWorkExperiencesForPublicProfile";
 import { TeacherDetailView } from "./TeacherDetailView";
 
 export const metadata: Metadata = { title: "Teacher profile" };
@@ -110,25 +107,24 @@ export default async function TeacherPage({ params }: Props) {
     regionName,
   });
 
-  const priceSummary = formatTeacherPriceSummary(
-    minVisibleOfferingHourlyRate(teacher.offerings, visibleOfferingIds),
-    billingCurrency,
-  );
-
   return (
     <TeacherDetailView
       name={teacher.user.name}
       imageUrl={teacher.user.image ?? null}
       initials={initials(teacher.user.name)}
+      headline={teacher.headline}
+      bio={teacher.bio}
+      email={teacher.user.email}
+      spokenLanguages={teacher.spokenLanguages}
+      locationCountryCode={teacher.locationCountryCode}
       displayId={teacher.displayId}
       rating={teacher.avgRating}
       ratingsCount={teacher.ratingsCount}
-      headline={teacher.headline}
-      bio={teacher.bio}
-      priceSummary={priceSummary}
       subjects={teacher.subjects.map((s) => ({
         id: s.subject.id,
         name: s.subject.name,
+        courseDescription: s.courseDescription,
+        gradeLevel: s.gradeLevel,
       }))}
       rates={rates}
       entries={entries}
@@ -151,6 +147,7 @@ export default async function TeacherPage({ params }: Props) {
         body: t.body,
         offeringTitle: t.offering.title,
       }))}
+      workExperiences={mapTeacherWorkExperiencesForPublicProfile(teacher.workExperiences)}
     />
   );
 }

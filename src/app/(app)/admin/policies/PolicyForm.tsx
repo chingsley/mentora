@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -80,7 +81,7 @@ export interface PolicyFormProps {
 
 export function PolicyForm({ initial }: PolicyFormProps) {
   const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<PolicyActionResult | null>(null);
 
   React.useEffect(() => {

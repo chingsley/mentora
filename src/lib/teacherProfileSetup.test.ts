@@ -10,6 +10,8 @@ const completeInput: TeacherProfileSetupInput = {
   image: "https://example.com/photo.jpg",
   bio: "Experienced tutor.",
   spokenLanguages: "English",
+  locationCountryCode: "CA",
+  locationCity: "Toronto",
   subjectIds: ["math"],
   offeringsCount: 1,
   payoutLegalName: "Jane Doe",
@@ -74,6 +76,8 @@ describe("teacherProfileSetup", () => {
           image: null,
           bio: "",
           spokenLanguages: "",
+          locationCountryCode: "",
+          locationCity: "",
           subjectIds: [],
           offeringsCount: 0,
           payoutLegalName: null,
@@ -83,7 +87,23 @@ describe("teacherProfileSetup", () => {
       ).toBe("bio");
     });
 
-    it("returns courses after bio is complete", () => {
+    it("returns location after bio is complete", () => {
+      expect(
+        firstIncompleteTeacherProfileSetupPhase({
+          ...completeInput,
+          spokenLanguages: "",
+          locationCountryCode: "",
+          locationCity: "",
+          subjectIds: [],
+          offeringsCount: 0,
+          payoutLegalName: null,
+          payoutCountryCode: null,
+          payoutPreferredMethod: null,
+        }),
+      ).toBe("location");
+    });
+
+    it("returns courses after bio and location are complete", () => {
       expect(
         firstIncompleteTeacherProfileSetupPhase({
           ...completeInput,
@@ -113,6 +133,8 @@ describe("teacherProfileSetup", () => {
           image: completeInput.image,
           bio: completeInput.bio,
           spokenLanguages: completeInput.spokenLanguages,
+          locationCountryCode: completeInput.locationCountryCode,
+          locationCity: completeInput.locationCity,
           subjectIds: [],
           offeringsCount: 0,
           payoutLegalName: null,
@@ -121,6 +143,7 @@ describe("teacherProfileSetup", () => {
         }),
       ).toEqual({
         bio: true,
+        location: true,
         courses: false,
         schedule: false,
         payment: false,

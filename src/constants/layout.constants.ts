@@ -29,7 +29,7 @@ export const LAYOUT = {
   },
   Z: {
     STICKY: 200,
-    /** Route transition progress bar (`NavigationProgress`). */
+    /** Global route loading overlay (`NavigationLoadingProvider`). */
     NAVIGATION_PROGRESS: 250,
     MODAL: 1000,
     TOAST: 1100,

@@ -53,7 +53,7 @@ const SetupContinueButton = styled(Button)`
 `;
 
 export interface TeacherProfileTabFooterProps {
-  onBack: () => void;
+  onBack?: () => void;
   /** Submit the enclosing form (footer rendered inside a `<form>`). */
   continueAsSubmit?: boolean;
   /** Submit a form by id when the footer sits outside that form. */
@@ -65,6 +65,8 @@ export interface TeacherProfileTabFooterProps {
   continueDisabled?: boolean;
   /** Override continue label (e.g. final step). */
   continueLabel?: string;
+  /** Show only the back control (inline save elsewhere). */
+  backOnly?: boolean;
 }
 
 export function TeacherProfileTabFooter({
@@ -76,6 +78,7 @@ export function TeacherProfileTabFooter({
   backDisabled = false,
   continueDisabled = false,
   continueLabel = "Save & Continue",
+  backOnly = false,
 }: TeacherProfileTabFooterProps) {
   const setupMode = useTeacherProfileSetupMode();
   const onSkip = useTeacherProfileSetupSkip();
@@ -89,7 +92,7 @@ export function TeacherProfileTabFooter({
           type="button"
           variant={backVariant}
           onClick={onBack}
-          disabled={backDisabled || isLoading}
+          disabled={backDisabled || isLoading || !onBack}
         >
           Back
         </Button>
@@ -99,18 +102,20 @@ export function TeacherProfileTabFooter({
           </Button>
         ) : null}
       </FooterNav>
-      <SetupContinueWrap>
-        <SetupContinueButton
-          type={continueIsSubmit ? "submit" : "button"}
-          form={continueFormId}
-          variant="primary"
-          isLoading={isLoading}
-          disabled={continueDisabled}
-          onClick={continueIsSubmit ? undefined : onContinue}
-        >
-          {continueLabel}
-        </SetupContinueButton>
-      </SetupContinueWrap>
+      {backOnly ? null : (
+        <SetupContinueWrap>
+          <SetupContinueButton
+            type={continueIsSubmit ? "submit" : "button"}
+            form={continueFormId}
+            variant="primary"
+            isLoading={isLoading}
+            disabled={continueDisabled}
+            onClick={continueIsSubmit ? undefined : onContinue}
+          >
+            {continueLabel}
+          </SetupContinueButton>
+        </SetupContinueWrap>
+      )}
     </Footer>
   );
 }

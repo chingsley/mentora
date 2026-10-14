@@ -1,7 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useNavigationLoading } from "@/components/layouts/NavigationLoadingProvider";
+import { useActionPending } from "@/hooks/useActionPending";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import {
   AuthCallout,
   AuthFeedbackBanner,
@@ -23,10 +25,11 @@ export interface RegisterFormProps {
 }
 
 export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
-  const router = useRouter();
+  const router = useAppRouter();
+  const { beginNavigation, endNavigation } = useNavigationLoading();
   const passwordId = React.useId();
   const confirmPasswordId = React.useId();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<RegisterActionResult | null>(null);
   const [role, setRole] = React.useState<AuthRegisterRole>(defaultRole);
   const [password, setPassword] = React.useState("");
@@ -38,13 +41,20 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    beginNavigation();
     const formData = new FormData(event.currentTarget);
     startTransition(async () => {
-      const response = await registerAction(formData);
-      setResult(response);
-      if (response.ok) {
-        router.push(response.redirectTo);
-        router.refresh();
+      try {
+        const response = await registerAction(formData);
+        setResult(response);
+        if (response.ok) {
+          router.push(response.redirectTo);
+          router.refresh();
+        } else {
+          endNavigation();
+        }
+      } catch {
+        endNavigation();
       }
     });
   }
@@ -128,8 +138,8 @@ export function RegisterForm({ defaultRole = "STUDENT" }: RegisterFormProps) {
       ) : null} */}
 
       <AuthFormActions>
-        <AuthSubmitButton type="submit" isLoading={isPending}>
-          {isPending ? "Creating account…" : "Create account"}
+        <AuthSubmitButton type="submit" disabled={isPending}>
+          Create account
         </AuthSubmitButton>
       </AuthFormActions>
 

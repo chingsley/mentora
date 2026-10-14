@@ -1,14 +1,9 @@
-import { isTeacherCoursesPhaseComplete } from "@/lib/teacherCoursesCompleteness";
 import {
   teacherProfileSetupPhaseComplete,
   type TeacherProfileSetupInput,
 } from "@/lib/teacherProfileSetup";
 import type { TeacherProfileChecklistItem } from "./TeacherProfileTabs.types";
-import {
-  TEACHER_PROFILE_EDIT_TABS,
-  TEACHER_PROFILE_TAB_LABEL,
-  type TeacherProfileEditTabId,
-} from "./teacherProfileTabIds";
+import { TEACHER_PROFILE_TAB_LABEL } from "./teacherProfileTabIds";
 
 export type TeacherProfileCompletenessInput = TeacherProfileSetupInput;
 
@@ -17,9 +12,33 @@ export function buildTeacherProfileChecklist(
 ): TeacherProfileChecklistItem[] {
   const phaseComplete = teacherProfileSetupPhaseComplete(input);
 
-  return TEACHER_PROFILE_EDIT_TABS.map((tab) => ({
-    label: TEACHER_PROFILE_TAB_LABEL[tab],
-    done: phaseComplete[tab as TeacherProfileEditTabId],
-    editTab: tab,
-  }));
+  return [
+    {
+      label: "Photo & bio",
+      done: phaseComplete.bio,
+      editTab: "view",
+      profileSection: input.image ? "about" : "photo",
+    },
+    {
+      label: "Location & languages",
+      done: phaseComplete.location,
+      editTab: "view",
+      profileSection: "location",
+    },
+    {
+      label: TEACHER_PROFILE_TAB_LABEL.courses,
+      done: phaseComplete.courses,
+      editTab: "courses",
+    },
+    {
+      label: TEACHER_PROFILE_TAB_LABEL.schedule,
+      done: phaseComplete.schedule,
+      editTab: "schedule",
+    },
+    {
+      label: TEACHER_PROFILE_TAB_LABEL.payment,
+      done: phaseComplete.payment,
+      editTab: "payment",
+    },
+  ];
 }

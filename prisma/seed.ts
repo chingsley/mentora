@@ -20,10 +20,153 @@ const CONFIG = {
   MIN_ENROLLMENTS_PER_STUDENT: 2,
   MAX_ENROLLMENTS_PER_STUDENT: 3,
   NUM_ASSIGNMENTS: 20,
-  DEFAULT_PASSWORD: "ChangeMe123!",
-  HOURLY_RATE_KOBO: 500_000, // NGN 5,000 per hour (smallest unit)
+  DEFAULT_PASSWORD: "Password123@",
+  /** Seeded class & teacher rates in smallest currency units (e.g. CAD cents). */
+  SEED_HOURLY_RATE_MINOR: 2000, // CAD 20.00 per hour
   TEACHER_CAP: 10,
 } as const;
+
+/** Portrait URLs for seeded teachers (`null` = initials only in UI). */
+const TEACHER_SEED_PROFILE_IMAGES: Array<string | null> = [
+  "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=256&h=256&fit=crop&auto=format",
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=256&h=256&fit=crop&auto=format",
+  null,
+  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=256&h=256&fit=crop&auto=format",
+  "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=256&h=256&fit=crop&auto=format",
+  null,
+  "https://images.unsplash.com/photo-1519085360759-af0119f7cbe7?w=256&h=256&fit=crop&auto=format",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop&auto=format",
+  null,
+  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=256&h=256&fit=crop&auto=format",
+];
+
+function teacherSeedProfileImage(teacherIndex: number): string | null {
+  return TEACHER_SEED_PROFILE_IMAGES[teacherIndex] ?? null;
+}
+
+interface WorkExperienceSeedRow {
+  company: string;
+  role: string;
+  startYear: number;
+  startMonth: number;
+  endYear: number | null;
+  endMonth: number | null;
+}
+
+const TEACHER_WORK_EXPERIENCE_SETS: ReadonlyArray<readonly WorkExperienceSeedRow[]> = [
+  [
+    { company: "Westbridge Academy", role: "Mathematics Teacher", startYear: 2014, startMonth: 9, endYear: 2017, endMonth: 6 },
+    { company: "Horizon Learning Center", role: "Lead Tutor", startYear: 2017, startMonth: 8, endYear: 2020, endMonth: 7 },
+    { company: "Summit Prep School", role: "Senior Instructor", startYear: 2020, startMonth: 9, endYear: 2023, endMonth: 5 },
+    { company: "Mentora", role: "Online Educator", startYear: 2023, startMonth: 6, endYear: null, endMonth: null },
+  ],
+  [
+    { company: "Lakeside Secondary School", role: "English Teacher", startYear: 2013, startMonth: 1, endYear: 2016, endMonth: 12 },
+    { company: "Bright Minds Tutoring", role: "Curriculum Writer", startYear: 2017, startMonth: 3, endYear: 2019, endMonth: 8 },
+    { company: "City College Prep", role: "Department Coordinator", startYear: 2019, startMonth: 9, endYear: 2022, endMonth: 6 },
+    { company: "Mentora", role: "Independent Tutor", startYear: 2022, startMonth: 7, endYear: null, endMonth: null },
+  ],
+  [
+    { company: "Northview High", role: "Physics Teacher", startYear: 2015, startMonth: 9, endYear: 2018, endMonth: 6 },
+    { company: "STEM Futures Lab", role: "Instructional Coach", startYear: 2018, startMonth: 8, endYear: 2021, endMonth: 4 },
+    { company: "Atlas Education Group", role: "Senior STEM Specialist", startYear: 2021, startMonth: 5, endYear: null, endMonth: null },
+  ],
+  [
+    { company: "Riverside Academy", role: "Chemistry Teacher", startYear: 2012, startMonth: 9, endYear: 2015, endMonth: 6 },
+    { company: "Nova Science Institute", role: "Lab Instructor", startYear: 2015, startMonth: 7, endYear: 2018, endMonth: 12 },
+    { company: "Open Class Network", role: "Remote Educator", startYear: 2019, startMonth: 1, endYear: 2023, endMonth: 3 },
+    { company: "Mentora", role: "Chemistry Tutor", startYear: 2023, startMonth: 4, endYear: null, endMonth: null },
+  ],
+  [
+    { company: "CodeBridge Academy", role: "Programming Instructor", startYear: 2016, startMonth: 2, endYear: 2019, endMonth: 1 },
+    { company: "TechStart Youth", role: "Mentor & Workshop Lead", startYear: 2019, startMonth: 2, endYear: 2022, endMonth: 5 },
+    { company: "Mentora", role: "Computer Science Tutor", startYear: 2022, startMonth: 6, endYear: null, endMonth: null },
+  ],
+  [
+    { company: "Harmony School of Music", role: "Music Teacher", startYear: 2011, startMonth: 9, endYear: 2014, endMonth: 6 },
+    { company: "Community Arts Collective", role: "Ensemble Director", startYear: 2014, startMonth: 8, endYear: 2018, endMonth: 7 },
+    { company: "PerformEd Studio", role: "Private Instructor", startYear: 2018, startMonth: 9, endYear: 2021, endMonth: 12 },
+    { company: "Mentora", role: "Music Tutor", startYear: 2022, startMonth: 1, endYear: null, endMonth: null },
+  ],
+  [
+    { company: "Oakwood High School", role: "Biology Teacher", startYear: 2013, startMonth: 9, endYear: 2016, endMonth: 6 },
+    { company: "Greenfield Clinic Outreach", role: "Science Educator", startYear: 2016, startMonth: 7, endYear: 2019, endMonth: 8 },
+    { company: "Mentora", role: "Biology Tutor", startYear: 2020, startMonth: 1, endYear: null, endMonth: null },
+  ],
+  [
+    { company: "Heritage History Academy", role: "History Teacher", startYear: 2010, startMonth: 9, endYear: 2013, endMonth: 6 },
+    { company: "Global Citizens Program", role: "Curriculum Designer", startYear: 2013, startMonth: 8, endYear: 2017, endMonth: 5 },
+    { company: "Metro Evening College", role: "Adjunct Lecturer", startYear: 2017, startMonth: 9, endYear: 2022, endMonth: 4 },
+    { company: "Mentora", role: "History Tutor", startYear: 2022, startMonth: 5, endYear: null, endMonth: null },
+  ],
+  [
+    { company: "Capital Economics School", role: "Economics Teacher", startYear: 2014, startMonth: 1, endYear: 2017, endMonth: 12 },
+    { company: "Future Finance Youth", role: "Workshop Facilitator", startYear: 2018, startMonth: 3, endYear: 2020, endMonth: 11 },
+    { company: "Mentora", role: "Economics Tutor", startYear: 2021, startMonth: 1, endYear: null, endMonth: null },
+  ],
+  [
+    { company: "Literary Arts High", role: "Literature Teacher", startYear: 2012, startMonth: 9, endYear: 2015, endMonth: 6 },
+    { company: "Writers' Guild Education", role: "Reading Coach", startYear: 2015, startMonth: 7, endYear: 2019, endMonth: 6 },
+    { company: "Page & Pen Academy", role: "Senior English Instructor", startYear: 2019, startMonth: 9, endYear: 2023, endMonth: 1 },
+    { company: "Mentora", role: "Literature Tutor", startYear: 2023, startMonth: 2, endYear: null, endMonth: null },
+  ],
+];
+
+function workExperienceMonthDate(year: number, month: number): Date {
+  return new Date(Date.UTC(year, month - 1, 1));
+}
+
+function workExperienceSeedsForTeacher(teacherIndex: number): WorkExperienceSeedRow[] {
+  const set =
+    TEACHER_WORK_EXPERIENCE_SETS[teacherIndex % TEACHER_WORK_EXPERIENCE_SETS.length] ??
+    TEACHER_WORK_EXPERIENCE_SETS[0]!;
+  const count = 3 + (teacherIndex % 2);
+  return [...set].slice(0, count);
+}
+
+async function seedTeacherWorkExperiences(teacherProfileId: string, teacherIndex: number): Promise<void> {
+  await db.teacherWorkExperience.deleteMany({ where: { teacherProfileId } });
+  const rows = workExperienceSeedsForTeacher(teacherIndex);
+  await db.teacherWorkExperience.createMany({
+    data: rows.map((row, sortOrder) => ({
+      teacherProfileId,
+      company: row.company,
+      role: row.role,
+      startDate: workExperienceMonthDate(row.startYear, row.startMonth),
+      endDate:
+        row.endYear != null && row.endMonth != null
+          ? workExperienceMonthDate(row.endYear, row.endMonth)
+          : null,
+      sortOrder,
+    })),
+  });
+}
+
+function seedTeacherPublicProfileFields(
+  teacherIndex: number,
+  firstName: string,
+  lastName: string,
+) {
+  if (teacherIndex === 0) {
+    return {
+      headline: "Creative educator crafting engaging learning experiences",
+      bio:
+        `Greetings, fellow learners! My name is ${firstName}, and I am a dedicated tutor with a passion for helping students build confidence and reach their goals. I bring structured lessons, clear feedback, and plenty of practice so every session feels purposeful.\n\nI have supported students across different levels and learning styles, and I adapt my approach to what works best for each person. Whether you are catching up, staying ahead, or preparing for an exam, I focus on steady progress you can feel week after week.`,
+      spokenLanguages: "English, Spanish, Turkish",
+      locationCountryCode: "GB",
+      locationCity: "London",
+      locationLabel: "United Kingdom",
+    };
+  }
+  return {
+    headline: `Experienced tutor — ${firstName} ${lastName}`,
+    bio: `Hi, I'm ${firstName}. I've been teaching for several years and love helping students grow.`,
+    spokenLanguages: "English",
+    locationCountryCode: "CA",
+    locationCity: "",
+    locationLabel: "Canada",
+  };
+}
 
 const DEMO_RULES = [
   "Arrive 5 minutes early with your notebook and a pen.",
@@ -147,9 +290,10 @@ async function seedPolicy(): Promise<void> {
 
 async function seedRegions(): Promise<Region[]> {
   const regionData: Array<{ code: string; name: string; currency: string; minRate: number; }> = [
-    { code: "NG", name: "Nigeria", currency: "NGN", minRate: 350_000 },
-    { code: "US", name: "United States", currency: "USD", minRate: 1500 },
-    { code: "EU", name: "Europe", currency: "EUR", minRate: 1500 },
+    { code: "CA", name: "Canada", currency: "CAD", minRate: 1800 }, // $18/hr floor
+    { code: "US", name: "United States", currency: "USD", minRate: 2000 }, // $20/hr floor
+    { code: "EU", name: "Europe", currency: "EUR", minRate: 1800 }, // €18/hr floor
+    { code: "NG", name: "Nigeria", currency: "NGN", minRate: 500_000 }, // ₦5,000/hr floor
   ];
 
   const regions: Region[] = [];
@@ -182,7 +326,7 @@ async function seedSubjects(): Promise<Subject[]> {
   return subjects;
 }
 
-async function seedAdmin(ng: Region): Promise<void> {
+async function seedAdmin(primaryRegion: Region): Promise<void> {
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@mentora.local";
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? CONFIG.DEFAULT_PASSWORD;
   await db.user.upsert({
@@ -194,7 +338,7 @@ async function seedAdmin(ng: Region): Promise<void> {
       lastName: "Admin",
       passwordHash: await bcrypt.hash(adminPassword, 10),
       role: "ADMIN",
-      regionId: ng.id,
+      regionId: primaryRegion.id,
     },
     update: {},
   });
@@ -209,7 +353,7 @@ interface SeededTeacher {
   offeringIds: string[]; // order matches subjects
 }
 
-async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeacher[]> {
+async function seedTeachers(primaryRegion: Region, subjects: Subject[]): Promise<SeededTeacher[]> {
   if (CONFIG.COURSES_PER_TEACHER > subjects.length) {
     throw new Error(
       `COURSES_PER_TEACHER (${CONFIG.COURSES_PER_TEACHER}) exceeds available subjects (${subjects.length}).`,
@@ -221,37 +365,41 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
 
   for (let i = 0; i < CONFIG.NUM_TEACHERS; i += 1) {
     const [firstName, lastName] = pickName(TEACHER_NAMES, i, "Teacher");
-    const email = `teacher${i + 1}@mentora.local`;
+    const email = `user${i + 1}@teacher.com`;
     // Stable displayId that won't clash with runtime-generated IDs (uses date 2000-01-01).
     const displayId = `T-000101-${String(Math.floor(i / 26) + 1).padStart(2, "0")}${String.fromCharCode(65 + (i % 26))}`;
+    const teacherName = `${firstName} ${lastName}`;
+    const image = teacherSeedProfileImage(i);
+    const publicProfile = seedTeacherPublicProfileFields(i, firstName, lastName);
 
     const user = await db.user.upsert({
       where: { email },
       create: {
         email,
-        name: `${firstName} ${lastName}`,
+        name: teacherName,
         firstName,
         lastName,
+        image,
         passwordHash,
         role: "TEACHER",
-        regionId: ng.id,
+        regionId: primaryRegion.id,
         teacherProfile: {
           create: {
             displayId,
-            headline: `Experienced tutor — ${firstName} ${lastName}`,
-            bio: `Hi, I'm ${firstName}. I've been teaching for several years and love helping students grow.`,
-            timeZone: "Africa/Lagos",
-            spokenLanguages: "English",
-            locationCountryCode: "NG",
-            locationCity: "",
-            locationLabel: "Nigeria",
+            headline: publicProfile.headline,
+            bio: publicProfile.bio,
+            timeZone: "America/Toronto",
+            spokenLanguages: publicProfile.spokenLanguages,
+            locationCountryCode: publicProfile.locationCountryCode,
+            locationCity: publicProfile.locationCity,
+            locationLabel: publicProfile.locationLabel,
             avgRating: 4 + ((i % 10) / 10),
             ratingsCount: 5 + i,
             profileCompleted: true,
           },
         },
       },
-      update: {},
+      update: { name: teacherName, firstName, lastName, image },
       include: { teacherProfile: true },
     });
 
@@ -259,6 +407,20 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
     if (!teacherProfile) {
       throw new Error(`Teacher profile missing for ${email}`);
     }
+
+    await db.teacherProfile.update({
+      where: { id: teacherProfile.id },
+      data: {
+        headline: publicProfile.headline,
+        bio: publicProfile.bio,
+        spokenLanguages: publicProfile.spokenLanguages,
+        locationCountryCode: publicProfile.locationCountryCode,
+        locationCity: publicProfile.locationCity,
+        locationLabel: publicProfile.locationLabel,
+      },
+    });
+
+    await seedTeacherWorkExperiences(teacherProfile.id, i);
 
     // Pick COURSES_PER_TEACHER subjects, rotated per teacher so subjects overlap naturally.
     const teacherSubjects: Subject[] = [];
@@ -296,16 +458,16 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
           teacherProfileId_subjectId_regionId: {
             teacherProfileId: teacherProfile.id,
             subjectId: subj.id,
-            regionId: ng.id,
+            regionId: primaryRegion.id,
           },
         },
         create: {
           teacherProfileId: teacherProfile.id,
           subjectId: subj.id,
-          regionId: ng.id,
-          hourlyRate: CONFIG.HOURLY_RATE_KOBO,
+          regionId: primaryRegion.id,
+          hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR,
         },
-        update: { hourlyRate: CONFIG.HOURLY_RATE_KOBO },
+        update: { hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR },
       });
     }
 
@@ -330,10 +492,15 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
             startMinutes: slot.startMinutes,
             endMinutes: slot.endMinutes,
             teacherCap: CONFIG.TEACHER_CAP,
-            hourlyRate: CONFIG.HOURLY_RATE_KOBO,
+            hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR,
             rules: DEMO_RULES,
           },
           select: { id: true },
+        });
+      } else {
+        await db.classOffering.update({
+          where: { id: offering.id },
+          data: { hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR },
         });
       }
       offeringIds.push(offering.id);
@@ -343,7 +510,7 @@ async function seedTeachers(ng: Region, subjects: Subject[]): Promise<SeededTeac
       userId: user.id,
       teacherProfileId: teacherProfile.id,
       email,
-      name: `${firstName} ${lastName}`,
+      name: teacherName,
       subjects: teacherSubjects,
       offeringIds,
     });
@@ -359,13 +526,13 @@ interface SeededStudent {
   name: string;
 }
 
-async function seedStudents(ng: Region): Promise<SeededStudent[]> {
+async function seedStudents(primaryRegion: Region): Promise<SeededStudent[]> {
   const passwordHash = await bcrypt.hash(CONFIG.DEFAULT_PASSWORD, 10);
   const result: SeededStudent[] = [];
 
   for (let i = 0; i < CONFIG.NUM_STUDENTS; i += 1) {
     const [firstName, lastName] = pickName(STUDENT_NAMES, i, "Student");
-    const email = `student${i + 1}@mentora.local`;
+    const email = `user${i + 1}@student.com`;
 
     const user = await db.user.upsert({
       where: { email },
@@ -376,7 +543,7 @@ async function seedStudents(ng: Region): Promise<SeededStudent[]> {
         lastName,
         passwordHash,
         role: "STUDENT",
-        regionId: ng.id,
+        regionId: primaryRegion.id,
         studentProfile: { create: {} },
       },
       update: {},
@@ -399,7 +566,7 @@ async function seedStudents(ng: Region): Promise<SeededStudent[]> {
   return result;
 }
 
-async function seedGuardians(ng: Region, students: SeededStudent[]): Promise<void> {
+async function seedGuardians(primaryRegion: Region, students: SeededStudent[]): Promise<void> {
   if (CONFIG.NUM_GUARDIANS * CONFIG.WARDS_PER_GUARDIAN > students.length) {
     throw new Error(
       `NUM_GUARDIANS * WARDS_PER_GUARDIAN (${CONFIG.NUM_GUARDIANS * CONFIG.WARDS_PER_GUARDIAN}) exceeds NUM_STUDENTS (${students.length}).`,
@@ -410,7 +577,7 @@ async function seedGuardians(ng: Region, students: SeededStudent[]): Promise<voi
 
   for (let i = 0; i < CONFIG.NUM_GUARDIANS; i += 1) {
     const [firstName, lastName] = pickName(GUARDIAN_NAMES, i, "Guardian");
-    const email = `guardian${i + 1}@mentora.local`;
+    const email = `user${i + 1}@guardian.com`;
 
     const user = await db.user.upsert({
       where: { email },
@@ -421,7 +588,7 @@ async function seedGuardians(ng: Region, students: SeededStudent[]): Promise<voi
         lastName,
         passwordHash,
         role: "GUARDIAN",
-        regionId: ng.id,
+        regionId: primaryRegion.id,
         guardianProfile: { create: {} },
       },
       update: {},
@@ -614,7 +781,7 @@ async function seedAssignments(
 // ---------------------------------------------------------------------------
 
 const TEACHER5_PAST_CLASS_DEMO = {
-  teacherEmail: "teacher5@mentora.local",
+  teacherEmail: "user5@teacher.com",
   offeringTitle: "test meeting",
   dayOfWeek: "WED" as DayOfWeek,
   startMinutes: 7 * 60 + 30,
@@ -623,7 +790,7 @@ const TEACHER5_PAST_CLASS_DEMO = {
   sessionCalendarDate: "2026-06-03",
   studentEmails: Array.from(
     { length: 10 },
-    (_, i) => `student${i + 1}@mentora.local`,
+    (_, i) => `user${i + 1}@student.com`,
   ),
 } as const;
 
@@ -674,7 +841,7 @@ async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
         startMinutes: cfg.startMinutes,
         endMinutes: cfg.endMinutes,
         teacherCap: CONFIG.TEACHER_CAP,
-        hourlyRate: CONFIG.HOURLY_RATE_KOBO,
+        hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR,
         periodType: "OPEN",
         rules: DEMO_RULES,
       },
@@ -687,6 +854,7 @@ async function seedTeacher5PastClassAttendanceDemo(): Promise<void> {
         startMinutes: cfg.startMinutes,
         endMinutes: cfg.endMinutes,
         teacherCap: CONFIG.TEACHER_CAP,
+        hourlyRate: CONFIG.SEED_HOURLY_RATE_MINOR,
         periodType: "OPEN",
         active: true,
       },
@@ -849,10 +1017,10 @@ function sessionDateOnWeek(
 }
 
 const TEACHER1_CHART_DEMO = {
-  teacherEmail: "teacher1@mentora.local",
+  teacherEmail: "user1@teacher.com",
   /** Indices into teacher1's seeded offerings (MON/TUE/WED/THU/FRI spread). */
   offeringIndices: [0, 1, 2, 3, 4],
-  studentEmails: Array.from({ length: 8 }, (_, i) => `student${i + 1}@mentora.local`),
+  studentEmails: Array.from({ length: 8 }, (_, i) => `user${i + 1}@student.com`),
   /** Held sessions per offering per week (index 0 = oldest of past 8 weeks). */
   sessionsPerOfferingByWeek: [
     [0, 0, 0, 0, 0],
@@ -1055,25 +1223,25 @@ async function main(): Promise<void> {
 
   console.log("Seeding regions...");
   const regions = await seedRegions();
-  const ng = regions.find((r) => r.code === "NG");
-  if (!ng) throw new Error("Nigeria region missing after seedRegions");
+  const ca = regions.find((r) => r.code === "CA");
+  if (!ca) throw new Error("Canada region missing after seedRegions");
 
   console.log("Seeding subjects...");
   const subjects = await seedSubjects();
 
   console.log("Seeding admin user...");
-  await seedAdmin(ng);
+  await seedAdmin(ca);
 
   console.log(`Seeding ${CONFIG.NUM_TEACHERS} teachers × ${CONFIG.COURSES_PER_TEACHER} courses...`);
-  const teachers = await seedTeachers(ng, subjects);
+  const teachers = await seedTeachers(ca, subjects);
 
   console.log(`Seeding ${CONFIG.NUM_STUDENTS} students...`);
-  const students = await seedStudents(ng);
+  const students = await seedStudents(ca);
 
   console.log(
     `Seeding ${CONFIG.NUM_GUARDIANS} guardians × ${CONFIG.WARDS_PER_GUARDIAN} wards each...`,
   );
-  await seedGuardians(ng, students);
+  await seedGuardians(ca, students);
 
   console.log(
     `Seeding enrollments (${CONFIG.MIN_ENROLLMENTS_PER_STUDENT}-${CONFIG.MAX_ENROLLMENTS_PER_STUDENT} per student)...`,
@@ -1091,7 +1259,7 @@ async function main(): Promise<void> {
 
   console.log("Seed complete.");
   console.log(
-    `  Login with: admin@mentora.local, teacher1..${CONFIG.NUM_TEACHERS}@mentora.local, student1..${CONFIG.NUM_STUDENTS}@mentora.local, guardian1..${CONFIG.NUM_GUARDIANS}@mentora.local`,
+    `  Login with: admin@mentora.local, user1..${CONFIG.NUM_TEACHERS}@teacher.com, user1..${CONFIG.NUM_STUDENTS}@student.com, user1..${CONFIG.NUM_GUARDIANS}@guardian.com`,
   );
   console.log(`  Default password: ${CONFIG.DEFAULT_PASSWORD}`);
 }

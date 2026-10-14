@@ -1,7 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useNavigationLoading } from "@/components/layouts/NavigationLoadingProvider";
+import { useActionPending } from "@/hooks/useActionPending";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import {
   AuthFeedbackBanner,
   AuthFoot,
@@ -20,21 +22,29 @@ export interface GuardianRegisterFormProps {
 }
 
 export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: GuardianRegisterFormProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const router = useAppRouter();
+  const { beginNavigation, endNavigation } = useNavigationLoading();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<RegisterActionResult | null>(null);
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    beginNavigation();
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
-      const res = await guardianRegisterAction(fd);
-      setResult(res);
-      if (res.ok) {
-        router.push(res.redirectTo);
-        router.refresh();
+      try {
+        const res = await guardianRegisterAction(fd);
+        setResult(res);
+        if (res.ok) {
+          router.push(res.redirectTo);
+          router.refresh();
+        } else {
+          endNavigation();
+        }
+      } catch {
+        endNavigation();
       }
     });
   }
@@ -99,7 +109,7 @@ export function GuardianRegisterForm({ defaultEmail = "", defaultCode = "" }: Gu
       />
 
       <AuthFormActions>
-        <AuthSubmitButton type="submit" isLoading={isPending}>
+        <AuthSubmitButton type="submit" disabled={isPending}>
           Create guardian account
         </AuthSubmitButton>
       </AuthFormActions>

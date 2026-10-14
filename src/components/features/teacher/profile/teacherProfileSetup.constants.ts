@@ -1,4 +1,4 @@
-import type { TeacherProfileEditTabId } from "./teacherProfileTabIds";
+import type { TeacherProfileSetupPhase } from "@/lib/teacherProfileSetup";
 
 /** Session storage key — cleared when onboarding completes successfully. */
 export const TEACHER_SETUP_DISMISS_STORAGE_KEY = "teacher-setup:dismissed";
@@ -21,12 +21,16 @@ export function teacherProfileWelcomeHref(): string {
 }
 
 export const TEACHER_SETUP_STEP_COPY: Record<
-  TeacherProfileEditTabId,
+  TeacherProfileSetupPhase,
   { title: string; subtitle: string }
 > = {
   bio: {
     title: "Photo & bio",
     subtitle: "Help students recognize you and understand your teaching style.",
+  },
+  location: {
+    title: "Location & languages",
+    subtitle: "Country, city, and languages appear on your public profile.",
   },
   courses: {
     title: "Courses",

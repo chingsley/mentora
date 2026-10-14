@@ -9,15 +9,14 @@ import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import { BOX_SHADOW_INPUTS, LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import {
-  TEACHER_PROFILE_EDIT_TABS,
-  TEACHER_PROFILE_TAB_LABEL,
-  type TeacherProfileEditTabId,
-} from "./teacherProfileTabIds";
+  TEACHER_PROFILE_SETUP_PHASES,
+  type TeacherProfileSetupPhase,
+} from "@/lib/teacherProfileSetup";
 
 export interface TeacherProfileSetupNavProps {
   items: ProfileCompletenessItem[];
-  currentStep: TeacherProfileEditTabId;
-  onNavigateStep: (step: TeacherProfileEditTabId) => void;
+  currentStep: TeacherProfileSetupPhase;
+  onNavigateStep: (step: TeacherProfileSetupPhase) => void;
 }
 
 const Nav = styled.nav`
@@ -148,8 +147,8 @@ const SegmentLabel = styled.span`
   text-overflow: ellipsis;
 `;
 
-function stepIndex(step: TeacherProfileEditTabId): number {
-  return TEACHER_PROFILE_EDIT_TABS.indexOf(step);
+function stepIndex(step: TeacherProfileSetupPhase): number {
+  return TEACHER_PROFILE_SETUP_PHASES.indexOf(step);
 }
 
 export function TeacherProfileSetupNav({
@@ -165,7 +164,7 @@ export function TeacherProfileSetupNav({
   return (
     <Nav aria-label="Profile setup progress">
       <StepMeta>
-        Step {currentIndex + 1} of {TEACHER_PROFILE_EDIT_TABS.length}
+        Step {currentIndex + 1} of {TEACHER_PROFILE_SETUP_PHASES.length}
       </StepMeta>
       <ProgressTrack
         role="progressbar"
@@ -177,23 +176,23 @@ export function TeacherProfileSetupNav({
         <ProgressFill $pct={pct} />
       </ProgressTrack>
       <SegmentedList>
-        {TEACHER_PROFILE_EDIT_TABS.map((tab, index) => {
-          const item = items.find((entry) => entry.editTab === tab);
+        {TEACHER_PROFILE_SETUP_PHASES.map((phase, index) => {
+          const item = items[index];
           const doneStep = item?.done ?? false;
-          const active = tab === currentStep;
+          const active = phase === currentStep;
           const canNavigate = doneStep && !active;
-          const label = TEACHER_PROFILE_TAB_LABEL[tab];
+          const label = item?.label ?? phase;
 
           if (canNavigate) {
             return (
-              <SegmentItem key={tab}>
+              <SegmentItem key={phase}>
                 <SegmentButton
                   type="button"
                   $active={active}
                   $done={doneStep}
                   $clickable
                   aria-current={active ? "step" : undefined}
-                  onClick={() => onNavigateStep(tab)}
+                  onClick={() => onNavigateStep(phase)}
                 >
                   <Check size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.BOLD} aria-hidden />
                   <SegmentLabel>{label}</SegmentLabel>
@@ -203,8 +202,13 @@ export function TeacherProfileSetupNav({
           }
 
           return (
-            <SegmentItem key={tab}>
-              <SegmentStatus $active={active} $done={doneStep} $clickable={false} aria-current={active ? "step" : undefined}>
+            <SegmentItem key={phase}>
+              <SegmentStatus
+                $active={active}
+                $done={doneStep}
+                $clickable={false}
+                aria-current={active ? "step" : undefined}
+              >
                 {doneStep ? (
                   <Check size={ICON_SIZE.XS} strokeWidth={ICON_STROKE.BOLD} aria-hidden />
                 ) : (

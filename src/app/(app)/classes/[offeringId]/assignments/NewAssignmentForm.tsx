@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -75,7 +76,7 @@ export interface NewAssignmentFormProps {
 
 export function NewAssignmentForm({ offeringId }: NewAssignmentFormProps) {
   const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
   const formRef = React.useRef<HTMLFormElement>(null);
 

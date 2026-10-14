@@ -43,6 +43,8 @@ export const COLORS = {
    * Applied once on `<Main>` in `AppShellClient`.
    */
   APP_MAIN_BACKGROUND: "#ffffff",
+  /** Full-screen scrim behind the global route/action loading overlay. */
+  NAVIGATION_LOADING_SCRIM: "rgba(255, 255, 255, 0.88)",
 
   // —— 30% gray structure ——
   /** Dark gray — sidebars, nav bars, headings. */
@@ -102,6 +104,7 @@ export const COLORS = {
   DESTRUCTIVE_BORDER_HOVER: "#fecaca",
   DESTRUCTIVE_BG_HOVER: "#fff7f7",
   SUCCESS: "#16a34a",
+  RATING_STAR: "#eab308",
 
   // Translucent overlays / borders
   RING_BLACK_5: "rgba(0, 0, 0, 0.05)",

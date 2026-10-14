@@ -1,7 +1,7 @@
 "use client";
 
 import type { DayOfWeek } from "@prisma/client";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import * as React from "react";
 import { Button } from "@/components/ui/Button";
 import { isClassLive } from "@/lib/classSession";
@@ -38,7 +38,7 @@ export function JoinClassButton({
   endMinutes,
   recurrence = DEFAULT_OFFERING_RECURRENCE,
 }: JoinClassButtonProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [, setTick] = React.useState(0);
 
   React.useEffect(() => {

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import styled from "styled-components";
 import { TeacherProfileSetupNav } from "./TeacherProfileSetupNav";
 import { TeacherProfileSetupProvider } from "./TeacherProfileSetupContext";
@@ -9,8 +10,14 @@ import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import { firstIncompleteTeacherProfileSetupPhase } from "@/lib/teacherProfileSetup";
-import { TeacherProfileBioTab } from "./TeacherProfileBioTab";
+import {
+  firstIncompleteTeacherProfileSetupPhase,
+  isTeacherProfileSetupStepId,
+  nextTeacherProfileSetupPhase,
+  type TeacherProfileSetupPhase,
+} from "@/lib/teacherProfileSetup";
+import { TeacherProfileBioSetupStep } from "./TeacherProfileBioSetupStep";
+import { TeacherProfileLocationTab } from "./TeacherProfileLocationTab";
 import { TeacherProfileCoursesTab } from "./TeacherProfileCoursesTab";
 import { TeacherProfilePaymentTab } from "./TeacherProfilePaymentTab";
 import { TeacherProfileScheduleTab } from "./TeacherProfileScheduleTab";
@@ -23,12 +30,6 @@ import {
   clearSetupDismissed,
   markSetupDismissed,
 } from "./teacherProfileSetupStorage";
-import {
-  isTeacherProfileEditTabId,
-  nextTabAfterSave,
-  previousTabBefore,
-  type TeacherProfileEditTabId,
-} from "./teacherProfileTabIds";
 
 const SetupPage = styled.div`
   display: flex;
@@ -130,12 +131,14 @@ export interface TeacherProfileSetupWizardProps extends TeacherProfileTabsProps 
 function resolveSetupStep(
   urlTab: string | null,
   props: TeacherProfileTabsProps,
-): TeacherProfileEditTabId {
-  if (urlTab && isTeacherProfileEditTabId(urlTab)) return urlTab;
+): TeacherProfileSetupPhase {
+  if (urlTab && isTeacherProfileSetupStepId(urlTab)) return urlTab;
   return firstIncompleteTeacherProfileSetupPhase({
     image: props.imageUrl,
     bio: props.bio,
     spokenLanguages: props.spokenLanguages,
+    locationCountryCode: props.locationCountryCode,
+    locationCity: props.locationCity,
     subjectIds: props.initialSubjects.map((s) => s.subjectId),
     offeringsCount: props.scheduleOfferings.length,
     payoutLegalName: props.payoutLegalName,
@@ -148,7 +151,7 @@ function resolveSetupStep(
 }
 
 export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileSetupWizardProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const urlTab = params.get("tab");
@@ -156,7 +159,7 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
   const stepCopy = TEACHER_SETUP_STEP_COPY[step];
 
   const setStep = React.useCallback(
-    (next: TeacherProfileEditTabId) => {
+    (next: TeacherProfileSetupPhase) => {
       const search = new URLSearchParams(params.toString());
       search.set("setup", TEACHER_SETUP_QUERY_VALUE);
       search.set("tab", next);
@@ -182,20 +185,20 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
     onClose();
   }
 
-  function handleAdvance(current: TeacherProfileEditTabId) {
+  function handleAdvance(current: TeacherProfileSetupPhase) {
     if (current === "payment") {
       handleAdvanceFromPayment();
       return;
     }
-    setStep(nextTabAfterSave(current) as TeacherProfileEditTabId);
+    setStep(nextTeacherProfileSetupPhase(current));
   }
 
-  function handleSkipStep(current: TeacherProfileEditTabId) {
+  function handleSkipStep(current: TeacherProfileSetupPhase) {
     if (current === "payment") {
       handleClose();
       return;
     }
-    setStep(nextTabAfterSave(current) as TeacherProfileEditTabId);
+    setStep(nextTeacherProfileSetupPhase(current));
   }
 
   return (
@@ -220,18 +223,26 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
 
         <StepContent>
           {step === "bio" ? (
-            <TeacherProfileBioTab
-              key={`setup-${props.bio}|${props.spokenLanguages}|${props.locationCountryCode}|${props.locationCity}|${props.imageUrl ?? ""}`}
+            <TeacherProfileBioSetupStep
+              key={`setup-${props.bio}|${props.imageUrl ?? ""}`}
               initials={props.initials}
               imageUrl={props.imageUrl}
               bio={props.bio}
+              onAdvance={() => handleAdvance("bio")}
+              onBack={() => setStep("bio")}
+              backDisabled
+            />
+          ) : null}
+
+          {step === "location" ? (
+            <TeacherProfileLocationTab
+              key={`setup-${props.spokenLanguages}|${props.locationCountryCode}|${props.locationCity}`}
               spokenLanguages={props.spokenLanguages}
               locationCountryCode={props.locationCountryCode}
               locationCity={props.locationCity}
               locationLabel={props.locationLabel}
-              onAdvance={() => handleAdvance("bio")}
+              onAdvance={() => handleAdvance("location")}
               onBack={() => setStep("bio")}
-              backDisabled
             />
           ) : null}
 
@@ -246,7 +257,7 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
               rateCells={props.rateCells}
               teacherRegionCode={props.teacherRegionCode}
               onAdvance={() => handleAdvance("courses")}
-              onBack={() => setStep(previousTabBefore("courses") as TeacherProfileEditTabId)}
+              onBack={() => setStep("location")}
             />
           ) : null}
 
@@ -262,7 +273,7 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
               rateCells={props.rateCells}
               teacherRegionCode={props.teacherRegionCode}
               onAdvance={() => handleAdvance("schedule")}
-              onBack={() => setStep(previousTabBefore("schedule") as TeacherProfileEditTabId)}
+              onBack={() => setStep("courses")}
             />
           ) : null}
 
@@ -277,7 +288,7 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
               payoutBankRoutingNumber={props.payoutBankRoutingNumber}
               payoutNotes={props.payoutNotes}
               onAdvance={() => handleAdvanceFromPayment()}
-              onBack={() => setStep(previousTabBefore("payment") as TeacherProfileEditTabId)}
+              onBack={() => setStep("schedule")}
             />
           ) : null}
         </StepContent>

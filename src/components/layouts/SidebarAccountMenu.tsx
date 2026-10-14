@@ -2,9 +2,11 @@
 
 import { ChevronDown, LogOut, Settings, UserCircle2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useNavigationLoading } from "@/components/layouts/NavigationLoadingProvider";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import type { Role } from "@prisma/client";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled, { css } from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors.constants";
@@ -202,8 +204,9 @@ export interface SidebarAccountMenuProps {
 export function SidebarAccountMenu({ user, navCollapsed, onNavigate }: SidebarAccountMenuProps) {
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const [isSigningOut, startSignOut] = React.useTransition();
+  const router = useAppRouter();
+  const { beginNavigation, endNavigation } = useNavigationLoading();
+  const [isSigningOut, startSignOut] = useActionPending();
 
   const userLabel = user.name?.trim() || user.email?.trim() || "Account";
   const initials = initialsFromName(user.name, user.email);
@@ -232,10 +235,15 @@ export function SidebarAccountMenu({ user, navCollapsed, onNavigate }: SidebarAc
   }
 
   function handleSignOut() {
+    beginNavigation();
     startSignOut(async () => {
-      await signOutAction();
-      router.push("/");
-      router.refresh();
+      try {
+        await signOutAction();
+        router.push("/");
+        router.refresh();
+      } catch {
+        endNavigation();
+      }
     });
   }
 

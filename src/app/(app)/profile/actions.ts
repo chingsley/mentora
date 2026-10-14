@@ -14,6 +14,8 @@ import {
   removeTeacherRate,
   saveTeacherBioTab,
   saveTeacherBioTabSchema,
+  saveTeacherLocationTab,
+  saveTeacherLocationTabSchema,
   saveTeacherPayoutTab,
   saveTeacherPayoutTabSchema,
   setRateMajorSchema,
@@ -428,6 +430,27 @@ export async function saveTeacherBioTabAction(formData: FormData): Promise<Actio
   const session = await requireRole("TEACHER");
   const parsed = saveTeacherBioTabSchema.safeParse({
     bio: formData.get("bio") || "",
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Please fix the highlighted fields.",
+      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+    };
+  }
+  try {
+    await saveTeacherBioTab(session.user.id, parsed.data);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Could not save profile";
+    return { ok: false, error: msg };
+  }
+  revalidateTeacher();
+  return { ok: true };
+}
+
+export async function saveTeacherLocationTabAction(formData: FormData): Promise<ActionResult> {
+  const session = await requireRole("TEACHER");
+  const parsed = saveTeacherLocationTabSchema.safeParse({
     spokenLanguages: formData.get("spokenLanguages"),
     locationCountryCode: formData.get("locationCountryCode") || "",
     locationCity: formData.get("locationCity") || "",
@@ -440,7 +463,7 @@ export async function saveTeacherBioTabAction(formData: FormData): Promise<Actio
     };
   }
   try {
-    await saveTeacherBioTab(session.user.id, parsed.data);
+    await saveTeacherLocationTab(session.user.id, parsed.data);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Could not save profile";
     return { ok: false, error: msg };

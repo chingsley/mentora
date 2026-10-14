@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { TriangleAlert } from "lucide-react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
-import { saveTeacherBioTabAction, type ActionResult } from "@/app/(app)/profile/actions";
-import { ProfilePhotoForm, type ProfilePhotoFormHandle } from "@/components/features/teacher/ProfilePhotoForm";
+import { saveTeacherLocationTabAction, type ActionResult } from "@/app/(app)/profile/actions";
+import { Button } from "@/components/ui/Button";
 import { TeacherProfileTabFooter } from "./TeacherProfileTabFooter";
 import {
   TeacherProfileFormSection,
@@ -28,96 +28,10 @@ import { FONTS } from "@/constants/fonts.constants";
 import { BOX_SHADOW_INPUTS, LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { TeacherProfileForm } from "./TeacherProfileFormSurface";
-import { TEACHER_BIO_FORM_ID } from "./teacherProfileFormIds";
-import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
-import {
-  TEACHER_BIO_MAX_LENGTH,
-  TEACHER_BIO_TEXTAREA_MIN_HEIGHT,
-} from "@/constants/teacherProfile.constants";
+import { TEACHER_LOCATION_FORM_ID } from "./teacherProfileFormIds";
 import { useTeacherProfileSetupMode } from "./TeacherProfileSetupContext";
 import { getCitiesForCountry } from "@/lib/locationCities";
 import { resolveTeacherLocationFields } from "@/lib/teacherProfileLocation";
-
-const BIO_HINT_COLOR = COLORS.SIDEBAR_BRAND;
-
-const PhotoGuidanceCallout = styled.div`
-  display: flex;
-  gap: ${SPACING.THREE};
-  align-items: flex-start;
-  width: 100%;
-  padding: ${SPACING.FOUR};
-  border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: ${COLORS.SURFACE_OFF_WHITE};
-  text-align: left;
-  align-self: stretch;
-`;
-
-const WarningIcon = styled.span`
-  display: inline-flex;
-  flex-shrink: 0;
-  line-height: 0;
-  color: ${COLORS.DESTRUCTIVE};
-`;
-
-const PhotoGuidanceCopy = styled.p`
-  margin: 0;
-  font-size: ${FONTS.SIZE.SM};
-  line-height: ${FONTS.LINE_HEIGHT.RELAXED};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const PhotoGuidanceLead = styled.strong`
-  display: block;
-  margin-bottom: ${SPACING.ONE};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-`;
-
-const Field = styled.label`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.TWO};
-  min-width: 0;
-  width: 100%;
-`;
-
-const Textarea = styled.textarea`
-  min-height: ${TEACHER_BIO_TEXTAREA_MIN_HEIGHT};
-  width: 100%;
-  border-radius: ${FORM_FIELD.CONTROL_RADIUS};
-  border: ${formFieldControlBorder(false)};
-  box-shadow: ${BOX_SHADOW_INPUTS};
-  padding: ${SPACING.THREE} ${SPACING.FOUR};
-  font-size: ${FONTS.SIZE.SM};
-  font-family: ${FONTS.FAMILY.PRIMARY};
-  font-weight: ${FONTS.WEIGHT.NORMAL};
-  color: ${COLORS.TEXT};
-  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
-  outline: none;
-  resize: vertical;
-  background-color: ${COLORS.FOREGROUND};
-
-  &::placeholder {
-    color: ${FORM_FIELD.PLACEHOLDER_COLOR};
-    font-weight: ${FONTS.WEIGHT.NORMAL};
-  }
-
-  &:focus {
-    border-color: ${COLORS.SIDEBAR_BRAND};
-    box-shadow: 0 0 0 2px ${COLORS.RING_BLACK_10};
-  }
-`;
-
-const BioFieldFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-`;
-
-const CharCounter = styled.span`
-  flex-shrink: 0;
-  font-size: ${FONTS.SIZE.XS};
-  color: ${BIO_HINT_COLOR};
-`;
 
 const TagWrap = styled.div`
   display: flex;
@@ -207,7 +121,12 @@ const ErrorText = styled.p`
   color: ${COLORS.DESTRUCTIVE};
 `;
 
-const BIO_MAX = TEACHER_BIO_MAX_LENGTH;
+const EmbeddedSaveFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: ${SPACING.SIX};
+`;
 
 const COUNTRY_OPTIONS: SearchComboboxOption[] = COUNTRIES.map((country) => ({
   value: country.code,
@@ -239,23 +158,19 @@ function parseLanguageTags(raw: string): string[] {
     .filter(Boolean);
 }
 
-export interface TeacherProfileBioTabProps {
-  initials: string;
-  imageUrl: string | null;
-  bio: string;
+export interface TeacherProfileLocationTabProps {
   spokenLanguages: string;
   locationCountryCode: string;
   locationCity: string;
   locationLabel: string;
-  onAdvance: () => void;
-  onBack: () => void;
+  onAdvance?: () => void;
+  onBack?: () => void;
   backDisabled?: boolean;
+  /** Rendered inside Profile View public tabs (no back / advance navigation). */
+  embedded?: boolean;
 }
 
-export function TeacherProfileBioTab({
-  initials,
-  imageUrl,
-  bio,
+export function TeacherProfileLocationTab({
   spokenLanguages,
   locationCountryCode,
   locationCity,
@@ -263,11 +178,11 @@ export function TeacherProfileBioTab({
   onAdvance,
   onBack,
   backDisabled = false,
-}: TeacherProfileBioTabProps) {
+  embedded = false,
+}: TeacherProfileLocationTabProps) {
   const router = useRouter();
   const setupMode = useTeacherProfileSetupMode();
-  const photoRef = React.useRef<ProfilePhotoFormHandle>(null);
-  const [isSaving, startTransition] = React.useTransition();
+  const [isSaving, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
 
   const initialLocation = React.useMemo(
@@ -280,7 +195,6 @@ export function TeacherProfileBioTab({
     [locationCountryCode, locationCity, locationLabel],
   );
 
-  const [bioLocal, setBioLocal] = React.useState(bio);
   const [tags, setTags] = React.useState<string[]>(() => parseLanguageTags(spokenLanguages));
   const [tagDraft, setTagDraft] = React.useState("");
   const [country, setCountry] = React.useState<SearchComboboxOption | null>(() =>
@@ -317,91 +231,23 @@ export function TeacherProfileBioTab({
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    fd.set("bio", bioLocal);
     fd.set("spokenLanguages", tags.join(", "));
     fd.set("locationCountryCode", country?.value ?? "");
     fd.set("locationCity", city?.value ?? "");
     startTransition(async () => {
-      if (photoRef.current?.hasPendingUpload()) {
-        const uploadRes = await photoRef.current.uploadIfPending();
-        if (!uploadRes.ok) {
-          setResult({ ok: false, error: uploadRes.error });
-          return;
-        }
-      }
-
-      const res = await saveTeacherBioTabAction(fd);
+      const res = await saveTeacherLocationTabAction(fd);
       setResult(res);
       if (res.ok) {
         router.refresh();
-        onAdvance();
+        onAdvance?.();
       }
     });
   }
 
   const errs = result && !result.ok ? result.fieldErrors : undefined;
 
-  return (
-    <TeacherProfileForm id={TEACHER_BIO_FORM_ID} onSubmit={onSubmit}>
-      <TeacherProfileFormSectionStack $setup={setupMode}>
-        <TeacherProfileFormSection
-          id="teacher-bio-photo-section"
-          stepLabel="1 of 3"
-          title="Profile photo"
-          hint="Add a clear, recent headshot students will see on your profile."
-          contentAlign="center"
-        >
-          <ProfilePhotoForm
-            ref={photoRef}
-            layout="studio"
-            currentImage={imageUrl}
-            fallbackInitials={initials}
-            hint=""
-          />
-          <PhotoGuidanceCallout role="note">
-            <WarningIcon aria-hidden>
-              <TriangleAlert size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} />
-            </WarningIcon>
-            <PhotoGuidanceCopy>
-              <PhotoGuidanceLead>Photo tip</PhotoGuidanceLead>
-              Students use your photo to recognize you before class. Use a recent picture that matches
-              how you look when you teach.
-            </PhotoGuidanceCopy>
-          </PhotoGuidanceCallout>
-        </TeacherProfileFormSection>
-
-        <TeacherProfileFormSection
-          id="teacher-bio-about-section"
-          stepLabel="2 of 3"
-          title="About you"
-          hint="A short note on your experience, teaching style, and what students can expect."
-        >
-          <Field htmlFor="teacher-profile-bio">
-            <Textarea
-              id="teacher-profile-bio"
-              name="bio"
-              rows={4}
-              value={bioLocal}
-              maxLength={BIO_MAX}
-              onChange={(e) => setBioLocal(e.target.value)}
-              placeholder="e.g. 8 years teaching maths; patient, exam-focused sessions."
-            />
-            <BioFieldFooter>
-              <CharCounter aria-live="polite">
-                {bioLocal.length} / {BIO_MAX}
-              </CharCounter>
-            </BioFieldFooter>
-            {errs?.bio ? <ErrorText>{errs.bio}</ErrorText> : null}
-          </Field>
-        </TeacherProfileFormSection>
-
-        <TeacherProfileFormSection
-          id="teacher-bio-details-section"
-          stepLabel="3 of 3"
-          title="Location and languages"
-          hint="Country, city, and languages appear on your public profile."
-        >
-          <DetailsFields>
+  const fields = (
+    <DetailsFields>
             <LocationRow>
               <SearchCombobox
                 id="teacher-profile-country"
@@ -460,18 +306,42 @@ export function TeacherProfileBioTab({
                 ) : null}
               </FormFieldMetaSlot>
             </FormFieldRoot>
-          </DetailsFields>
-        </TeacherProfileFormSection>
-      </TeacherProfileFormSectionStack>
+    </DetailsFields>
+  );
+
+  return (
+    <TeacherProfileForm id={TEACHER_LOCATION_FORM_ID} onSubmit={onSubmit}>
+      {embedded ? (
+        fields
+      ) : (
+        <TeacherProfileFormSectionStack $setup={setupMode}>
+          <TeacherProfileFormSection
+            id="teacher-location-section"
+            stepLabel={setupMode ? "1 of 1" : undefined}
+            title="Location and languages"
+            hint="Country, city, and languages appear on your public profile."
+          >
+            {fields}
+          </TeacherProfileFormSection>
+        </TeacherProfileFormSectionStack>
+      )}
 
       {result && !result.ok && !result.fieldErrors ? <ErrorText>{result.error}</ErrorText> : null}
 
-      <TeacherProfileTabFooter
-        onBack={onBack}
-        continueAsSubmit
-        isLoading={isSaving}
-        backDisabled={backDisabled}
-      />
+      {embedded ? (
+        <EmbeddedSaveFooter>
+          <Button type="submit" variant="primary" isLoading={isSaving}>
+            Save
+          </Button>
+        </EmbeddedSaveFooter>
+      ) : (
+        <TeacherProfileTabFooter
+          onBack={onBack!}
+          continueAsSubmit
+          isLoading={isSaving}
+          backDisabled={backDisabled}
+        />
+      )}
     </TeacherProfileForm>
   );
 }

@@ -1,11 +1,15 @@
 import type { DayOfWeek, OfferingPeriodType, OfferingRecurrenceKind } from "@prisma/client";
 
+import type { TeacherPublicProfileWorkExperience } from "@/types/teacherPublicProfileWorkExperience";
+
 import type { TeacherProfileTabId } from "./teacherProfileTabIds";
 
 export interface TeacherProfileChecklistItem {
   label: string;
   done: boolean;
   editTab?: TeacherProfileTabId;
+  /** Inner tab on Profile View (`TeacherPublicProfileView`). */
+  profileSection?: string;
 }
 
 export interface TeacherProfileInitialSubject {
@@ -48,6 +52,7 @@ export interface TeacherProfileTabsProps {
   initials: string;
   imageUrl: string | null;
   displayId: string;
+  email: string;
   profileCompleted: boolean;
   headline: string;
   bio: string;
@@ -96,4 +101,5 @@ export interface TeacherProfileTabsProps {
   inviteableStudents: TeacherProfileInviteableStudent[];
   billingCurrency: string;
   regionMinHourlyMajor: number | null;
+  workExperiences: TeacherPublicProfileWorkExperience[];
 }

@@ -2,6 +2,7 @@ import type { DayOfWeek, OfferingPeriodType } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { TeacherProfilePageClient } from "@/components/features/teacher/profile/TeacherProfilePageClient";
 import { buildTeacherProfileChecklist } from "@/components/features/teacher/profile/teacherProfileCompleteness";
+import { mapTeacherWorkExperiencesForPublicProfile } from "@/lib/mapTeacherWorkExperiencesForPublicProfile";
 import { smallestToMajor } from "@/lib/money";
 import { formatPrice } from "@/lib/time";
 import { getPolicy, listRegions } from "@/server/policies";
@@ -45,6 +46,7 @@ function sortTeacherSubjectsForProfile<T extends {
 }
 
 interface TeacherProfileForPage {
+  id: string;
   displayId: string;
   headline: string;
   bio: string;
@@ -66,6 +68,7 @@ interface TeacherProfileForPage {
   ratingsCount: number;
   hoursTaught: number;
   user: {
+    email: string;
     image: string | null;
     name: string;
     firstName: string;
@@ -73,6 +76,14 @@ interface TeacherProfileForPage {
     region: { id: string; code: string; name: string; currency: string; } | null;
   };
   subjects: TeacherSubjectForPage[];
+  workExperiences: Array<{
+    id: string;
+    company: string;
+    role: string;
+    startDate: Date;
+    endDate: Date | null;
+    sortOrder: number;
+  }>;
   rates: Array<{
     id: string;
     subjectId: string;
@@ -215,6 +226,8 @@ export async function TeacherProfilePage({
     image: profile.user.image,
     bio: profile.bio,
     spokenLanguages: profile.spokenLanguages ?? "",
+    locationCountryCode: profile.locationCountryCode ?? "",
+    locationCity: profile.locationCity ?? "",
     subjectIds: profile.subjects.map((s) => s.subjectId),
     offeringsCount: profile.offerings.length,
     payoutLegalName: profile.payoutLegalName,
@@ -234,6 +247,7 @@ export async function TeacherProfilePage({
       initials={initials(firstName, lastName)}
       imageUrl={profile.user.image ?? null}
       displayId={profile.displayId}
+      email={profile.user.email}
       profileCompleted={profile.profileCompleted}
       headline={profile.headline}
       bio={profile.bio}
@@ -277,6 +291,7 @@ export async function TeacherProfilePage({
       inviteableStudents={inviteableStudents}
       billingCurrency={billingCurrency}
       regionMinHourlyMajor={regionMinHourlyMajor}
+      workExperiences={mapTeacherWorkExperiencesForPublicProfile(profile.workExperiences)}
     />
   );
 }

@@ -2,8 +2,9 @@
 
 import { OfferingPeriodType } from "@prisma/client";
 import type { DayOfWeek } from "@prisma/client";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
@@ -193,8 +194,8 @@ export function OfferingDialog({
   regionMinHourlyMajor,
   initial,
 }: OfferingDialogProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const router = useAppRouter();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
   const [subjectId, setSubjectId] = React.useState("");
   const [periodType, setPeriodType] = React.useState<OfferingPeriodType>(OfferingPeriodType.OPEN);

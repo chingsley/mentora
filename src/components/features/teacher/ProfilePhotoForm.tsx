@@ -12,13 +12,16 @@ import { FONTS } from "@/constants/fonts.constants";
 import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
+import { TEACHER_PUBLIC_PROFILE } from "@/constants/teacherPublicProfile.constants";
 
 export interface ProfilePhotoFormProps {
   currentImage: string | null;
   fallbackInitials: string;
   hint?: string;
   /** Studio layout: avatar with corner upload control (profile bio tab) */
-  layout?: "default" | "studio";
+  layout?: "default" | "studio" | "publicHero";
+  /** Upload immediately after the user picks a file (public profile hero). */
+  uploadOnPick?: boolean;
   children?: React.ReactNode;
 }
 
@@ -146,11 +149,21 @@ const AvatarWithUpload = styled.div`
   flex-shrink: 0;
 `;
 
-const AvatarUploadFab = styled.button`
+const AvatarUploadFab = styled.button<{ $publicHero?: boolean }>`
   position: absolute;
   z-index: 1;
-  left: calc(50% + (9.75rem / 2) * 0.70710678 - 1.125rem);
-  top: calc(50% + (9.75rem / 2) * 0.70710678 - 1.125rem);
+  ${(p) =>
+    p.$publicHero
+      ? css`
+          right: ${SPACING.TWO};
+          bottom: ${SPACING.TWO};
+          left: auto;
+          top: auto;
+        `
+      : css`
+          left: calc(50% + (9.75rem / 2) * 0.70710678 - 1.125rem);
+          top: calc(50% + (9.75rem / 2) * 0.70710678 - 1.125rem);
+        `}
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -188,20 +201,26 @@ const AvatarUploadFab = styled.button`
   }
 `;
 
-const Avatar = styled.div<{ $studio?: boolean }>`
+const Avatar = styled.div<{ $studio?: boolean; $publicHero?: boolean }>`
   position: relative;
-  height: ${(p) => (p.$studio ? "9.75rem" : "7rem")};
-  width: ${(p) => (p.$studio ? "9.75rem" : "7rem")};
+  height: ${(p) =>
+    p.$publicHero ? TEACHER_PUBLIC_PROFILE.HERO_AVATAR_SIZE : p.$studio ? "9.75rem" : "7rem"};
+  width: ${(p) =>
+    p.$publicHero ? TEACHER_PUBLIC_PROFILE.HERO_AVATAR_SIZE : p.$studio ? "9.75rem" : "7rem"};
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: ${LAYOUT.RADIUS.FULL};
+  border-radius: ${(p) =>
+    p.$publicHero ? TEACHER_PUBLIC_PROFILE.HERO_AVATAR_RADIUS : LAYOUT.RADIUS.FULL};
   background-color: ${COLORS.MUTED};
   outline: 1px solid ${COLORS.BORDER};
   outline-offset: -1px;
+  box-shadow: ${(p) => (p.$publicHero ? TEACHER_PUBLIC_PROFILE.HERO_AVATAR_SHADOW : "none")};
 
   ${LAYOUT.MEDIA.SM} {
-    height: ${(p) => (p.$studio ? "9.75rem" : "8rem")};
-    width: ${(p) => (p.$studio ? "9.75rem" : "8rem")};
+    height: ${(p) =>
+      p.$publicHero ? TEACHER_PUBLIC_PROFILE.HERO_AVATAR_SIZE : p.$studio ? "9.75rem" : "8rem"};
+    width: ${(p) =>
+      p.$publicHero ? TEACHER_PUBLIC_PROFILE.HERO_AVATAR_SIZE : p.$studio ? "9.75rem" : "8rem"};
   }
 `;
 
@@ -417,6 +436,7 @@ export const ProfilePhotoForm = React.forwardRef<ProfilePhotoFormHandle, Profile
       fallbackInitials,
       hint = "PNG, JPEG, or WebP · up to 2 MB. A profile photo is required to complete your teacher profile.",
       layout = "default",
+      uploadOnPick = false,
       children,
     },
     ref,
@@ -437,6 +457,11 @@ export const ProfilePhotoForm = React.forwardRef<ProfilePhotoFormHandle, Profile
       hasPendingUpload,
     } = usePickAndUpload(currentImage, router);
 
+    React.useEffect(() => {
+      if (!uploadOnPick || !pendingFile) return;
+      void uploadPendingFile();
+    }, [uploadOnPick, pendingFile, uploadPendingFile]);
+
     React.useImperativeHandle(
       ref,
       () => ({
@@ -445,6 +470,58 @@ export const ProfilePhotoForm = React.forwardRef<ProfilePhotoFormHandle, Profile
       }),
       [uploadPendingFile, hasPendingUpload],
     );
+
+    if (layout === "publicHero") {
+      return (
+        <StudioWrap>
+          <HiddenInput ref={inputRef} type="file" accept={ACCEPT} onChange={handleFile} />
+          <AvatarWithUpload>
+            <Avatar $publicHero>
+              {display ? (
+                isLocalPreviewSrc(display) ? (
+                  <AvatarPreviewImg src={display} alt="Your profile photo" />
+                ) : (
+                  <Image
+                    src={display}
+                    alt="Your profile photo"
+                    fill
+                    sizes={TEACHER_PUBLIC_PROFILE.HERO_AVATAR_SIZE}
+                    style={{ objectFit: "cover" }}
+                    unoptimized
+                  />
+                )
+              ) : (
+                <Fallback>{fallbackInitials}</Fallback>
+              )}
+            </Avatar>
+            {display ? (
+              <AvatarUploadFab
+                $publicHero
+                type="button"
+                onClick={handleRemove}
+                disabled={isUploading || isRemoving}
+                aria-label="Remove profile photo"
+              >
+                <X size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
+              </AvatarUploadFab>
+            ) : (
+              <AvatarUploadFab
+                $publicHero
+                type="button"
+                onClick={handlePick}
+                disabled={isUploading || isRemoving}
+                aria-label="Upload profile photo"
+              >
+                <CloudUpload size={ICON_SIZE.MD} strokeWidth={ICON_STROKE.MEDIUM} aria-hidden />
+              </AvatarUploadFab>
+            )}
+          </AvatarWithUpload>
+          <ErrorSlot role="status" aria-live="polite">
+            {error ? <ErrorText>{error}</ErrorText> : null}
+          </ErrorSlot>
+        </StudioWrap>
+      );
+    }
 
     if (layout === "studio") {
       const hasSideContent = Boolean(children);

@@ -2,6 +2,7 @@
 
 import type { ReportStatus } from "@prisma/client";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors.constants";
@@ -27,7 +28,7 @@ export interface ReportStatusFormProps {
 }
 
 export function ReportStatusForm({ reportId, currentStatus }: ReportStatusFormProps) {
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [status, setStatus] = React.useState<ReportStatus>(currentStatus);
 
   function submit(next: ReportStatus) {

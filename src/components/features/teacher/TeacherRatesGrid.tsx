@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors.constants";
@@ -186,7 +187,7 @@ const RateAction = styled.span`
 
 export function TeacherRatesGrid({ subjects, regions, rates }: TeacherRatesGridProps) {
   const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [editing, setEditing] = React.useState<string | null>(null);
   const [value, setValue] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);

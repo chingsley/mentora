@@ -2,10 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { addTeacherCourseAction, type ActionResult } from "@/app/(app)/profile/actions";
 import { Button } from "@/components/ui/Button";
-import { InlineFormFieldRow } from "@/components/ui/FormField";
+import {
+  FormFieldControlSlot,
+  FormFieldLabelSlot,
+  FormFieldMetaSlot,
+  FormFieldRoot,
+  InlineFormFieldRow,
+} from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
@@ -42,16 +49,6 @@ const FieldsRow = styled(InlineFormFieldRow)`
 
   ${LAYOUT.MEDIA.SM} {
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
-  }
-`;
-
-const Actions = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.TWO};
-
-  ${LAYOUT.MEDIA.SM} {
-    padding-bottom: ${SPACING.ONE};
   }
 `;
 
@@ -113,7 +110,7 @@ export function TeacherProfileAddCourseForm({
 }: TeacherProfileAddCourseFormProps) {
   const router = useRouter();
   const formRef = React.useRef<HTMLFormElement>(null);
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
   const [subject, setSubject] = React.useState<TeacherProfileSubjectOption | null>(null);
   const [classLimit, setClassLimit] = React.useState(String(defaultClassLimit(globalCap)));
@@ -218,11 +215,15 @@ export function TeacherProfileAddCourseForm({
             disabled={isPending}
             onChange={(e) => setClassLimit(e.target.value)}
           />
-          <Actions>
-            <Button type="submit" isLoading={isPending} disabled={!canSubmit || isPending}>
-              {isEditing ? "Save course" : "Add course"}
-            </Button>
-          </Actions>
+          <FormFieldRoot $hasLabel>
+            <FormFieldLabelSlot aria-hidden="true" />
+            <FormFieldControlSlot>
+              <Button type="submit" isLoading={isPending} disabled={!canSubmit || isPending}>
+                {isEditing ? "Save course" : "Add course"}
+              </Button>
+            </FormFieldControlSlot>
+            <FormFieldMetaSlot />
+          </FormFieldRoot>
         </FieldsRow>
         {result && !result.ok ? <FormError>{result.error}</FormError> : null}
       </Form>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import * as React from "react";
 import styled from "styled-components";
 import { Settings2 } from "lucide-react";
@@ -164,7 +164,7 @@ export function TeacherSessionAttendanceDialog({
   sessionDate,
   onEditSchedule,
 }: TeacherSessionAttendanceDialogProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [session, setSession] = React.useState<SessionAttendanceData | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);

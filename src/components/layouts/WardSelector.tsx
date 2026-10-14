@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import * as React from "react";
 import styled from "styled-components";
 import { ChevronDown } from "lucide-react";
@@ -138,7 +139,7 @@ const Option = styled.button<{ $selected: boolean }>`
 `;
 
 export function WardSelector({ wards, collapsed = false }: WardSelectorProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const pathname = usePathname() ?? "";
   const params = useParams<{ studentId?: string }>();
   const active = params?.studentId ?? wards[0]?.studentProfileId;

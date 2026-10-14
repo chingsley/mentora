@@ -1,20 +1,18 @@
 "use client";
 
-import Image from "next/image";
 import * as React from "react";
 import styled from "styled-components";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import {
   ClassDetailsDialog,
   type ClassDetail,
 } from "@/components/features/class/ClassDetailsDialog";
+import { TeacherPublicProfileView } from "@/components/features/teacher/public/TeacherPublicProfileView";
+import {
+  TEACHER_PUBLIC_PROFILE,
+  TEACHER_PUBLIC_PROFILE_SPACE,
+} from "@/constants/teacherPublicProfile.constants";
+import type { TeacherPublicProfileWorkExperience } from "@/types/teacherPublicProfileWorkExperience";
 import type { Role } from "@prisma/client";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
@@ -27,232 +25,36 @@ import { TeacherPublicCalendar } from "./TeacherPublicCalendar";
 import { TeacherRatesWithOfferings } from "./TeacherRatesWithOfferings";
 import { useTeacherOfferingEnrollment } from "./useTeacherOfferingEnrollment";
 
-const Wrap = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.SIX};
-`;
-
-const HeroCard = styled(Card)`
-  overflow: hidden;
-`;
-
-const HeroInner = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.FIVE};
-`;
-
-const HeroRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.FIVE};
-
-  ${LAYOUT.MEDIA.SM} {
-    flex-direction: row;
-    align-items: center;
-  }
-`;
-
-const Avatar = styled.div`
-  position: relative;
-  height: 6rem;
-  width: 6rem;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  background-color: ${COLORS.MUTED};
-  outline: 2px solid rgba(23, 32, 51, 0.1);
-  outline-offset: -2px;
-
-  ${LAYOUT.MEDIA.SM} {
-    height: 7rem;
-    width: 7rem;
-  }
-`;
-
-const AvatarFallback = styled.div`
-  display: flex;
-  height: 100%;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  font-size: ${FONTS.SIZE["2XL"]};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const HeroBody = styled.div`
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: ${SPACING.TWO};
-`;
-
-const TitleRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${SPACING.TWO};
-`;
-
-const Name = styled.h1`
-  font-size: ${FONTS.SIZE["2XL"]};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
+const SectionTitle = styled.h2`
+  margin: 0 0 ${SPACING.FOUR};
+  font-size: ${FONTS.SIZE.UI_LARGE};
+  font-weight: ${FONTS.WEIGHT.BOLD};
   color: ${COLORS.HEADER};
-
-  ${LAYOUT.MEDIA.SM} {
-    font-size: ${FONTS.SIZE["3XL"]};
-  }
-`;
-
-const DisplayId = styled.span`
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.BACKGROUND};
-  padding: 0.125rem 0.625rem;
-  font-family: ${FONTS.FAMILY.MONO};
-  font-size: ${FONTS.SIZE.XS};
-  color: ${COLORS.HEADER};
-`;
-
-const RatingPill = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: ${SPACING.ONE};
-  border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: rgba(23, 32, 51, 0.05);
-  padding: 0.125rem ${SPACING.TWO};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-`;
-
-const RatingCount = styled.span`
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const Headline = styled.p`
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const PriceLine = styled.p`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-`;
-
-const SubjectPills = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  padding-top: ${SPACING.ONE};
-`;
-
-const SubjectPill = styled.span`
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  border: 1px solid ${COLORS.BORDER};
-  padding: 0.125rem 0.625rem;
-  font-size: ${FONTS.SIZE.XS};
-  color: rgba(2, 8, 23, 0.8);
 `;
 
 const InfoBlock = styled.p`
   border-radius: ${LAYOUT.RADIUS.MD};
-  background-color: ${COLORS.BACKGROUND};
+  background-color: ${COLORS.SURFACE_OFF_WHITE};
   padding: ${SPACING.FOUR};
   font-size: ${FONTS.SIZE.SM};
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
-const HeroDivider = styled.hr`
-  margin: 0;
-  border: none;
-  border-top: 1px solid ${COLORS.BORDER_SUBTLE_LIGHT};
-`;
-
-const AboutSection = styled.section`
+const AvailabilityStack = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${SPACING.TWO};
-  max-width: 42rem;
+  gap: ${SPACING.EIGHT};
 `;
 
-const AboutLabel = styled.h2`
-  margin: 0;
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: ${COLORS.SIDEBAR_MUTED};
+const EnrollRegion = styled.section`
+  padding: ${SPACING.EIGHT} ${LAYOUT.PAGE_INSET.INLINE} ${TEACHER_PUBLIC_PROFILE_SPACE.BODY_PADDING_BLOCK};
+  background-color: ${COLORS.FOREGROUND};
 `;
 
-const AboutText = styled.p`
-  margin: 0;
-  white-space: pre-wrap;
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.NORMAL};
-  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
-  color: ${COLORS.SIDEBAR_MUTED};
-`;
-
-const Muted = styled.p`
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const TestimonialGrid = styled.ul`
-  display: grid;
-  gap: ${SPACING.THREE};
-  list-style: none;
-  margin: 0;
-  padding: 0;
-
-  ${LAYOUT.MEDIA.SM} {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-`;
-
-const TestimonialCard = styled.li`
-  border-radius: ${LAYOUT.RADIUS.LG};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.BACKGROUND};
-  padding: ${SPACING.THREE};
-`;
-
-const TestimonialHead = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const TestimonialName = styled.p`
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.HEADER};
-`;
-
-const Stars = styled.span`
-  font-size: ${FONTS.SIZE.XS};
-  color: #b45309;
-`;
-
-const StarsMuted = styled.span`
-  color: ${COLORS.MUTED_FOREGROUND};
-`;
-
-const TestimonialBody = styled.p`
-  margin-top: ${SPACING.ONE};
-  font-size: ${FONTS.SIZE.SM};
-  color: rgba(2, 8, 23, 0.8);
-`;
-
-const TestimonialFoot = styled.p`
-  margin-top: ${SPACING.ONE};
-  font-size: ${FONTS.SIZE.META};
-  color: ${COLORS.MUTED_FOREGROUND};
+const EnrollColumn = styled.div`
+  margin: 0 auto;
+  max-width: ${TEACHER_PUBLIC_PROFILE.CONTENT_MAX_WIDTH};
+  width: 100%;
 `;
 
 export interface TeacherTestimonial {
@@ -261,6 +63,13 @@ export interface TeacherTestimonial {
   rating: number;
   body: string;
   offeringTitle: string;
+}
+
+export interface TeacherSubjectDetail {
+  id: string;
+  name: string;
+  courseDescription: string;
+  gradeLevel: string;
 }
 
 export interface TeacherRateRow {
@@ -275,13 +84,15 @@ export interface TeacherDetailViewProps {
   name: string;
   imageUrl: string | null;
   initials: string;
+  headline: string;
+  bio: string;
+  email: string;
+  spokenLanguages: string;
+  locationCountryCode: string;
   displayId: string;
   rating: number;
   ratingsCount: number;
-  headline: string;
-  bio: string;
-  priceSummary: string;
-  subjects: { id: string; name: string; }[];
+  subjects: TeacherSubjectDetail[];
   rates: TeacherRateRow[];
   entries: CalendarEntry[];
   detailsByOfferingId: Record<string, ClassDetail>;
@@ -293,18 +104,21 @@ export interface TeacherDetailViewProps {
     studentDisplayName: string;
   } | null;
   testimonials: TeacherTestimonial[];
+  workExperiences: TeacherPublicProfileWorkExperience[];
 }
 
 export function TeacherDetailView({
   name,
   imageUrl,
   initials,
+  headline,
+  bio,
+  email,
+  spokenLanguages,
+  locationCountryCode,
   displayId,
   rating,
   ratingsCount,
-  headline,
-  bio,
-  priceSummary,
   subjects,
   rates,
   entries,
@@ -313,10 +127,13 @@ export function TeacherDetailView({
   viewerRole,
   studentSchedule,
   testimonials,
+  workExperiences,
 }: TeacherDetailViewProps) {
   const isStudent = viewerRole === "STUDENT";
   const enrollment = useTeacherOfferingEnrollment();
   const [expandedSubjectId, setExpandedSubjectId] = React.useState<string | null>(null);
+
+  const skills = subjects.map((s) => s.name);
 
   const toggleSubject = React.useCallback((subjectId: string) => {
     setExpandedSubjectId((prev) => (prev === subjectId ? null : subjectId));
@@ -329,54 +146,8 @@ export function TeacherDetailView({
     ? enrollmentByOfferingId[enrollment.selectedOfferingId] ?? null
     : null;
 
-  return (
-    <Wrap>
-      <HeroCard>
-        <HeroInner>
-          <HeroRow>
-            <Avatar>
-              {imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={`${name} profile photo`}
-                  fill
-                  sizes="112px"
-                  style={{ objectFit: "cover" }}
-                  unoptimized
-                />
-              ) : (
-                <AvatarFallback>{initials}</AvatarFallback>
-              )}
-            </Avatar>
-            <HeroBody>
-              <TitleRow>
-                <Name>{name}</Name>
-                <DisplayId>{displayId}</DisplayId>
-                <RatingPill>
-                  <span aria-hidden>★</span>
-                  {rating.toFixed(1)}
-                  <RatingCount>({ratingsCount})</RatingCount>
-                </RatingPill>
-              </TitleRow>
-              <Headline>{headline || "Tutor on Mentora"}</Headline>
-              <PriceLine>{priceSummary}</PriceLine>
-              <SubjectPills>
-                {subjects.map((s) => (
-                  <SubjectPill key={s.id}>{s.name}</SubjectPill>
-                ))}
-              </SubjectPills>
-            </HeroBody>
-          </HeroRow>
-
-          <HeroDivider />
-
-          <AboutSection aria-labelledby="teacher-about-heading">
-            <AboutLabel id="teacher-about-heading">About</AboutLabel>
-            <AboutText>{bio || "This teacher hasn't written a bio yet."}</AboutText>
-          </AboutSection>
-        </HeroInner>
-      </HeroCard>
-
+  const availabilityPanel = (
+    <AvailabilityStack>
       <TeacherRatesWithOfferings
         rates={rates}
         entries={entries}
@@ -390,71 +161,54 @@ export function TeacherDetailView({
         onEnrol={enrollment.handleEnrol}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{isStudent ? "Your weekly schedule" : "Weekly schedule"}</CardTitle>
-          <CardDescription>
-            {isStudent
-              ? "Your enrolled classes across all teachers. Check for time clashes before enrolling in new classes."
-              : "Tap a class to see capacity, rules and testimonies. Green tiles are open, amber are almost full, red are full."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isStudent ? (
-            studentSchedule && studentSchedule.rows.length > 0 ? (
-              <TeacherDetailStudentSchedule
-                rows={studentSchedule.rows}
-                occurrenceMap={studentSchedule.occurrenceMap}
-                studentDisplayName={studentSchedule.studentDisplayName}
-              />
-            ) : (
-              <InfoBlock>
-                You have no enrolled classes yet. Pick a subject above to enrol in your
-                first class with {name}.
-              </InfoBlock>
-            )
-          ) : entries.length === 0 ? (
-            <InfoBlock>
-              This teacher hasn&apos;t published any class periods yet.
-            </InfoBlock>
-          ) : (
-            <TeacherPublicCalendar
-              entries={entries}
-              onOfferingClick={enrollment.openOffering}
+      <div>
+        <SectionTitle>{isStudent ? "Your weekly schedule" : "Weekly schedule"}</SectionTitle>
+        {isStudent ? (
+          studentSchedule && studentSchedule.rows.length > 0 ? (
+            <TeacherDetailStudentSchedule
+              rows={studentSchedule.rows}
+              occurrenceMap={studentSchedule.occurrenceMap}
+              studentDisplayName={studentSchedule.studentDisplayName}
             />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Testimonials</CardTitle>
-          <CardDescription>
-            What previous students said about classes with {name}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {testimonials.length === 0 ? (
-            <Muted>No testimonials yet.</Muted>
           ) : (
-            <TestimonialGrid>
-              {testimonials.slice(0, 6).map((t) => (
-                <TestimonialCard key={t.id}>
-                  <TestimonialHead>
-                    <TestimonialName>{t.studentName}</TestimonialName>
-                    <Stars aria-label={`${t.rating} out of 5`}>
-                      {"★".repeat(t.rating)}
-                      <StarsMuted>{"★".repeat(5 - t.rating)}</StarsMuted>
-                    </Stars>
-                  </TestimonialHead>
-                  <TestimonialBody>{t.body}</TestimonialBody>
-                  <TestimonialFoot>{t.offeringTitle}</TestimonialFoot>
-                </TestimonialCard>
-              ))}
-            </TestimonialGrid>
-          )}
-        </CardContent>
-      </Card>
+            <InfoBlock>
+              You have no enrolled classes yet. Pick a subject above to enrol in your first class
+              with {name}.
+            </InfoBlock>
+          )
+        ) : entries.length === 0 ? (
+          <InfoBlock>This teacher hasn&apos;t published any class periods yet.</InfoBlock>
+        ) : (
+          <TeacherPublicCalendar entries={entries} onOfferingClick={enrollment.openOffering} />
+        )}
+      </div>
+    </AvailabilityStack>
+  );
+
+  return (
+    <>
+      <TeacherPublicProfileView
+        name={name}
+        imageUrl={imageUrl}
+        initials={initials}
+        headline={headline}
+        bio={bio}
+        email={email}
+        spokenLanguages={spokenLanguages}
+        locationCountryCode={locationCountryCode}
+        displayId={displayId}
+        rating={rating}
+        ratingsCount={ratingsCount}
+        subjects={subjects}
+        skills={skills}
+        reviewsCount={testimonials.length}
+        testimonials={testimonials}
+        workExperiences={workExperiences}
+      />
+
+      <EnrollRegion aria-label="Classes and availability">
+        <EnrollColumn>{availabilityPanel}</EnrollColumn>
+      </EnrollRegion>
 
       <ClassDetailsDialog
         open={enrollment.selectedOfferingId !== null}
@@ -474,6 +228,6 @@ export function TeacherDetailView({
           }
         }}
       />
-    </Wrap>
+    </>
   );
 }

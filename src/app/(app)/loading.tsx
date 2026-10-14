@@ -1,6 +1,4 @@
-import { PageLoader } from "@/components/ui/PageLoader";
-
-/** Loading UI for authenticated routes (renders inside AppShell `<Main>`). */
+/** Route loading UI is handled globally by `NavigationLoadingProvider`. */
 export default function AppLoading() {
-  return <PageLoader />;
+  return null;
 }

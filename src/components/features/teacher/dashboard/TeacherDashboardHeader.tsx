@@ -12,12 +12,15 @@ import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 
-const Wrap = styled.header<{ $minimal: boolean; }>`
+const Wrap = styled.header<{ $minimal: boolean; $compact: boolean; }>`
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: ${SPACING.FOUR};
-  margin-bottom: ${(p) => (p.$minimal ? SPACING.EIGHT : SPACING.SIX)};
+  margin-bottom: ${(p) => {
+    if (p.$compact) return p.$minimal ? SPACING.TWO : SPACING.FOUR;
+    return p.$minimal ? SPACING.EIGHT : SPACING.SIX;
+  }};
 
   ${LAYOUT.MEDIA.MD} {
     flex-direction: ${(p) => (p.$minimal ? "column" : "row")};
@@ -254,6 +257,8 @@ export interface TeacherDashboardHeaderProps {
   showToolbar?: boolean;
   /** Role line under the profile name (default: Teacher). */
   profileRole?: string;
+  /** Less margin below the title block. */
+  compact?: boolean;
 }
 
 export function TeacherDashboardHeader({
@@ -267,6 +272,7 @@ export function TeacherDashboardHeader({
   showProfileLink = true,
   showToolbar = false,
   profileRole = "Teacher",
+  compact = false,
 }: TeacherDashboardHeaderProps) {
   const initials = teacherName
     .split(/\s+/)
@@ -276,7 +282,7 @@ export function TeacherDashboardHeader({
     .toUpperCase();
 
   return (
-    <Wrap $minimal={!showToolbar}>
+    <Wrap $minimal={!showToolbar} $compact={compact}>
       <TitleBlock>
         <TitleContent>
           <PageTitle>{title}</PageTitle>

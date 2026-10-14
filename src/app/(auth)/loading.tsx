@@ -1,6 +1,4 @@
-import { PageLoader } from "@/components/ui/PageLoader";
-
-/** Loading UI for auth routes (sign-in, sign-up, etc.). */
+/** Route loading UI is handled globally by `NavigationLoadingProvider`. */
 export default function AuthLoading() {
-  return <PageLoader fullViewport />;
+  return null;
 }

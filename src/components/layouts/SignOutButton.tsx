@@ -1,7 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useNavigationLoading } from "@/components/layouts/NavigationLoadingProvider";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
@@ -53,8 +55,9 @@ const IconSvg = styled.svg`
 `;
 
 export function SignOutButton({ compact = false }: SignOutButtonProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const router = useAppRouter();
+  const { beginNavigation, endNavigation } = useNavigationLoading();
+  const [isPending, startTransition] = useActionPending();
 
   return (
     <Base
@@ -62,10 +65,15 @@ export function SignOutButton({ compact = false }: SignOutButtonProps) {
       $compact={compact}
       aria-label={compact ? (isPending ? "Signing out" : "Sign out") : undefined}
       onClick={() => {
+        beginNavigation();
         startTransition(async () => {
-          await signOutAction();
-          router.push("/");
-          router.refresh();
+          try {
+            await signOutAction();
+            router.push("/");
+            router.refresh();
+          } catch {
+            endNavigation();
+          }
         });
       }}
       disabled={isPending}
@@ -79,8 +87,6 @@ export function SignOutButton({ compact = false }: SignOutButtonProps) {
             d="M15 18l-6-6 6-6M5 12h14"
           />
         </IconSvg>
-      ) : isPending ? (
-        "Signing out..."
       ) : (
         "Sign out"
       )}

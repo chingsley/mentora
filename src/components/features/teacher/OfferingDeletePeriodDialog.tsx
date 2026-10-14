@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { deleteOfferingAction } from "@/app/(app)/profile/actions";
 import { Button } from "@/components/ui/Button";
@@ -63,7 +64,7 @@ export function OfferingDeletePeriodDialog({
   onDeleted,
 }: OfferingDeletePeriodDialogProps) {
   const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [error, setError] = React.useState<string | null>(null);
 
   const open = target !== null;

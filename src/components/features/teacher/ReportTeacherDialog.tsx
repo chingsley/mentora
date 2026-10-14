@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useActionPending } from "@/hooks/useActionPending";
 import styled from "styled-components";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
@@ -94,7 +95,7 @@ export function ReportTeacherDialog({
   teacherProfileId,
   teacherName,
 }: ReportTeacherDialogProps) {
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useActionPending();
   const [result, setResult] = React.useState<
     { ok: true } | { ok: false; error: string } | null
   >(null);

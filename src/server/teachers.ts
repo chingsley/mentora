@@ -111,12 +111,32 @@ export async function recommendTeachers(studentUserId: string, limit = 6) {
   });
 }
 
+export async function getTeacherRatingRank(teacherProfileId: string): Promise<number | null> {
+  const teacher = await db.teacherProfile.findUnique({
+    where: { id: teacherProfileId },
+    select: { avgRating: true, ratingsCount: true },
+  });
+  if (!teacher || teacher.ratingsCount < 1) return null;
+  const higher = await db.teacherProfile.count({
+    where: {
+      ratingsCount: { gte: 1 },
+      avgRating: { gt: teacher.avgRating },
+    },
+  });
+  return higher + 1;
+}
+
 export async function getTeacherById(teacherProfileId: string) {
   return db.teacherProfile.findUnique({
     where: { id: teacherProfileId },
     include: {
-      user: { select: { id: true, name: true, image: true, region: true } },
+      user: {
+        select: { id: true, name: true, email: true, image: true, region: true },
+      },
       subjects: { include: { subject: true } },
+      workExperiences: {
+        orderBy: [{ startDate: "desc" }, { sortOrder: "desc" }],
+      },
       rates: { include: { region: true, subject: true } },
       offerings: {
         where: { active: true },
@@ -188,6 +208,9 @@ export const MY_TEACHER_PROFILE_INCLUDE = {
       { subjectId: "desc" as const },
     ],
   },
+  workExperiences: {
+    orderBy: [{ startDate: "desc" as const }, { sortOrder: "desc" as const }],
+  },
   rates: { include: { subject: true, region: true } },
   offerings: {
     include: {
@@ -256,6 +279,11 @@ export function normalizeSpokenLanguages(raw: string): string {
 
 export const saveTeacherBioTabSchema = z.object({
   bio: z.string().trim().max(TEACHER_BIO_MAX_LENGTH).optional().default(""),
+});
+
+export type SaveTeacherBioTabInput = z.infer<typeof saveTeacherBioTabSchema>;
+
+export const saveTeacherLocationTabSchema = z.object({
   spokenLanguages: z.string().trim().min(2, "Add languages you speak (e.g. English, Portuguese)").max(500),
   locationCountryCode: z
     .string()
@@ -265,25 +293,36 @@ export const saveTeacherBioTabSchema = z.object({
   locationCity: z.string().trim().min(1, "Enter your city").max(120),
 });
 
-export type SaveTeacherBioTabInput = z.infer<typeof saveTeacherBioTabSchema>;
+export type SaveTeacherLocationTabInput = z.infer<typeof saveTeacherLocationTabSchema>;
 
 export async function saveTeacherBioTab(teacherUserId: string, input: SaveTeacherBioTabInput) {
+  const teacher = await requireTeacher(teacherUserId);
+
+  await db.teacherProfile.update({
+    where: { id: teacher.id },
+    data: { bio: input.bio ?? "" },
+  });
+
+  await recomputeProfileCompleted(teacher.id);
+}
+
+export async function saveTeacherLocationTab(
+  teacherUserId: string,
+  input: SaveTeacherLocationTabInput,
+) {
   const teacher = await requireTeacher(teacherUserId);
   const languages = normalizeSpokenLanguages(input.spokenLanguages);
   const countryName = getTeacherLocationCountryName(input.locationCountryCode);
   const locationLabel = formatTeacherLocationLabel(input.locationCity, countryName);
 
-  const teacherProfileBioData = {
-    bio: input.bio ?? "",
-    spokenLanguages: languages,
-    locationCountryCode: input.locationCountryCode,
-    locationCity: input.locationCity,
-    locationLabel,
-  } as Prisma.TeacherProfileUncheckedUpdateInput;
-
   await db.teacherProfile.update({
     where: { id: teacher.id },
-    data: teacherProfileBioData,
+    data: {
+      spokenLanguages: languages,
+      locationCountryCode: input.locationCountryCode,
+      locationCity: input.locationCity,
+      locationLabel,
+    },
   });
 
   await recomputeProfileCompleted(teacher.id);
@@ -1338,6 +1377,10 @@ export async function recomputeProfileCompleted(teacherProfileId: string) {
     image: profile.user.image,
     bio: profile.bio,
     spokenLanguages: String((profile as { spokenLanguages?: string | null }).spokenLanguages ?? ""),
+    locationCountryCode: String(
+      (profile as { locationCountryCode?: string | null }).locationCountryCode ?? "",
+    ),
+    locationCity: String((profile as { locationCity?: string | null }).locationCity ?? ""),
     subjectIds: profile.subjects.map((s) => s.subjectId),
     offeringsCount: profile.offerings.length,
     payoutLegalName: profile.payoutLegalName,

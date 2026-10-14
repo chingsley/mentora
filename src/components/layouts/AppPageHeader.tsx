@@ -17,6 +17,8 @@ export interface AppPageHeaderProps {
   notificationCount?: number;
   /** Optional control aligned to the right of the title block. */
   action?: ReactNode;
+  /** Tighter space below the title block (e.g. profile editor). */
+  compact?: boolean;
 }
 
 export function AppPageHeader({
@@ -29,6 +31,7 @@ export function AppPageHeader({
   showToolbar = false,
   notificationCount = 0,
   action,
+  compact = false,
 }: AppPageHeaderProps) {
   const user = useAppShell();
 
@@ -38,6 +41,7 @@ export function AppPageHeader({
       teacherImage={profileImage}
       title={title}
       subtitle={subtitle}
+      compact={compact}
       action={action}
       searchPlaceholder={searchPlaceholder ?? appShellSearchPlaceholder(user.role)}
       showProfileLink={showProfileLink}

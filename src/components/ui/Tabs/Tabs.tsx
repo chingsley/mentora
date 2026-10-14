@@ -10,10 +10,13 @@ import { SURFACE } from "@/constants/surface.constants";
 
 export type TabsVisualVariant = "default" | "underline";
 
+export type TabsListAlignment = "start" | "center";
+
 interface TabsContextValue {
   value: string;
   onValueChange: (next: string) => void;
   variant: TabsVisualVariant;
+  listAlignment: TabsListAlignment;
 }
 
 const TabsContext = React.createContext<TabsContextValue | null>(null);
@@ -24,11 +27,12 @@ function useTabsContext(component: string): TabsContextValue {
   return ctx;
 }
 
-const List = styled.div<{ $underline: boolean; }>`
+const List = styled.div<{ $underline: boolean; $align: TabsListAlignment; }>`
   display: flex;
   flex: 1;
   min-width: 0;
-  justify-content: ${(p) => (p.$underline ? "center" : "flex-start")};
+  justify-content: ${(p) =>
+    p.$underline ? (p.$align === "start" ? "flex-start" : "center") : "flex-start"};
   gap: ${(p) => (p.$underline ? SPACING.ONE : SPACING.ONE)};
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -63,8 +67,8 @@ const TabButton = styled.button<{ $active: boolean; $underline: boolean; }>`
           border-bottom: 2px solid transparent;
           ${p.$active
           ? css`
-                color: ${COLORS.HEADER};
-                border-bottom-color: ${COLORS.SIDEBAR_ACCENT};
+                border-bottom-color: ${COLORS.ACTION_PRIMARY};
+                color: ${COLORS.ACTION_PRIMARY};
                 font-weight: ${FONTS.WEIGHT.SEMIBOLD};
               `
           : css`
@@ -98,11 +102,22 @@ export interface TabsProps {
   onValueChange: (value: string) => void;
   /** Underline style for dashboard-style tab strips */
   variant?: TabsVisualVariant;
+  /** Tab row alignment when `variant` is `underline` (default `center`). */
+  listAlignment?: TabsListAlignment;
   children: React.ReactNode;
 }
 
-export function Tabs({ value, onValueChange, variant = "default", children }: TabsProps) {
-  const ctx = React.useMemo(() => ({ value, onValueChange, variant }), [value, onValueChange, variant]);
+export function Tabs({
+  value,
+  onValueChange,
+  variant = "default",
+  listAlignment = "center",
+  children,
+}: TabsProps) {
+  const ctx = React.useMemo(
+    () => ({ value, onValueChange, variant, listAlignment }),
+    [value, onValueChange, variant, listAlignment],
+  );
   return <TabsContext.Provider value={ctx}>{children}</TabsContext.Provider>;
 }
 
@@ -112,7 +127,7 @@ export interface TabsListProps {
 }
 
 export function TabsList({ "aria-label": ariaLabel = "Profile sections", children }: TabsListProps) {
-  const { value, onValueChange, variant } = useTabsContext("TabsList");
+  const { value, onValueChange, variant, listAlignment } = useTabsContext("TabsList");
   const listRef = React.useRef<HTMLDivElement>(null);
   const underline = variant === "underline";
 
@@ -145,6 +160,7 @@ export function TabsList({ "aria-label": ariaLabel = "Profile sections", childre
       aria-label={ariaLabel}
       onKeyDown={onKeyDown}
       $underline={underline}
+      $align={listAlignment}
     >
       {children}
     </List>

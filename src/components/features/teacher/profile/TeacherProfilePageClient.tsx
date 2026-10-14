@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import * as React from "react";
 import styled from "styled-components";
 import { Suspense } from "react";
@@ -85,7 +86,7 @@ function TeacherProfilePageClientInner({
   initialWelcome = false,
   ...props
 }: TeacherProfilePageClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
