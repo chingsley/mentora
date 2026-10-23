@@ -8,7 +8,6 @@ import {
   occurrenceDisplayParts,
   sortByNextOccurrence,
 } from "@/lib/dashboardSchedule";
-import { formatPrice } from "@/lib/time";
 import type {
   TeacherDashboardActivityItem,
   TeacherDashboardPayload,
@@ -16,7 +15,6 @@ import type {
   TeacherDashboardUpcomingSession,
 } from "@/types/teacherDashboard";
 import { getTeacherDashboardCharts } from "@/server/teacherDashboardCharts";
-import { getTeacherEarningsSummary } from "@/server/teacherEarnings";
 import { getMyTeacherProfile } from "@/server/teachers";
 
 export async function getTeacherDashboardPayload(userId: string): Promise<TeacherDashboardPayload | null> {
@@ -24,14 +22,9 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
   if (!data) return null;
 
   const { profile, activeStudentCount } = data;
-  const currency =
-    profile.user.region?.currency ?? profile.rates[0]?.region.currency ?? "USD";
 
   const activeOfferings = profile.offerings.filter((o) => o.active);
-  const [earnings, charts] = await Promise.all([
-    getTeacherEarningsSummary(userId),
-    getTeacherDashboardCharts(profile),
-  ]);
+  const charts = await getTeacherDashboardCharts(profile);
 
   const stats: TeacherDashboardStat[] = [
     {
@@ -55,25 +48,15 @@ export async function getTeacherDashboardPayload(userId: string): Promise<Teache
     },
     {
       tone: "orange",
-      label: "Classes held",
-      value: String(earnings?.totalClassesHeld ?? 0),
-      hint: "Completed sessions to date",
+      label: "Classes this month",
+      value: String(charts.classesHeldThisMonth.total),
+      hint: charts.classesHeldThisMonth.monthLabel,
       trend:
-        earnings && earnings.totalClassesHeld > 0
-          ? `↑ ${earnings.grossAmountFormatted} gross`
+        charts.classesHeldThisMonth.total > 0
+          ? `↑ ${charts.classesHeldThisMonth.total} completed`
           : undefined,
-      trendPositive: (earnings?.totalClassesHeld ?? 0) > 0,
-    },
-    {
-      tone: "blue",
-      accent: true,
-      label: "Net earnings",
-      value: earnings?.netAmountFormatted ?? formatPrice(0, currency),
-      hint:
-        earnings && earnings.grossAmountMinor > 0
-          ? `${earnings.commissionPercent}% platform fee applied`
-          : "From completed sessions",
-      footerLink: { href: "/earnings", label: "View earnings" },
+      trendPositive: charts.classesHeldThisMonth.total > 0,
+      footerLink: { href: "/schedule", label: "View schedule" },
     },
   ];
 

@@ -17,6 +17,7 @@ export interface TeacherProfileInitialSubject {
   defaultCap: number | null;
   courseDescription: string;
   gradeLevel: string;
+  yearsTaught: number;
   syllabus: string;
 }
 
@@ -70,17 +71,14 @@ export interface TeacherProfileTabsProps {
   locationCountryCode: string;
   locationCity: string;
   locationLabel: string;
-  payoutLegalName: string | null;
-  payoutCountryCode: string | null;
-  payoutPreferredMethod: string | null;
-  payoutBankName: string | null;
-  payoutBankBranch: string | null;
-  payoutBankAccountNumber: string | null;
-  payoutBankRoutingNumber: string | null;
-  payoutNotes: string | null;
-  allSubjects: { id: string; name: string }[];
   initialSubjects: TeacherProfileInitialSubject[];
-  taughtSubjects: { id: string; name: string; defaultCap: number | null }[];
+  taughtSubjects: {
+    id: string;
+    name: string;
+    defaultCap: number | null;
+    yearsTaught: number;
+    tenureLabel: string;
+  }[];
   taughtSubjectsWithStudents: {
     subjectId: string;
     subjectName: string;

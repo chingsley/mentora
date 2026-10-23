@@ -12,14 +12,13 @@ import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import {
   firstIncompleteTeacherProfileSetupPhase,
-  isTeacherProfileSetupStepId,
   nextTeacherProfileSetupPhase,
+  normalizeTeacherProfileSetupStepParam,
   type TeacherProfileSetupPhase,
 } from "@/lib/teacherProfileSetup";
 import { TeacherProfileBioSetupStep } from "./TeacherProfileBioSetupStep";
 import { TeacherProfileLocationTab } from "./TeacherProfileLocationTab";
 import { TeacherProfileCoursesTab } from "./TeacherProfileCoursesTab";
-import { TeacherProfilePaymentTab } from "./TeacherProfilePaymentTab";
 import { TeacherProfileScheduleTab } from "./TeacherProfileScheduleTab";
 import type { TeacherProfileTabsProps } from "./TeacherProfileTabs.types";
 import {
@@ -132,7 +131,8 @@ function resolveSetupStep(
   urlTab: string | null,
   props: TeacherProfileTabsProps,
 ): TeacherProfileSetupPhase {
-  if (urlTab && isTeacherProfileSetupStepId(urlTab)) return urlTab;
+  const normalized = normalizeTeacherProfileSetupStepParam(urlTab);
+  if (normalized) return normalized;
   return firstIncompleteTeacherProfileSetupPhase({
     image: props.imageUrl,
     bio: props.bio,
@@ -141,12 +141,6 @@ function resolveSetupStep(
     locationCity: props.locationCity,
     subjectIds: props.initialSubjects.map((s) => s.subjectId),
     offeringsCount: props.scheduleOfferings.length,
-    payoutLegalName: props.payoutLegalName,
-    payoutCountryCode: props.payoutCountryCode,
-    payoutPreferredMethod: props.payoutPreferredMethod,
-    payoutBankName: props.payoutBankName,
-    payoutBankBranch: props.payoutBankBranch,
-    payoutBankAccountNumber: props.payoutBankAccountNumber,
   });
 }
 
@@ -178,7 +172,7 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
     router.push("/dashboard");
   }
 
-  function handleAdvanceFromPayment() {
+  function finishSetup() {
     clearSetupDismissed();
     router.refresh();
     router.push("/dashboard");
@@ -186,15 +180,15 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
   }
 
   function handleAdvance(current: TeacherProfileSetupPhase) {
-    if (current === "payment") {
-      handleAdvanceFromPayment();
+    if (current === "schedule") {
+      finishSetup();
       return;
     }
     setStep(nextTeacherProfileSetupPhase(current));
   }
 
   function handleSkipStep(current: TeacherProfileSetupPhase) {
-    if (current === "payment") {
+    if (current === "schedule") {
       handleClose();
       return;
     }
@@ -248,7 +242,6 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
 
           {step === "courses" ? (
             <TeacherProfileCoursesTab
-              allSubjects={props.allSubjects}
               initialSubjects={props.initialSubjects}
               taughtSubjects={props.taughtSubjects}
               taughtSubjectsWithStudents={props.taughtSubjectsWithStudents}
@@ -274,21 +267,6 @@ export function TeacherProfileSetupWizard({ onClose, ...props }: TeacherProfileS
               teacherRegionCode={props.teacherRegionCode}
               onAdvance={() => handleAdvance("schedule")}
               onBack={() => setStep("courses")}
-            />
-          ) : null}
-
-          {step === "payment" ? (
-            <TeacherProfilePaymentTab
-              payoutLegalName={props.payoutLegalName}
-              payoutCountryCode={props.payoutCountryCode}
-              payoutPreferredMethod={props.payoutPreferredMethod}
-              payoutBankName={props.payoutBankName}
-              payoutBankBranch={props.payoutBankBranch}
-              payoutBankAccountNumber={props.payoutBankAccountNumber}
-              payoutBankRoutingNumber={props.payoutBankRoutingNumber}
-              payoutNotes={props.payoutNotes}
-              onAdvance={() => handleAdvanceFromPayment()}
-              onBack={() => setStep("schedule")}
             />
           ) : null}
         </StepContent>

@@ -1,0 +1,34 @@
+---
+description: Reuse existing UI primitives and modal patterns before inventing new layouts
+alwaysApply: true
+---
+
+# UI consistency (reuse before reinventing)
+
+Before adding or changing interactive UI, **find and match an existing pattern in this repo**. Inconsistent one-off modals and form layouts slow delivery and regress polish.
+
+## Modals and drawers
+
+- Use `@/components/ui/Dialog` for all overlays. Do **not** build custom fixed panels or ad-hoc portals.
+- **Multi-field create/edit flows** (teacher profile, offerings, attendance, class details): `placement="right"` and `size="lg"` (or `xl` when the reference feature already does). Follow `OfferingDialog`, `ClassDetailsDialog`, `TeacherProfileEditCourseDialog`, `ReportTeacherDialog`.
+- **Short confirmations** (delete, irreversible action, &lt; 3 lines of copy): centered `Dialog`, `size="sm"`, primary + secondary actions in a footer row — follow `TeacherProfileDeleteCourseDialog`.
+- Drawer headers come from `Dialog` `title`; do **not** duplicate title rows inside the body unless the established feature already does.
+
+## Form controls
+
+- Use shared primitives: `Input`, `Select`, `Button`, `FormField` slots. Teacher-taught **course names** are free text (`TeacherProfileAddCourseForm`, `Input` + `subjectName` validation)—not a fixed catalog picker.
+- Match field layout to the nearest sibling: drawer forms use a vertical `FormGrid` with footer actions (`OfferingDialog`, `TeacherProfileAddCourseForm` with `presentation="drawer"`), not inline three-column toolbars unless that pattern already exists on the same surface.
+- Every color, spacing, radius, font, icon size/stroke, and breakpoint must use `src/constants/*` tokens (see `mentora.mdc` §6).
+
+## Feature work checklist
+
+1. Search `src/components` for the same interaction (edit course, list row menu, profile tab, etc.).
+2. Extend or compose the existing component (prop/variant) instead of copying markup.
+3. If nothing fits, implement the **smallest** new shared piece next to related features (e.g. `TeacherProfileEditCourseDialog`), then use it from every call site.
+4. After UI changes, compare side-by-side with the reference screen (Courses tab, Schedule drawer, etc.) for control chrome and action placement.
+
+## Anti-patterns (do not ship)
+
+- Centered modal with a full edit form when a right drawer already exists for that domain.
+- Raw `<input>` / one-off styled fields when `Input` or `Select` applies.
+- Duplicate edit/delete flows per tab without sharing dialog shells and actions.

@@ -30,6 +30,8 @@ export interface TeacherPublicProfileHeaderProps {
   rating: number;
   ratingsCount: number;
   primarySubjectName: string;
+  /** Profile preview: e.g. continue-setup CTA below languages. */
+  afterLanguages?: ReactNode;
 }
 
 const Hero = styled.header`
@@ -141,6 +143,10 @@ const NativeBadge = styled.span`
   vertical-align: middle;
 `;
 
+const AfterLanguagesSlot = styled.div`
+  margin-top: ${SPACING.TWO};
+`;
+
 const BadgeRow = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -211,6 +217,7 @@ export function TeacherPublicProfileHeader({
   rating,
   ratingsCount,
   primarySubjectName,
+  afterLanguages,
 }: TeacherPublicProfileHeaderProps) {
   const languages = parseSpokenLanguages(spokenLanguages);
   const flag = countryCodeToFlagEmoji(locationCountryCode);
@@ -275,6 +282,8 @@ export function TeacherPublicProfileHeader({
             </span>
           </LanguagesRow>
         ) : null}
+
+        {afterLanguages ? <AfterLanguagesSlot>{afterLanguages}</AfterLanguagesSlot> : null}
 
         <BadgeRow>
           {showSuperTutor ? (

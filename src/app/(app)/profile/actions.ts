@@ -16,8 +16,6 @@ import {
   saveTeacherBioTabSchema,
   saveTeacherLocationTab,
   saveTeacherLocationTabSchema,
-  saveTeacherPayoutTab,
-  saveTeacherPayoutTabSchema,
   setRateMajorSchema,
   setSubjectsSchema,
   setTeacherRateMajor,
@@ -28,6 +26,10 @@ import {
   addTeacherCourseSchema,
   removeTeacherCourse,
   removeTeacherCourseSchema,
+  removeTeacherWorkExperience,
+  removeTeacherWorkExperienceSchema,
+  saveTeacherWorkExperience,
+  saveTeacherWorkExperienceSchema,
   updateBioSchema,
   updateOfferingSchedule,
   updateTeacherBio,
@@ -137,8 +139,10 @@ export async function saveSubjectsAction(formData: FormData): Promise<ActionResu
 export async function addTeacherCourseAction(formData: FormData): Promise<ActionResult> {
   const session = await requireRole("TEACHER");
   const parsed = addTeacherCourseSchema.safeParse({
-    subjectId: formData.get("subjectId"),
+    subjectName: formData.get("subjectName"),
+    subjectId: formData.get("subjectId") || undefined,
     defaultCap: formData.get("defaultCap"),
+    yearsTaught: formData.get("yearsTaught"),
     isEdit: formData.get("isEdit"),
   });
   if (!parsed.success) {
@@ -174,6 +178,51 @@ export async function removeTeacherCourseAction(formData: FormData): Promise<Act
     await removeTeacherCourse(session.user.id, parsed.data);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Could not remove course";
+    return { ok: false, error: msg };
+  }
+  revalidateTeacher();
+  return { ok: true };
+}
+
+export async function saveTeacherWorkExperienceAction(formData: FormData): Promise<ActionResult> {
+  const session = await requireRole("TEACHER");
+  const parsed = saveTeacherWorkExperienceSchema.safeParse({
+    id: formData.get("id") || undefined,
+    company: formData.get("company"),
+    role: formData.get("role"),
+    startMonth: formData.get("startMonth"),
+    endMonth: formData.get("endMonth") ?? "",
+    isCurrent: formData.get("isCurrent"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Please fix the highlighted fields.",
+      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
+    };
+  }
+  try {
+    await saveTeacherWorkExperience(session.user.id, parsed.data);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Could not save experience";
+    return { ok: false, error: msg };
+  }
+  revalidateTeacher();
+  return { ok: true };
+}
+
+export async function removeTeacherWorkExperienceAction(formData: FormData): Promise<ActionResult> {
+  const session = await requireRole("TEACHER");
+  const parsed = removeTeacherWorkExperienceSchema.safeParse({
+    id: formData.get("id"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: "Invalid experience" };
+  }
+  try {
+    await removeTeacherWorkExperience(session.user.id, parsed.data);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Could not remove experience";
     return { ok: false, error: msg };
   }
   revalidateTeacher();
@@ -468,30 +517,6 @@ export async function saveTeacherLocationTabAction(formData: FormData): Promise<
     const msg = err instanceof Error ? err.message : "Could not save profile";
     return { ok: false, error: msg };
   }
-  revalidateTeacher();
-  return { ok: true };
-}
-
-export async function saveTeacherPayoutTabAction(formData: FormData): Promise<ActionResult> {
-  const session = await requireRole("TEACHER");
-  const parsed = saveTeacherPayoutTabSchema.safeParse({
-    payoutLegalName: formData.get("payoutLegalName") || "",
-    payoutCountryCode: formData.get("payoutCountryCode") || "",
-    payoutPreferredMethod: formData.get("payoutPreferredMethod") || "",
-    payoutBankName: formData.get("payoutBankName") || "",
-    payoutBankBranch: formData.get("payoutBankBranch") || "",
-    payoutBankAccountNumber: formData.get("payoutBankAccountNumber") || "",
-    payoutBankRoutingNumber: formData.get("payoutBankRoutingNumber") || "",
-    payoutNotes: formData.get("payoutNotes") || "",
-  });
-  if (!parsed.success) {
-    return {
-      ok: false,
-      error: "Please fix the highlighted fields.",
-      fieldErrors: flatten(parsed.error.flatten().fieldErrors),
-    };
-  }
-  await saveTeacherPayoutTab(session.user.id, parsed.data);
   revalidateTeacher();
   return { ok: true };
 }

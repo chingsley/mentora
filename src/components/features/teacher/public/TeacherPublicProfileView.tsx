@@ -9,6 +9,7 @@ import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { TeacherPublicProfileAboutPanel } from "./TeacherPublicProfileAboutPanel";
 import { TeacherPublicProfileExperiencePanel } from "./TeacherPublicProfileExperiencePanel";
+import { TeacherPublicProfileSubjectsPanel } from "./TeacherPublicProfileSubjectsPanel";
 import type { TeacherPublicProfileWorkExperience } from "@/types/teacherPublicProfileWorkExperience";
 import { TeacherPublicProfileHeader } from "./TeacherPublicProfileHeader";
 import {
@@ -31,42 +32,15 @@ const SectionTitle = styled.h2`
   color: ${COLORS.HEADER};
 `;
 
+const SectionTitleOnly = styled(SectionTitle)`
+  margin-bottom: ${SPACING.FOUR};
+`;
+
 const Muted = styled.p`
   margin: 0;
   font-size: ${FONTS.SIZE.SM};
   color: ${COLORS.MUTED_FOREGROUND};
   line-height: ${FONTS.LINE_HEIGHT.RELAXED};
-`;
-
-const ExperienceSubject = styled.h3`
-  margin: 0;
-  font-size: ${FONTS.SIZE.MD};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  color: ${COLORS.HEADER};
-`;
-
-const ExperienceBody = styled.p`
-  margin: 0;
-  font-size: ${FONTS.SIZE.SM};
-  line-height: ${FONTS.LINE_HEIGHT.RELAXED};
-  color: ${COLORS.MUTED_FOREGROUND};
-  white-space: pre-wrap;
-`;
-
-const EducationList = styled.ul`
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.FOUR};
-`;
-
-const EducationItem = styled.li`
-  padding: ${SPACING.FOUR};
-  border-radius: ${LAYOUT.RADIUS.LG};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.FOREGROUND};
 `;
 
 const TestimonialGrid = styled.ul`
@@ -135,8 +109,7 @@ export interface TeacherPublicProfileTestimonial {
 export interface TeacherPublicProfileSubject {
   id: string;
   name: string;
-  courseDescription: string;
-  gradeLevel: string;
+  tenureLabel: string;
 }
 
 export interface TeacherPublicProfileViewProps {
@@ -161,9 +134,20 @@ export interface TeacherPublicProfileViewProps {
   profilePreview?: boolean;
   /** Edit location & languages (Profile View only). */
   locationPanel?: React.ReactNode;
+  /** Class schedule editor (Profile View only). */
+  schedulePanel?: React.ReactNode;
   photoEditor?: React.ReactNode;
   bioEditor?: React.ReactNode;
   heroBandRef?: React.Ref<HTMLDivElement>;
+  /** Extend grey chrome through `<Main>` top padding (no outer profile tabs). */
+  flushChromeToMainTop?: boolean;
+  profilePreviewSetupAction?: React.ReactNode;
+  onEditSubject?: (subjectId: string) => void;
+  onDeleteSubject?: (subjectId: string) => void;
+  onAddSubject?: () => void;
+  onEditExperience?: (id: string) => void;
+  onDeleteExperience?: (id: string) => void;
+  onAddExperience?: () => void;
 }
 
 export function TeacherPublicProfileView({
@@ -186,12 +170,22 @@ export function TeacherPublicProfileView({
   defaultTab = "about",
   profilePreview = false,
   locationPanel,
+  schedulePanel,
   photoEditor,
   bioEditor,
   heroBandRef,
+  flushChromeToMainTop = false,
+  profilePreviewSetupAction,
+  onEditSubject,
+  onDeleteSubject,
+  onAddSubject,
+  onEditExperience,
+  onDeleteExperience,
+  onAddExperience,
 }: TeacherPublicProfileViewProps) {
   const [tab, setTab] = React.useState(defaultTab);
   const showLocationTab = Boolean(locationPanel);
+  const showScheduleTab = Boolean(schedulePanel);
 
   React.useEffect(() => {
     setTab(defaultTab);
@@ -199,9 +193,9 @@ export function TeacherPublicProfileView({
   const primarySubjectName = subjects[0]?.name ?? "";
 
   return (
-    <PublicProfileBleed $profilePreview={profilePreview}>
+    <PublicProfileBleed $flushToMainTop={flushChromeToMainTop}>
       <Tabs value={tab} onValueChange={setTab} variant="underline" listAlignment="start">
-        <PublicProfileChrome>
+        <PublicProfileChrome $flushToMainTop={flushChromeToMainTop}>
           <PublicProfileHeroBand ref={heroBandRef} $profilePreview={profilePreview}>
             <PublicProfileColumn>
               <TeacherPublicProfileHeader
@@ -216,6 +210,7 @@ export function TeacherPublicProfileView({
                 rating={rating}
                 ratingsCount={ratingsCount}
                 primarySubjectName={primarySubjectName}
+                afterLanguages={profilePreviewSetupAction}
               />
             </PublicProfileColumn>
           </PublicProfileHeroBand>
@@ -228,7 +223,8 @@ export function TeacherPublicProfileView({
                   <TabsTrigger value="location">Location & languages</TabsTrigger>
                 ) : null}
                 <TabsTrigger value="reviews">Reviews ({reviewsCount})</TabsTrigger>
-                <TabsTrigger value="subjects">Subjects taught</TabsTrigger>
+                <TabsTrigger value="subjects">Subjects</TabsTrigger>
+                {showScheduleTab ? <TabsTrigger value="schedule">Scheduling</TabsTrigger> : null}
                 <TabsTrigger value="experience">Experience</TabsTrigger>
               </TabsList>
             </PublicProfileColumn>
@@ -256,7 +252,11 @@ export function TeacherPublicProfileView({
               <PanelSection>
                 <SectionTitle>Reviews</SectionTitle>
                 {testimonials.length === 0 ? (
-                  <Muted>No reviews yet.</Muted>
+                  <Muted>
+                    {profilePreview
+                      ? "Reviews are submitted by students after they attend your classes."
+                      : "No reviews yet."}
+                  </Muted>
                 ) : (
                   <TestimonialGrid>
                     {testimonials.map((t) => (
@@ -279,30 +279,34 @@ export function TeacherPublicProfileView({
 
             <TabsContent value="subjects">
               <PanelSection>
-                <SectionTitle>Subjects taught</SectionTitle>
-                {subjects.length === 0 ? (
-                  <Muted>No subjects listed yet.</Muted>
-                ) : (
-                  <EducationList>
-                    {subjects.map((subject) => (
-                      <EducationItem key={subject.id}>
-                        <ExperienceSubject>{subject.name}</ExperienceSubject>
-                        <ExperienceBody>
-                          {subject.gradeLevel.trim()
-                            ? `Levels taught: ${subject.gradeLevel}`
-                            : subject.courseDescription.trim() ||
-                              `Structured ${subject.name} lessons on Mentora.`}
-                        </ExperienceBody>
-                      </EducationItem>
-                    ))}
-                  </EducationList>
-                )}
+                <TeacherPublicProfileSubjectsPanel
+                  subjects={subjects}
+                  onEditSubject={profilePreview ? onEditSubject : undefined}
+                  onDeleteSubject={profilePreview ? onDeleteSubject : undefined}
+                  onAddSubject={profilePreview ? onAddSubject : undefined}
+                />
               </PanelSection>
             </TabsContent>
 
+            {showScheduleTab ? (
+              <TabsContent value="schedule">
+                <PanelSection>
+                  {profilePreview ? (
+                    <SectionTitleOnly>Class schedule</SectionTitleOnly>
+                  ) : null}
+                  {schedulePanel}
+                </PanelSection>
+              </TabsContent>
+            ) : null}
+
             <TabsContent value="experience">
               <PanelSection>
-                <TeacherPublicProfileExperiencePanel experiences={workExperiences} />
+                <TeacherPublicProfileExperiencePanel
+                  experiences={workExperiences}
+                  onEditExperience={profilePreview ? onEditExperience : undefined}
+                  onDeleteExperience={profilePreview ? onDeleteExperience : undefined}
+                  onAddExperience={profilePreview ? onAddExperience : undefined}
+                />
               </PanelSection>
             </TabsContent>
           </PublicProfileColumn>

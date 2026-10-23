@@ -283,6 +283,7 @@ model TeacherSubject {
   defaultCap        Int?
   courseDescription String @default("") @db.Text
   gradeLevel        String @default("")
+  yearsTaught       Int    @default(0)
   syllabus          String @default("") @db.Text
   createdAt         DateTime @default(now())
   sortOrder         Int      @default(0)

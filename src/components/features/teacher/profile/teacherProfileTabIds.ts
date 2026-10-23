@@ -1,12 +1,14 @@
-export type TeacherProfileTabId = "view" | "courses" | "schedule" | "payment";
+export type TeacherProfileTabId = "view" | "courses" | "schedule";
 
 /** Legacy URL — opens Profile View. */
 export const TEACHER_PROFILE_LEGACY_BIO_TAB = "bio";
 
+/** Legacy tab — opens Scheduling. */
+export const TEACHER_PROFILE_LEGACY_PAYMENT_TAB = "payment";
+
 export const TEACHER_PROFILE_EDIT_TABS = [
   "courses",
   "schedule",
-  "payment",
 ] as const satisfies readonly TeacherProfileTabId[];
 
 export type TeacherProfileEditTabId = (typeof TEACHER_PROFILE_EDIT_TABS)[number];
@@ -14,28 +16,28 @@ export type TeacherProfileEditTabId = (typeof TEACHER_PROFILE_EDIT_TABS)[number]
 export const TEACHER_PROFILE_TAB_LABEL: Record<TeacherProfileEditTabId, string> = {
   courses: "Courses",
   schedule: "Scheduling",
-  payment: "Payment Details",
 };
 
 export function isTeacherProfileTabId(v: string): v is TeacherProfileTabId {
-  return v === "view" || v === "courses" || v === "schedule" || v === "payment";
+  return v === "view" || v === "courses" || v === "schedule";
 }
 
 export function isTeacherProfileEditTabId(v: string): v is TeacherProfileEditTabId {
   return (TEACHER_PROFILE_EDIT_TABS as readonly string[]).includes(v);
 }
 
-/** Tabs shown on `/profile` after onboarding is complete. */
+/** Legacy outer profile tabs (setup wizard removed — editing is on Profile View sections). */
 export const TEACHER_PROFILE_MAINTENANCE_TABS = ["view"] as const satisfies readonly TeacherProfileTabId[];
 
 export type TeacherProfileMaintenanceTabId = (typeof TEACHER_PROFILE_MAINTENANCE_TABS)[number];
 
 export function isTeacherProfileMaintenanceTabId(v: string): v is TeacherProfileMaintenanceTabId {
-  return v === "view";
+  return (TEACHER_PROFILE_MAINTENANCE_TABS as readonly string[]).includes(v);
 }
 
 export function normalizeTeacherProfileTabParam(v: string | null): string | null {
   if (v === TEACHER_PROFILE_LEGACY_BIO_TAB) return "view";
+  if (v === TEACHER_PROFILE_LEGACY_PAYMENT_TAB) return "schedule";
   return v;
 }
 

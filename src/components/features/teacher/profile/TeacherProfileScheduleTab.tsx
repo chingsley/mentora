@@ -47,6 +47,8 @@ export interface TeacherProfileScheduleTabProps {
   teacherRegionCode: string | null;
   onAdvance: () => void;
   onBack: () => void;
+  /** Renders inside Profile View section tabs (no card chrome or wizard footer). */
+  embedded?: boolean;
 }
 
 export function TeacherProfileScheduleTab({
@@ -61,13 +63,14 @@ export function TeacherProfileScheduleTab({
   teacherRegionCode,
   onAdvance,
   onBack,
+  embedded = false,
 }: TeacherProfileScheduleTabProps) {
   const setupMode = useTeacherProfileSetupMode();
 
   const scheduleBody =
     dialogSubjects.length === 0 ? (
       <InfoBlock>
-              Pick your subjects in the Courses tab first, then add class periods here.
+        Add subjects under the Subjects tab first, then add class periods here.
       </InfoBlock>
     ) : (
       <TeacherOfferingCalendar
@@ -81,6 +84,10 @@ export function TeacherProfileScheduleTab({
         emptyStateMessage="No class periods yet. Pick day or week view and click an empty slot to add one."
       />
     );
+
+  if (embedded) {
+    return <Wrap>{scheduleBody}</Wrap>;
+  }
 
   return (
     <Wrap>

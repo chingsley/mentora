@@ -33,6 +33,13 @@ import { useTeacherProfileSetupMode } from "./TeacherProfileSetupContext";
 import { getCitiesForCountry } from "@/lib/locationCities";
 import { resolveTeacherLocationFields } from "@/lib/teacherProfileLocation";
 
+const EmbeddedSectionTitle = styled.h2`
+  margin: 0 0 ${SPACING.FOUR};
+  font-size: ${FONTS.SIZE.UI_LARGE};
+  font-weight: ${FONTS.WEIGHT.BOLD};
+  color: ${COLORS.HEADER};
+`;
+
 const TagWrap = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -312,7 +319,10 @@ export function TeacherProfileLocationTab({
   return (
     <TeacherProfileForm id={TEACHER_LOCATION_FORM_ID} onSubmit={onSubmit}>
       {embedded ? (
-        fields
+        <>
+          <EmbeddedSectionTitle>Location & languages</EmbeddedSectionTitle>
+          {fields}
+        </>
       ) : (
         <TeacherProfileFormSectionStack $setup={setupMode}>
           <TeacherProfileFormSection

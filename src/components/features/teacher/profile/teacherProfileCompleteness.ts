@@ -28,17 +28,14 @@ export function buildTeacherProfileChecklist(
     {
       label: TEACHER_PROFILE_TAB_LABEL.courses,
       done: phaseComplete.courses,
-      editTab: "courses",
+      editTab: "view",
+      profileSection: "subjects",
     },
     {
       label: TEACHER_PROFILE_TAB_LABEL.schedule,
       done: phaseComplete.schedule,
-      editTab: "schedule",
-    },
-    {
-      label: TEACHER_PROFILE_TAB_LABEL.payment,
-      done: phaseComplete.payment,
-      editTab: "payment",
+      editTab: "view",
+      profileSection: "schedule",
     },
   ];
 }

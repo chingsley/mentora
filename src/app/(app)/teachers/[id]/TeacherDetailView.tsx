@@ -68,8 +68,7 @@ export interface TeacherTestimonial {
 export interface TeacherSubjectDetail {
   id: string;
   name: string;
-  courseDescription: string;
-  gradeLevel: string;
+  tenureLabel: string;
 }
 
 export interface TeacherRateRow {

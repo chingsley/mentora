@@ -3,13 +3,14 @@ import { notFound } from "next/navigation";
 import { TeacherProfilePageClient } from "@/components/features/teacher/profile/TeacherProfilePageClient";
 import { buildTeacherProfileChecklist } from "@/components/features/teacher/profile/teacherProfileCompleteness";
 import { mapTeacherWorkExperiencesForPublicProfile } from "@/lib/mapTeacherWorkExperiencesForPublicProfile";
+import { teacherSubjectTenureLabel } from "@/lib/formatTeacherSubjectYearsTaught";
 import { smallestToMajor } from "@/lib/money";
 import { formatPrice } from "@/lib/time";
 import { getPolicy, listRegions } from "@/server/policies";
 import {
   getMyTeacherProfile,
+  getTeacherSubjectYearsTaughtMap,
   listInviteableStudentsForTeacher,
-  listSubjects,
 } from "@/server/teachers";
 
 /**
@@ -23,6 +24,7 @@ interface TeacherSubjectForPage {
   defaultCap: number | null;
   courseDescription: string;
   gradeLevel: string;
+  yearsTaught: number;
   syllabus: string;
   createdAt: Date;
   sortOrder: number;
@@ -55,14 +57,6 @@ interface TeacherProfileForPage {
   locationCountryCode: string;
   locationCity: string;
   locationLabel: string;
-  payoutLegalName: string | null;
-  payoutCountryCode: string | null;
-  payoutPreferredMethod: string | null;
-  payoutBankName: string | null;
-  payoutBankBranch: string | null;
-  payoutBankAccountNumber: string | null;
-  payoutBankRoutingNumber: string | null;
-  payoutNotes: string | null;
   profileCompleted: boolean;
   avgRating: number;
   ratingsCount: number;
@@ -120,17 +114,12 @@ function initials(first: string, last: string) {
 export async function TeacherProfilePage({
   userId,
   initialTab,
-  initialSetup = false,
-  initialWelcome = false,
 }: {
   userId: string;
   initialTab?: string | null;
-  initialSetup?: boolean;
-  initialWelcome?: boolean;
 }) {
-  const [data, subjects, regions, policy, inviteableStudentRows] = await Promise.all([
+  const [data, regions, policy, inviteableStudentRows] = await Promise.all([
     getMyTeacherProfile(userId),
-    listSubjects(),
     listRegions(),
     getPolicy(),
     listInviteableStudentsForTeacher(userId),
@@ -144,12 +133,18 @@ export async function TeacherProfilePage({
   const fullName = `${firstName} ${lastName}`.trim() || profile.user.name;
 
   const teacherSubjectIds = new Set(profile.subjects.map((s) => s.subjectId));
+  const subjectYearsTaught = await getTeacherSubjectYearsTaughtMap(profile.id);
   const orderedSubjects = sortTeacherSubjectsForProfile(profile.subjects);
-  const taughtSubjects = orderedSubjects.map((ts) => ({
-    id: ts.subject.id,
-    name: ts.subject.name,
-    defaultCap: ts.defaultCap,
-  }));
+  const taughtSubjects = orderedSubjects.map((ts) => {
+    const yearsTaught = subjectYearsTaught.get(ts.subjectId) ?? 0;
+    return {
+      id: ts.subject.id,
+      name: ts.subject.name,
+      defaultCap: ts.defaultCap,
+      yearsTaught,
+      tenureLabel: teacherSubjectTenureLabel(yearsTaught),
+    };
+  });
 
   const rateRegions = regions.map((r) => ({
     id: r.id,
@@ -230,19 +225,11 @@ export async function TeacherProfilePage({
     locationCity: profile.locationCity ?? "",
     subjectIds: profile.subjects.map((s) => s.subjectId),
     offeringsCount: profile.offerings.length,
-    payoutLegalName: profile.payoutLegalName,
-    payoutCountryCode: profile.payoutCountryCode,
-    payoutPreferredMethod: profile.payoutPreferredMethod,
-    payoutBankName: profile.payoutBankName,
-    payoutBankBranch: profile.payoutBankBranch,
-    payoutBankAccountNumber: profile.payoutBankAccountNumber,
   });
 
   return (
     <TeacherProfilePageClient
       initialTab={initialTab}
-      initialSetup={initialSetup}
-      initialWelcome={initialWelcome}
       fullName={fullName}
       initials={initials(firstName, lastName)}
       imageUrl={profile.user.image ?? null}
@@ -265,20 +252,12 @@ export async function TeacherProfilePage({
       locationCountryCode={profile.locationCountryCode ?? ""}
       locationCity={profile.locationCity ?? ""}
       locationLabel={profile.locationLabel ?? ""}
-      payoutLegalName={profile.payoutLegalName}
-      payoutCountryCode={profile.payoutCountryCode}
-      payoutPreferredMethod={profile.payoutPreferredMethod}
-      payoutBankName={profile.payoutBankName}
-      payoutBankBranch={profile.payoutBankBranch}
-      payoutBankAccountNumber={profile.payoutBankAccountNumber}
-      payoutBankRoutingNumber={profile.payoutBankRoutingNumber}
-      payoutNotes={profile.payoutNotes}
-      allSubjects={subjects.map((s) => ({ id: s.id, name: s.name }))}
       initialSubjects={profile.subjects.map((s) => ({
         subjectId: s.subjectId,
         defaultCap: s.defaultCap,
         courseDescription: s.courseDescription ?? "",
         gradeLevel: s.gradeLevel ?? "",
+        yearsTaught: s.yearsTaught ?? 0,
         syllabus: s.syllabus ?? "",
       }))}
       taughtSubjects={taughtSubjects}
