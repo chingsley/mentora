@@ -431,9 +431,12 @@ async function seedTeachers(primaryRegion: Region, subjects: Subject[]): Promise
 
     // Register each distinct subject as a TeacherSubject + TeacherRate.
     const seenSubjectIds = new Set<string>();
+    let distinctSubjectOrd = 0;
     for (const subj of teacherSubjects) {
       if (seenSubjectIds.has(subj.id)) continue;
       seenSubjectIds.add(subj.id);
+      const yearsTaught = 1 + ((i + distinctSubjectOrd) % 9);
+      distinctSubjectOrd += 1;
       await db.teacherSubject.upsert({
         where: {
           teacherProfileId_subjectId: {
@@ -447,10 +450,12 @@ async function seedTeachers(primaryRegion: Region, subjects: Subject[]): Promise
           defaultCap: CONFIG.TEACHER_CAP,
           courseDescription: `Structured ${subj.name} lessons with clear goals, practice, and feedback for every student.`,
           gradeLevel: "Mixed levels",
+          yearsTaught,
         },
         update: {
           courseDescription: `Structured ${subj.name} lessons with clear goals, practice, and feedback for every student.`,
           gradeLevel: "Mixed levels",
+          yearsTaught,
         },
       });
       await db.teacherRate.upsert({

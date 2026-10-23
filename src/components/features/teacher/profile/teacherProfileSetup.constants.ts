@@ -10,14 +10,23 @@ export const TEACHER_SETUP_QUERY_VALUE = "1";
 
 export const TEACHER_WELCOME_QUERY_VALUE = "1";
 
-export function teacherProfileSetupHref(tab?: string): string {
-  const params = new URLSearchParams({ setup: TEACHER_SETUP_QUERY_VALUE });
-  if (tab) params.set("tab", tab);
+export function teacherProfileHref(profileSection?: string): string {
+  if (!profileSection) return "/profile";
+  const params = new URLSearchParams({ profileSection });
   return `/profile?${params.toString()}`;
 }
 
+/** @deprecated Setup wizard removed — opens profile (optional section). */
+export function teacherProfileSetupHref(legacyTab?: string): string {
+  if (legacyTab === "schedule") return teacherProfileHref("schedule");
+  if (legacyTab === "courses") return teacherProfileHref("subjects");
+  if (legacyTab === "location") return teacherProfileHref("photo");
+  if (legacyTab === "bio") return teacherProfileHref("about");
+  return teacherProfileHref();
+}
+
 export function teacherProfileWelcomeHref(): string {
-  return `/profile?welcome=${TEACHER_WELCOME_QUERY_VALUE}`;
+  return teacherProfileHref();
 }
 
 export const TEACHER_SETUP_STEP_COPY: Record<
@@ -39,9 +48,5 @@ export const TEACHER_SETUP_STEP_COPY: Record<
   schedule: {
     title: "Scheduling",
     subtitle: "Add class times and set your hourly rate for each class.",
-  },
-  payment: {
-    title: "Payment details",
-    subtitle: "Tell us where to send your earnings when classes are completed.",
   },
 };

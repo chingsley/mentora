@@ -1,5 +1,6 @@
 import type { DayOfWeek, OfferingPeriodType, OfferingRecurrenceKind } from "@prisma/client";
 
+import type { TeacherPublicProfileTestimonial } from "@/components/features/teacher/public/TeacherPublicProfileView";
 import type { TeacherPublicProfileWorkExperience } from "@/types/teacherPublicProfileWorkExperience";
 
 import type { TeacherProfileTabId } from "./teacherProfileTabIds";
@@ -17,6 +18,7 @@ export interface TeacherProfileInitialSubject {
   defaultCap: number | null;
   courseDescription: string;
   gradeLevel: string;
+  yearsTaught: number;
   syllabus: string;
 }
 
@@ -53,6 +55,8 @@ export interface TeacherProfileTabsProps {
   imageUrl: string | null;
   displayId: string;
   email: string;
+  contactPhone: string;
+  contactAddress: string;
   profileCompleted: boolean;
   headline: string;
   bio: string;
@@ -70,17 +74,14 @@ export interface TeacherProfileTabsProps {
   locationCountryCode: string;
   locationCity: string;
   locationLabel: string;
-  payoutLegalName: string | null;
-  payoutCountryCode: string | null;
-  payoutPreferredMethod: string | null;
-  payoutBankName: string | null;
-  payoutBankBranch: string | null;
-  payoutBankAccountNumber: string | null;
-  payoutBankRoutingNumber: string | null;
-  payoutNotes: string | null;
-  allSubjects: { id: string; name: string }[];
   initialSubjects: TeacherProfileInitialSubject[];
-  taughtSubjects: { id: string; name: string; defaultCap: number | null }[];
+  taughtSubjects: {
+    id: string;
+    name: string;
+    defaultCap: number | null;
+    yearsTaught: number;
+    tenureLabel: string;
+  }[];
   taughtSubjectsWithStudents: {
     subjectId: string;
     subjectName: string;
@@ -102,4 +103,6 @@ export interface TeacherProfileTabsProps {
   billingCurrency: string;
   regionMinHourlyMajor: number | null;
   workExperiences: TeacherPublicProfileWorkExperience[];
+  testimonials: TeacherPublicProfileTestimonial[];
+  reviewsCount: number;
 }

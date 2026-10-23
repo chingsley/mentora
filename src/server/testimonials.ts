@@ -31,6 +31,12 @@ export async function listTestimonialsByOffering(offeringId: string) {
   });
 }
 
+export async function countTestimonialsByTeacher(teacherProfileId: string) {
+  return db.classTestimonial.count({
+    where: { offering: { teacherProfileId } },
+  });
+}
+
 export async function listTestimonialsByTeacher(teacherProfileId: string) {
   return db.classTestimonial.findMany({
     where: { offering: { teacherProfileId } },

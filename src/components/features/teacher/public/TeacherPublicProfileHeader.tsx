@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { MessageCircle, TrendingUp, Trophy } from "lucide-react";
+import { MapPin, MessageCircle, TrendingUp, Trophy } from "lucide-react";
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
@@ -10,12 +10,17 @@ import { ICON_SIZE, ICON_STROKE } from "@/constants/iconTheme.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import {
   TEACHER_PUBLIC_PROFILE,
-  TEACHER_PUBLIC_PROFILE_NATIVE_BADGE,
   TEACHER_PUBLIC_PROFILE_SPACE,
 } from "@/constants/teacherPublicProfile.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { countryCodeToFlagEmoji } from "@/lib/countryCodeToFlagEmoji";
 import { parseSpokenLanguages } from "@/lib/parseSpokenLanguages";
+import {
+  formatTeacherLocationLabel,
+  getTeacherLocationCountryName,
+  resolveTeacherLocationFields,
+} from "@/lib/teacherProfileLocation";
+import { TeacherProfileLanguagePills } from "@/components/features/teacher/profile/TeacherProfileLanguagePills";
 
 export interface TeacherPublicProfileHeaderProps {
   name: string;
@@ -26,13 +31,19 @@ export interface TeacherPublicProfileHeaderProps {
   headline: string;
   spokenLanguages: string;
   locationCountryCode: string;
+  locationCity?: string;
+  locationLabel?: string;
   displayId: string;
   rating: number;
   ratingsCount: number;
   primarySubjectName: string;
+  /** Profile preview: e.g. continue-setup CTA below languages. */
+  afterLanguages?: ReactNode;
+  /** Profile preview: replaces headline, languages, and location (inline edit). */
+  heroSummaryEditor?: ReactNode;
 }
 
-const Hero = styled.header`
+const Hero = styled.header<{ $hasPhotoEditor?: boolean; }>`
   display: flex;
   flex-direction: column;
   gap: ${TEACHER_PUBLIC_PROFILE_SPACE.HERO_GAP};
@@ -66,16 +77,16 @@ const AvatarFallback = styled.div`
   color: ${COLORS.MUTED_FOREGROUND};
 `;
 
-const Body = styled.div`
+const Body = styled.div<{ $hasPhotoEditor?: boolean; }>`
   display: flex;
   min-width: 0;
   flex: 1;
   flex-direction: column;
   gap: ${SPACING.THREE};
-  padding-top: ${SPACING.TWO};
+  padding-top: ${({ $hasPhotoEditor }) => ($hasPhotoEditor ? 0 : SPACING.TWO)};
 
   ${LAYOUT.MEDIA.MD} {
-    padding-top: ${SPACING.FOUR};
+    padding-top: ${({ $hasPhotoEditor }) => ($hasPhotoEditor ? 0 : SPACING.FOUR)};
   }
 `;
 
@@ -127,18 +138,24 @@ const LanguagesRow = styled.p`
   color: ${COLORS.GRAY_TEXT_SECONDARY};
 `;
 
-const NativeBadge = styled.span`
-  display: inline-block;
-  margin: 0 ${SPACING.HALF};
-  border-radius: ${LAYOUT.RADIUS.SM};
-  background-color: ${TEACHER_PUBLIC_PROFILE_NATIVE_BADGE.BACKGROUND};
-  padding: ${SPACING.HALF} ${SPACING.TWO};
-  font-size: ${FONTS.SIZE.META};
-  font-weight: ${FONTS.WEIGHT.SEMIBOLD};
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: ${TEACHER_PUBLIC_PROFILE_NATIVE_BADGE.TEXT};
-  vertical-align: middle;
+const LanguagesMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${SPACING.TWO};
+  width: 100%;
+  min-width: 0;
+`;
+
+const MetaLabel = styled.span`
+  font-size: ${FONTS.SIZE.SM};
+  line-height: ${FONTS.LINE_HEIGHT.RELAXED};
+  color: ${COLORS.GRAY_TEXT_SECONDARY};
+  flex-shrink: 0;
+`;
+
+const AfterLanguagesSlot = styled.div`
+  margin-top: ${SPACING.TWO};
 `;
 
 const BadgeRow = styled.div`
@@ -162,7 +179,7 @@ const BadgeCard = styled.div`
   box-shadow: ${LAYOUT.SHADOW.SM};
 `;
 
-const BadgeIcon = styled.span<{ $tone: "success" | "accent" }>`
+const BadgeIcon = styled.span<{ $tone: "success" | "accent"; }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,21 +224,36 @@ export function TeacherPublicProfileHeader({
   headline,
   spokenLanguages,
   locationCountryCode,
+  locationCity = "",
+  locationLabel = "",
   displayId,
   rating,
   ratingsCount,
   primarySubjectName,
+  afterLanguages,
+  heroSummaryEditor,
 }: TeacherPublicProfileHeaderProps) {
   const languages = parseSpokenLanguages(spokenLanguages);
   const flag = countryCodeToFlagEmoji(locationCountryCode);
+  const resolvedLocation = resolveTeacherLocationFields({
+    locationCountryCode,
+    locationCity,
+    locationLabel,
+  });
+  const locationDisplay = formatTeacherLocationLabel(
+    resolvedLocation.city,
+    getTeacherLocationCountryName(resolvedLocation.countryCode),
+  );
   const showSuperTutor = rating >= 4.5 && ratingsCount >= 3;
   const showTopTutor = rating >= 4.7 && ratingsCount >= 5;
   const subjectLabel = primarySubjectName.trim()
     ? `${primarySubjectName.toUpperCase()} TUTOR`
     : "TUTOR";
 
+  const hasPhotoEditor = Boolean(photoEditor);
+
   return (
-    <Hero>
+    <Hero $hasPhotoEditor={hasPhotoEditor}>
       {photoEditor ? (
         photoEditor
       ) : (
@@ -241,40 +273,44 @@ export function TeacherPublicProfileHeader({
         </Avatar>
       )}
 
-      <Body>
+      <Body $hasPhotoEditor={hasPhotoEditor}>
         {displayId ? <RankLine>{displayId}</RankLine> : null}
         <NameRow>
           <Name>{name}</Name>
           {flag ? <Flag aria-hidden>{flag}</Flag> : null}
         </NameRow>
-        <Headline>{headline || "Tutor on Mentora"}</Headline>
+        {heroSummaryEditor ?? (
+          <>
+            <Headline>{headline || "Tutor on Mentora"}</Headline>
 
-        {languages.length > 0 ? (
-          <LanguagesRow>
-            <MessageCircle
-              size={ICON_SIZE.SM}
-              strokeWidth={ICON_STROKE.NORMAL}
-              color={COLORS.GRAY_TEXT_TERTIARY}
-              aria-hidden
-            />
-            <span>
-              Speaks:{" "}
-              {languages.map((lang, index) => (
-                <span key={lang}>
-                  {index === 0 ? (
-                    <>
-                      {lang}
-                      <NativeBadge>Native</NativeBadge>
-                    </>
-                  ) : (
-                    lang
-                  )}
-                  {index < languages.length - 1 ? ", " : ""}
-                </span>
-              ))}
-            </span>
-          </LanguagesRow>
-        ) : null}
+            {languages.length > 0 ? (
+              <LanguagesMeta>
+                <MessageCircle
+                  size={ICON_SIZE.SM}
+                  strokeWidth={ICON_STROKE.NORMAL}
+                  color={COLORS.GRAY_TEXT_TERTIARY}
+                  aria-hidden
+                />
+                <MetaLabel>Speaks:</MetaLabel>
+                <TeacherProfileLanguagePills languages={languages} />
+              </LanguagesMeta>
+            ) : null}
+
+            {locationDisplay ? (
+              <LanguagesRow>
+                <MapPin
+                  size={ICON_SIZE.SM}
+                  strokeWidth={ICON_STROKE.NORMAL}
+                  color={COLORS.GRAY_TEXT_TERTIARY}
+                  aria-hidden
+                />
+                <span>Based in: {locationDisplay}</span>
+              </LanguagesRow>
+            ) : null}
+          </>
+        )}
+
+        {afterLanguages ? <AfterLanguagesSlot>{afterLanguages}</AfterLanguagesSlot> : null}
 
         <BadgeRow>
           {showSuperTutor ? (

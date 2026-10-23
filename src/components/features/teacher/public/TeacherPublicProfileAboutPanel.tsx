@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import * as React from "react";
 import styled from "styled-components";
+import { TeacherProfileContactDetailsView } from "@/components/features/teacher/profile/TeacherProfileContactDetailsView";
 import { COLORS } from "@/constants/colors.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
@@ -15,8 +16,10 @@ import {
 export interface TeacherPublicProfileAboutPanelProps {
   bio: string;
   email: string;
-  skills: string[];
+  phone?: string | null;
+  address?: string | null;
   bioEditor?: ReactNode;
+  contactEditor?: ReactNode;
 }
 
 const Grid = styled.div`
@@ -66,58 +69,16 @@ const SeeMoreButton = styled.button`
 const SideStack = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${SPACING.EIGHT};
-`;
-
-const FieldBlock = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${SPACING.TWO};
-`;
-
-const FieldLabel = styled.p`
-  margin: 0;
-  font-size: ${FONTS.SIZE.META};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: ${COLORS.GRAY_TEXT_TERTIARY};
-`;
-
-const EmailLink = styled.a`
-  font-size: ${FONTS.SIZE.SM};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.ACTION_PRIMARY};
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  word-break: break-all;
-
-  &:hover {
-    color: ${COLORS.ACTION_PRIMARY_HOVER};
-  }
-`;
-
-const SkillRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${SPACING.TWO};
-`;
-
-const SkillPill = styled.span`
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  border: 1px solid ${COLORS.BORDER};
-  background-color: ${COLORS.BACKGROUND};
-  padding: ${SPACING.HALF} ${SPACING.TWO};
-  font-size: ${FONTS.SIZE.META};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.MUTED_FOREGROUND};
+  min-width: 0;
 `;
 
 export function TeacherPublicProfileAboutPanel({
   bio,
   email,
-  skills,
+  phone,
+  address,
   bioEditor,
+  contactEditor,
 }: TeacherPublicProfileAboutPanelProps) {
   const [expanded, setExpanded] = React.useState(false);
   const text = bio.trim() || "This teacher hasn't written a bio yet.";
@@ -146,23 +107,10 @@ export function TeacherPublicProfileAboutPanel({
       </section>
 
       <SideStack aria-labelledby="teacher-contact">
-        <div>
-          <SectionTitle id="teacher-contact">Contact Details</SectionTitle>
-          <FieldBlock>
-            <FieldLabel>Email address</FieldLabel>
-            <EmailLink href={`mailto:${email}`}>{email}</EmailLink>
-          </FieldBlock>
-        </div>
-        {skills.length > 0 ? (
-          <FieldBlock>
-            <FieldLabel>Skills</FieldLabel>
-            <SkillRow>
-              {skills.map((skill) => (
-                <SkillPill key={skill}>{skill}</SkillPill>
-              ))}
-            </SkillRow>
-          </FieldBlock>
-        ) : null}
+        <SectionTitle id="teacher-contact">Contact Details</SectionTitle>
+        {contactEditor ?? (
+          <TeacherProfileContactDetailsView email={email} phone={phone} address={address} />
+        )}
       </SideStack>
     </Grid>
   );

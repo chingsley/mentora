@@ -6,7 +6,13 @@ import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 export interface TeacherProfileCoursesTableProps {
-  taughtSubjects: { id: string; name: string; defaultCap: number | null }[];
+  taughtSubjects: {
+    id: string;
+    name: string;
+    defaultCap: number | null;
+    yearsTaught: number;
+    tenureLabel: string;
+  }[];
   globalCap: number;
   onEditSubject?: (subjectId: string) => void;
   onDeleteSubject?: (subjectId: string) => void;

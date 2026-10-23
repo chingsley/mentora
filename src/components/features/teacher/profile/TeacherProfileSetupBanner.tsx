@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import * as React from "react";
 import styled from "styled-components";
 import { MarketingSecondaryCtaLink } from "@/components/ui/Link";
@@ -10,11 +10,7 @@ import { DASHBOARD } from "@/constants/dashboard.constants";
 import { FONTS } from "@/constants/fonts.constants";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
-import {
-  TEACHER_SETUP_QUERY_VALUE,
-  TEACHER_WELCOME_QUERY_VALUE,
-  teacherProfileSetupHref,
-} from "./teacherProfileSetup.constants";
+import { teacherProfileHref } from "./teacherProfileSetup.constants";
 
 const Banner = styled.div`
   display: flex;
@@ -54,26 +50,20 @@ const BannerBody = styled.p`
 export function TeacherProfileSetupBanner() {
   const user = useAppShell();
   const pathname = usePathname();
-  const params = useSearchParams();
-  const setupOpen =
-    pathname === "/profile" && params.get("setup") === TEACHER_SETUP_QUERY_VALUE;
-  const welcomeOpen =
-    pathname === "/profile" && params.get("welcome") === TEACHER_WELCOME_QUERY_VALUE;
-
-  if (user.role !== "TEACHER" || user.teacherProfileCompleted !== false || setupOpen || welcomeOpen) {
+  if (pathname === "/profile" || user.role !== "TEACHER" || user.teacherProfileCompleted !== false) {
     return null;
   }
 
   return (
     <Banner role="status">
       <BannerCopy>
-        <BannerTitle>Finish setting up your teacher profile</BannerTitle>
+        <BannerTitle>Complete your teacher profile</BannerTitle>
         <BannerBody>
-          Add your photo, courses, schedule, and payout details so students can discover and book you.
+          Add your photo, subjects, and schedule on your profile so students can find and book you.
         </BannerBody>
       </BannerCopy>
-      <MarketingSecondaryCtaLink href={teacherProfileSetupHref()}>
-        Complete setup
+      <MarketingSecondaryCtaLink href={teacherProfileHref()}>
+        Open profile
       </MarketingSecondaryCtaLink>
     </Banner>
   );

@@ -1,4 +1,5 @@
 import { COLORS } from "./colors.constants";
+import { ICON_SIZE } from "./iconTheme.constants";
 import { LAYOUT } from "./layout.constants";
 import { SPACING } from "./spacing.constants";
 
@@ -9,17 +10,15 @@ export const TEACHER_PUBLIC_PROFILE = {
   HERO_AVATAR_RADIUS: LAYOUT.RADIUS.XL,
   HERO_AVATAR_SHADOW: "0 12px 40px rgba(44, 44, 46, 0.12)",
   ABOUT_TRUNCATE_CHARS: 320,
+  /** Hero summary edit rows: icon | label | control grid. */
+  HERO_INLINE_ICON_COLUMN: `${ICON_SIZE.SM}px`,
+  /** Fits “Based in:” so Headline / Speaks / Based in controls share a left edge. */
+  HERO_INLINE_LABEL_WIDTH: "4.75rem",
 } as const;
 
 export const TEACHER_PUBLIC_PROFILE_SPACE = {
   HERO_GAP: SPACING.EIGHT,
   HERO_PADDING_BLOCK: SPACING.EIGHT,
-  /** Hero band when nested under Teacher Profile tabs (less air below page title). */
-  HERO_PADDING_BLOCK_PROFILE_PREVIEW: SPACING.FOUR,
-  /** Pull hero chrome into `<Main>` top padding on `/profile` → Profile View. */
-  PROFILE_PREVIEW_CHROME_PULL_BLOCK: LAYOUT.PAGE_INSET.BLOCK,
-  /** Top inset for profile preview hero inside grey chrome. */
-  PROFILE_PREVIEW_TITLE_PADDING_BLOCK: LAYOUT.PAGE_INSET.BLOCK,
   BODY_PADDING_BLOCK: SPACING.TEN,
   BADGE_GAP: SPACING.FOUR,
   CONTENT_COLUMNS_GAP: SPACING.TEN,

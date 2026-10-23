@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, ClipboardList, Users, Wallet } from "lucide-react";
+import { Calendar, ClipboardList, Users } from "lucide-react";
 import styled from "styled-components";
 import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
@@ -26,7 +26,7 @@ const StatGrid = styled.div`
   }
 
   ${LAYOUT.MEDIA.LG} {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 `;
 
@@ -42,7 +42,7 @@ const InsightsRow = styled.div`
   }
 `;
 
-const STAT_ICONS = [ClipboardList, Users, Calendar, Wallet] as const;
+const STAT_ICONS = [ClipboardList, Users, Calendar] as const;
 
 export interface TeacherDashboardViewProps {
   data: TeacherDashboardPayload;

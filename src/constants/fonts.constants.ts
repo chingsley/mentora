@@ -70,5 +70,6 @@ export const FONTS = {
   LETTER_SPACING: {
     HERO: "-0.03em",
     TITLE: "-0.02em",
+    FIELD_LABEL: "0.08em",
   },
 } as const;

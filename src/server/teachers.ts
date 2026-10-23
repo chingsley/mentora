@@ -24,7 +24,15 @@ import {
   recurrenceToDb,
 } from "@/lib/offeringRecurrence";
 import { TEACHER_PROFILE_ADD_COURSE } from "@/constants/teacherProfileCourse.constants";
-import { TEACHER_BIO_MAX_LENGTH } from "@/constants/teacherProfile.constants";
+import { TEACHER_WORK_EXPERIENCE } from "@/constants/teacherWorkExperience.constants";
+import { dateFromMonthInput } from "@/lib/teacherWorkExperienceMonth";
+import { isValidSubjectName, normalizeSubjectName } from "@/lib/subjectName";
+import { resolveOrCreateSubjectByName } from "@/server/subjectCatalog";
+import {
+  TEACHER_BIO_MAX_LENGTH,
+  TEACHER_CONTACT_ADDRESS_MAX_LENGTH,
+  TEACHER_CONTACT_PHONE_MAX_LENGTH,
+} from "@/constants/teacherProfile.constants";
 import { getPolicy } from "./policies";
 
 export interface TeacherSearchFilters {
@@ -226,6 +234,18 @@ export type MyTeacherProfile = Prisma.TeacherProfileGetPayload<{
   include: typeof MY_TEACHER_PROFILE_INCLUDE;
 }>;
 
+/** Reads tenure scalars directly so dev survives a stale cached `PrismaClient` after `prisma generate`. */
+export async function getTeacherSubjectYearsTaughtMap(
+  teacherProfileId: string,
+): Promise<Map<string, number>> {
+  const rows = await db.$queryRaw<{ subjectId: string; yearsTaught: number }[]>`
+    SELECT "subjectId", "yearsTaught"
+    FROM "TeacherSubject"
+    WHERE "teacherProfileId" = ${teacherProfileId}
+  `;
+  return new Map(rows.map((row) => [row.subjectId, row.yearsTaught]));
+}
+
 export async function getMyTeacherProfile(teacherUserId: string): Promise<{
   profile: MyTeacherProfile;
   studentsPerSubject: Record<string, number>;
@@ -283,6 +303,24 @@ export const saveTeacherBioTabSchema = z.object({
 
 export type SaveTeacherBioTabInput = z.infer<typeof saveTeacherBioTabSchema>;
 
+export const saveTeacherContactTabSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address").max(320),
+  contactPhone: z
+    .string()
+    .trim()
+    .max(TEACHER_CONTACT_PHONE_MAX_LENGTH, "Phone number is too long")
+    .optional()
+    .default(""),
+  contactAddress: z
+    .string()
+    .trim()
+    .max(TEACHER_CONTACT_ADDRESS_MAX_LENGTH, "Address is too long")
+    .optional()
+    .default(""),
+});
+
+export type SaveTeacherContactTabInput = z.infer<typeof saveTeacherContactTabSchema>;
+
 export const saveTeacherLocationTabSchema = z.object({
   spokenLanguages: z.string().trim().min(2, "Add languages you speak (e.g. English, Portuguese)").max(500),
   locationCountryCode: z
@@ -306,17 +344,66 @@ export async function saveTeacherBioTab(teacherUserId: string, input: SaveTeache
   await recomputeProfileCompleted(teacher.id);
 }
 
+export async function saveTeacherContactTab(
+  teacherUserId: string,
+  input: SaveTeacherContactTabInput,
+) {
+  const teacher = await requireTeacher(teacherUserId);
+  const email = input.email.trim();
+
+  const emailTaken = await db.user.findFirst({
+    where: { email, NOT: { id: teacherUserId } },
+    select: { id: true },
+  });
+  if (emailTaken) {
+    throw new Error("That email address is already in use.");
+  }
+
+  await db.$transaction([
+    db.user.update({
+      where: { id: teacherUserId },
+      data: { email },
+    }),
+    db.teacherProfile.update({
+      where: { id: teacher.id },
+      data: {
+        contactPhone: input.contactPhone ?? "",
+        contactAddress: input.contactAddress ?? "",
+      },
+    }),
+  ]);
+
+  await recomputeProfileCompleted(teacher.id);
+}
+
 export async function saveTeacherLocationTab(
   teacherUserId: string,
   input: SaveTeacherLocationTabInput,
 ) {
   const teacher = await requireTeacher(teacherUserId);
+  await applyTeacherLanguagesAndLocation(teacher.id, input);
+  await recomputeProfileCompleted(teacher.id);
+}
+
+export const saveTeacherHeroSummarySchema = z.object({
+  headline: z.string().trim().min(3, "Headline must be at least 3 characters").max(120),
+  spokenLanguages: saveTeacherLocationTabSchema.shape.spokenLanguages,
+  locationCountryCode: saveTeacherLocationTabSchema.shape.locationCountryCode,
+  locationCity: saveTeacherLocationTabSchema.shape.locationCity,
+});
+
+export type SaveTeacherHeroSummaryInput = z.infer<typeof saveTeacherHeroSummarySchema>;
+
+async function applyTeacherLanguagesAndLocation(
+  teacherProfileId: string,
+  input: SaveTeacherLocationTabInput,
+) {
   const languages = normalizeSpokenLanguages(input.spokenLanguages);
   const countryName = getTeacherLocationCountryName(input.locationCountryCode);
   const locationLabel = formatTeacherLocationLabel(input.locationCity, countryName);
 
   await db.teacherProfile.update({
-    where: { id: teacher.id },
+    where: { id: teacherProfileId },
     data: {
       spokenLanguages: languages,
       locationCountryCode: input.locationCountryCode,
@@ -324,7 +411,18 @@ export async function saveTeacherLocationTab(
       locationLabel,
     },
   });
+}
 
+export async function saveTeacherHeroSummary(
+  teacherUserId: string,
+  input: SaveTeacherHeroSummaryInput,
+) {
+  const teacher = await requireTeacher(teacherUserId);
+  await db.teacherProfile.update({
+    where: { id: teacher.id },
+    data: { headline: input.headline },
+  });
+  await applyTeacherLanguagesAndLocation(teacher.id, input);
   await recomputeProfileCompleted(teacher.id);
 }
 
@@ -429,7 +527,14 @@ export const setSubjectsSchema = z.object({
   subjects: z
     .array(
       z.object({
-        subjectId: z.string().min(1),
+        subjectName: z
+          .string()
+          .trim()
+          .min(
+            TEACHER_PROFILE_ADD_COURSE.SUBJECT_NAME_MIN,
+            `Course name must be at least ${TEACHER_PROFILE_ADD_COURSE.SUBJECT_NAME_MIN} characters`,
+          )
+          .max(TEACHER_PROFILE_ADD_COURSE.SUBJECT_NAME_MAX),
         defaultCap: z.coerce.number().int().min(1).max(1000),
         courseDescription: z
           .string()
@@ -444,7 +549,7 @@ export const setSubjectsSchema = z.object({
         syllabus: z.string().trim().max(10000).optional().default(""),
       }),
     )
-    .min(1, "Pick at least one subject"),
+    .min(1, "Add at least one course"),
 });
 
 export async function setTeacherSubjects(
@@ -454,25 +559,26 @@ export async function setTeacherSubjects(
   const teacher = await requireTeacher(teacherUserId);
   const policy = await getPolicy();
 
-  const rows = new Map<
-    string,
-    {
-      defaultCap: number;
-      courseDescription: string;
-      gradeLevel: string;
-      syllabus: string;
-    }
-  >();
-  for (const s of input.subjects) {
-    rows.set(s.subjectId, {
-      defaultCap: clampTeacherCap(s.defaultCap, policy.globalClassCap),
-      courseDescription: s.courseDescription,
-      gradeLevel: s.gradeLevel,
-      syllabus: s.syllabus ?? "",
-    });
-  }
-
   await db.$transaction(async (tx) => {
+    const rows = new Map<
+      string,
+      {
+        defaultCap: number;
+        courseDescription: string;
+        gradeLevel: string;
+        syllabus: string;
+      }
+    >();
+    for (const s of input.subjects) {
+      const subject = await resolveOrCreateSubjectByName(s.subjectName, tx);
+      rows.set(subject.id, {
+        defaultCap: clampTeacherCap(s.defaultCap, policy.globalClassCap),
+        courseDescription: s.courseDescription,
+        gradeLevel: s.gradeLevel,
+        syllabus: s.syllabus ?? "",
+      });
+    }
+
     const existing = await tx.teacherSubject.findMany({
       where: { teacherProfileId: teacher.id },
       select: { subjectId: true },
@@ -1205,7 +1311,15 @@ export async function setTeacherRateMajor(
 }
 
 export const addTeacherCourseSchema = z.object({
-  subjectId: z.string().min(1, "Choose a subject"),
+  subjectName: z
+    .string()
+    .trim()
+    .min(
+      TEACHER_PROFILE_ADD_COURSE.SUBJECT_NAME_MIN,
+      `Course name must be at least ${TEACHER_PROFILE_ADD_COURSE.SUBJECT_NAME_MIN} characters`,
+    )
+    .max(TEACHER_PROFILE_ADD_COURSE.SUBJECT_NAME_MAX),
+  subjectId: z.string().min(1).optional(),
   defaultCap: z.coerce
     .number()
     .int()
@@ -1216,6 +1330,17 @@ export const addTeacherCourseSchema = z.object({
     .max(
       TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MAX,
       `Class limit must be at most ${TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MAX}`,
+    ),
+  yearsTaught: z.coerce
+    .number()
+    .int()
+    .min(
+      TEACHER_PROFILE_ADD_COURSE.YEARS_TAUGHT_MIN,
+      `Years of experience cannot be negative`,
+    )
+    .max(
+      TEACHER_PROFILE_ADD_COURSE.YEARS_TAUGHT_MAX,
+      `Years of experience must be at most ${TEACHER_PROFILE_ADD_COURSE.YEARS_TAUGHT_MAX}`,
     ),
   /** When true, save existing course metadata without changing list order. */
   isEdit: z
@@ -1232,11 +1357,25 @@ export async function addTeacherCourse(
   const teacher = await requireTeacher(teacherUserId);
   const policy = await getPolicy();
 
-  const subject = await db.subject.findUnique({
-    where: { id: input.subjectId },
-    select: { id: true },
-  });
-  if (!subject) throw new Error("Unknown subject");
+  let subjectId: string;
+  if (input.isEdit) {
+    if (!input.subjectId) throw new Error("Missing course to update");
+    await assertSubjectBelongsToTeacher(teacher.id, input.subjectId);
+    subjectId = input.subjectId;
+    const name = normalizeSubjectName(input.subjectName);
+    if (!isValidSubjectName(name)) {
+      throw new Error("Enter a valid course name");
+    }
+    const peers = await db.teacherSubject.count({ where: { subjectId } });
+    if (peers === 1) {
+      await db.subject.update({
+        where: { id: subjectId },
+        data: { name },
+      });
+    }
+  } else {
+    subjectId = (await resolveOrCreateSubjectByName(input.subjectName)).id;
+  }
 
   const defaultCap = clampTeacherCap(
     Math.min(input.defaultCap, TEACHER_PROFILE_ADD_COURSE.CLASS_LIMIT_MAX),
@@ -1250,28 +1389,151 @@ export async function addTeacherCourse(
         _max: { sortOrder: true },
       }))._max.sortOrder ?? 0) + 1;
 
+  const yearsTaught = Math.min(
+    TEACHER_PROFILE_ADD_COURSE.YEARS_TAUGHT_MAX,
+    Math.max(TEACHER_PROFILE_ADD_COURSE.YEARS_TAUGHT_MIN, input.yearsTaught),
+  );
+
   const createData: Prisma.TeacherSubjectUncheckedCreateInput = {
     teacherProfileId: teacher.id,
-    subjectId: input.subjectId,
+    subjectId,
     defaultCap,
+    yearsTaught,
     courseDescription: "",
     gradeLevel: "",
     syllabus: "",
     sortOrder: nextSortOrder ?? 0,
   };
   const updateData: Prisma.TeacherSubjectUncheckedUpdateInput = input.isEdit
-    ? { defaultCap }
-    : { defaultCap, sortOrder: nextSortOrder ?? 0 };
+    ? { defaultCap, yearsTaught }
+    : { defaultCap, yearsTaught, sortOrder: nextSortOrder ?? 0 };
 
   await db.teacherSubject.upsert({
     where: {
-      teacherProfileId_subjectId: { teacherProfileId: teacher.id, subjectId: input.subjectId },
+      teacherProfileId_subjectId: { teacherProfileId: teacher.id, subjectId },
     },
     create: createData,
     update: updateData,
   });
 
   await recomputeProfileCompleted(teacher.id);
+}
+
+const workExperienceMonthSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use a valid month (YYYY-MM)");
+
+export const saveTeacherWorkExperienceSchema = z
+  .object({
+    id: z.string().min(1).optional(),
+    company: z
+      .string()
+      .trim()
+      .min(1, "Enter the organization name")
+      .max(TEACHER_WORK_EXPERIENCE.COMPANY_MAX),
+    role: z
+      .string()
+      .trim()
+      .min(1, "Enter your role or title")
+      .max(TEACHER_WORK_EXPERIENCE.ROLE_MAX),
+    startMonth: workExperienceMonthSchema,
+    endMonth: z.union([workExperienceMonthSchema, z.literal("")]).optional().default(""),
+    isCurrent: z
+      .union([z.literal("true"), z.literal("false"), z.boolean()])
+      .optional()
+      .transform((v) => v === true || v === "true")
+      .default(false),
+  })
+  .superRefine((value, ctx) => {
+    if (value.isCurrent) return;
+    const end = value.endMonth?.trim() ?? "";
+    if (!end) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select an end month or mark this as your current role",
+        path: ["endMonth"],
+      });
+      return;
+    }
+    try {
+      const start = dateFromMonthInput(value.startMonth);
+      const endDate = dateFromMonthInput(end);
+      if (endDate < start) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End month cannot be before start month",
+          path: ["endMonth"],
+        });
+      }
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid end month",
+        path: ["endMonth"],
+      });
+    }
+  });
+
+export async function saveTeacherWorkExperience(
+  teacherUserId: string,
+  input: z.infer<typeof saveTeacherWorkExperienceSchema>,
+) {
+  const teacher = await requireTeacher(teacherUserId);
+  const startDate = dateFromMonthInput(input.startMonth);
+  const endDate =
+    input.isCurrent || !input.endMonth?.trim()
+      ? null
+      : dateFromMonthInput(input.endMonth.trim());
+
+  const company = input.company.trim();
+  const role = input.role.trim();
+
+  if (input.id) {
+    const existing = await db.teacherWorkExperience.findFirst({
+      where: { id: input.id, teacherProfileId: teacher.id },
+      select: { id: true },
+    });
+    if (!existing) throw new Error("Experience not found");
+    await db.teacherWorkExperience.update({
+      where: { id: input.id },
+      data: { company, role, startDate, endDate },
+    });
+    return;
+  }
+
+  const maxSort = await db.teacherWorkExperience.aggregate({
+    where: { teacherProfileId: teacher.id },
+    _max: { sortOrder: true },
+  });
+
+  await db.teacherWorkExperience.create({
+    data: {
+      teacherProfileId: teacher.id,
+      company,
+      role,
+      startDate,
+      endDate,
+      sortOrder: (maxSort._max.sortOrder ?? 0) + 1,
+    },
+  });
+}
+
+export const removeTeacherWorkExperienceSchema = z.object({
+  id: z.string().min(1),
+});
+
+export async function removeTeacherWorkExperience(
+  teacherUserId: string,
+  input: z.infer<typeof removeTeacherWorkExperienceSchema>,
+) {
+  const teacher = await requireTeacher(teacherUserId);
+  const row = await db.teacherWorkExperience.findFirst({
+    where: { id: input.id, teacherProfileId: teacher.id },
+    select: { id: true },
+  });
+  if (!row) throw new Error("Experience not found");
+  await db.teacherWorkExperience.delete({ where: { id: input.id } });
 }
 
 export const removeTeacherCourseSchema = z.object({
@@ -1383,12 +1645,6 @@ export async function recomputeProfileCompleted(teacherProfileId: string) {
     locationCity: String((profile as { locationCity?: string | null }).locationCity ?? ""),
     subjectIds: profile.subjects.map((s) => s.subjectId),
     offeringsCount: profile.offerings.length,
-    payoutLegalName: profile.payoutLegalName,
-    payoutCountryCode: profile.payoutCountryCode,
-    payoutPreferredMethod: profile.payoutPreferredMethod,
-    payoutBankName: profile.payoutBankName,
-    payoutBankBranch: profile.payoutBankBranch,
-    payoutBankAccountNumber: profile.payoutBankAccountNumber,
   });
   if (profile.profileCompleted !== complete) {
     await db.teacherProfile.update({

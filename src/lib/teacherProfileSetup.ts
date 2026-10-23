@@ -1,5 +1,4 @@
 import { isTeacherCoursesPhaseComplete } from "@/lib/teacherCoursesCompleteness";
-import { TEACHER_PAYOUT_METHOD } from "@/constants/teacherPayout.constants";
 
 /** Onboarding steps (includes location, which is edited under Profile View). */
 export const TEACHER_PROFILE_SETUP_PHASES = [
@@ -7,13 +6,22 @@ export const TEACHER_PROFILE_SETUP_PHASES = [
   "location",
   "courses",
   "schedule",
-  "payment",
 ] as const;
 
 export type TeacherProfileSetupPhase = (typeof TEACHER_PROFILE_SETUP_PHASES)[number];
 
 export function isTeacherProfileSetupStepId(v: string): v is TeacherProfileSetupPhase {
+  if (v === "payment") return false;
   return (TEACHER_PROFILE_SETUP_PHASES as readonly string[]).includes(v);
+}
+
+/** Maps legacy setup URLs to the current step list. */
+export function normalizeTeacherProfileSetupStepParam(
+  v: string | null,
+): TeacherProfileSetupPhase | null {
+  if (!v) return null;
+  if (v === "payment") return "schedule";
+  return isTeacherProfileSetupStepId(v) ? v : null;
 }
 
 export function nextTeacherProfileSetupPhase(
@@ -34,12 +42,6 @@ export interface TeacherProfileSetupInput {
   locationCity: string;
   subjectIds: string[];
   offeringsCount: number;
-  payoutLegalName: string | null;
-  payoutCountryCode: string | null;
-  payoutPreferredMethod: string | null;
-  payoutBankName?: string | null;
-  payoutBankBranch?: string | null;
-  payoutBankAccountNumber?: string | null;
 }
 
 function phaseDone(flags: boolean[]): boolean {
@@ -69,35 +71,6 @@ export function isTeacherProfileSchedulePhaseComplete(
   return input.offeringsCount > 0;
 }
 
-export function isTeacherProfilePaymentPhaseComplete(
-  input: Pick<
-    TeacherProfileSetupInput,
-    | "payoutLegalName"
-    | "payoutCountryCode"
-    | "payoutPreferredMethod"
-    | "payoutBankName"
-    | "payoutBankBranch"
-    | "payoutBankAccountNumber"
-  >,
-): boolean {
-  const baseFlags = [
-    Boolean(input.payoutLegalName?.trim()),
-    Boolean(input.payoutCountryCode?.trim()),
-    Boolean(input.payoutPreferredMethod?.trim()),
-  ];
-
-  if (input.payoutPreferredMethod === TEACHER_PAYOUT_METHOD.BANK_TRANSFER) {
-    return phaseDone([
-      ...baseFlags,
-      Boolean(input.payoutBankName?.trim()),
-      Boolean(input.payoutBankBranch?.trim()),
-      Boolean(input.payoutBankAccountNumber?.trim()),
-    ]);
-  }
-
-  return phaseDone(baseFlags);
-}
-
 export function teacherProfileSetupPhaseComplete(
   input: TeacherProfileSetupInput,
 ): Record<TeacherProfileSetupPhase, boolean> {
@@ -106,7 +79,6 @@ export function teacherProfileSetupPhaseComplete(
     location: isTeacherProfileLocationPhaseComplete(input),
     courses: isTeacherCoursesPhaseComplete({ subjectIds: input.subjectIds }),
     schedule: isTeacherProfileSchedulePhaseComplete(input),
-    payment: isTeacherProfilePaymentPhaseComplete(input),
   };
 }
 

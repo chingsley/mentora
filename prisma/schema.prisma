@@ -187,6 +187,10 @@ model TeacherProfile {
   locationCity        String        @default("")
   /// Display label derived from city and country (e.g. Lagos, Nigeria)
   locationLabel    String           @default("")
+  /// Optional public contact phone (display / tel link on profile)
+  contactPhone     String           @default("") @db.VarChar(32)
+  /// Optional mailing or street address for contact details
+  contactAddress   String           @default("") @db.Text
   avgRating        Float            @default(0)
   ratingsCount     Int              @default(0)
   hoursTaught      Int              @default(0)
@@ -283,6 +287,7 @@ model TeacherSubject {
   defaultCap        Int?
   courseDescription String @default("") @db.Text
   gradeLevel        String @default("")
+  yearsTaught       Int    @default(0)
   syllabus          String @default("") @db.Text
   createdAt         DateTime @default(now())
   sortOrder         Int      @default(0)

@@ -2,10 +2,9 @@
 
 import * as React from "react";
 import styled from "styled-components";
-import {
-  TeacherProfileAddCourseForm,
-  type TeacherProfileEditCourseValues,
-} from "./TeacherProfileAddCourseForm";
+import { type TeacherProfileEditCourseValues } from "./TeacherProfileAddCourseForm";
+import { TeacherProfileEditCourseDialog } from "./TeacherProfileEditCourseDialog";
+import { TeacherProfileAddCourseForm } from "./TeacherProfileAddCourseForm";
 import { TeacherProfileCoursesTable } from "./TeacherProfileCoursesTable";
 import {
   TeacherProfileDeleteCourseDialog,
@@ -19,7 +18,6 @@ import { TEACHER_COURSES_FORM_ID } from "./teacherProfileFormIds";
 
 export type TeacherProfileCoursesTabProps = Pick<
   TeacherProfileTabsProps,
-  | "allSubjects"
   | "initialSubjects"
   | "taughtSubjects"
   | "taughtSubjectsWithStudents"
@@ -39,7 +37,6 @@ const Stack = styled.div`
 `;
 
 export function TeacherProfileCoursesTab({
-  allSubjects,
   taughtSubjects,
   taughtSubjectsWithStudents,
   globalCap,
@@ -59,6 +56,7 @@ export function TeacherProfileCoursesTab({
       subjectId: row.id,
       subjectName: row.name,
       defaultCap: row.defaultCap ?? globalCap,
+      yearsTaught: row.yearsTaught,
     });
   }
 
@@ -77,12 +75,7 @@ export function TeacherProfileCoursesTab({
   return (
     <TeacherProfileFormSurface id={TEACHER_COURSES_FORM_ID} aria-label="Courses you teach">
       <Stack>
-        <TeacherProfileAddCourseForm
-          allSubjects={allSubjects}
-          globalCap={globalCap}
-          editCourse={editCourse}
-          onClearEdit={() => setEditCourse(null)}
-        />
+        <TeacherProfileAddCourseForm globalCap={globalCap} />
         <TeacherProfileCoursesTable
           taughtSubjects={taughtSubjects}
           globalCap={globalCap}
@@ -91,6 +84,11 @@ export function TeacherProfileCoursesTab({
         />
       </Stack>
       <TeacherProfileTabFooter onBack={onBack} onContinue={onAdvance} />
+      <TeacherProfileEditCourseDialog
+        editCourse={editCourse}
+        onClose={() => setEditCourse(null)}
+        globalCap={globalCap}
+      />
       <TeacherProfileDeleteCourseDialog
         target={deleteTarget}
         onClose={() => {

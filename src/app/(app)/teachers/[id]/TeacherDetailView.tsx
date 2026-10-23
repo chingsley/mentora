@@ -68,8 +68,7 @@ export interface TeacherTestimonial {
 export interface TeacherSubjectDetail {
   id: string;
   name: string;
-  courseDescription: string;
-  gradeLevel: string;
+  tenureLabel: string;
 }
 
 export interface TeacherRateRow {
@@ -87,8 +86,12 @@ export interface TeacherDetailViewProps {
   headline: string;
   bio: string;
   email: string;
+  contactPhone?: string;
+  contactAddress?: string;
   spokenLanguages: string;
   locationCountryCode: string;
+  locationCity: string;
+  locationLabel: string;
   displayId: string;
   rating: number;
   ratingsCount: number;
@@ -114,8 +117,12 @@ export function TeacherDetailView({
   headline,
   bio,
   email,
+  contactPhone = "",
+  contactAddress = "",
   spokenLanguages,
   locationCountryCode,
+  locationCity,
+  locationLabel,
   displayId,
   rating,
   ratingsCount,
@@ -132,8 +139,6 @@ export function TeacherDetailView({
   const isStudent = viewerRole === "STUDENT";
   const enrollment = useTeacherOfferingEnrollment();
   const [expandedSubjectId, setExpandedSubjectId] = React.useState<string | null>(null);
-
-  const skills = subjects.map((s) => s.name);
 
   const toggleSubject = React.useCallback((subjectId: string) => {
     setExpandedSubjectId((prev) => (prev === subjectId ? null : subjectId));
@@ -194,13 +199,16 @@ export function TeacherDetailView({
         headline={headline}
         bio={bio}
         email={email}
+        phone={contactPhone}
+        address={contactAddress}
         spokenLanguages={spokenLanguages}
         locationCountryCode={locationCountryCode}
+        locationCity={locationCity}
+        locationLabel={locationLabel}
         displayId={displayId}
         rating={rating}
         ratingsCount={ratingsCount}
         subjects={subjects}
-        skills={skills}
         reviewsCount={testimonials.length}
         testimonials={testimonials}
         workExperiences={workExperiences}

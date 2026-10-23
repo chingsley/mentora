@@ -4,7 +4,6 @@ import {
   teacherProfileSetupPhaseComplete,
   type TeacherProfileSetupInput,
 } from "./teacherProfileSetup";
-import { TEACHER_PAYOUT_METHOD } from "@/constants/teacherPayout.constants";
 
 const completeInput: TeacherProfileSetupInput = {
   image: "https://example.com/photo.jpg",
@@ -14,9 +13,6 @@ const completeInput: TeacherProfileSetupInput = {
   locationCity: "Toronto",
   subjectIds: ["math"],
   offeringsCount: 1,
-  payoutLegalName: "Jane Doe",
-  payoutCountryCode: "NG",
-  payoutPreferredMethod: TEACHER_PAYOUT_METHOD.STRIPE_CONNECT,
 };
 
 describe("teacherProfileSetup", () => {
@@ -29,43 +25,8 @@ describe("teacherProfileSetup", () => {
       expect(isTeacherProfileSetupComplete({ ...completeInput, image: null })).toBe(false);
     });
 
-    it("returns false when payment fields are missing", () => {
-      expect(
-        isTeacherProfileSetupComplete({
-          ...completeInput,
-          payoutLegalName: null,
-          payoutCountryCode: null,
-          payoutPreferredMethod: null,
-        }),
-      ).toBe(false);
-    });
-
     it("returns false when there are no offerings", () => {
       expect(isTeacherProfileSetupComplete({ ...completeInput, offeringsCount: 0 })).toBe(false);
-    });
-
-    it("returns false when bank transfer is selected but bank details are missing", () => {
-      expect(
-        isTeacherProfileSetupComplete({
-          ...completeInput,
-          payoutPreferredMethod: TEACHER_PAYOUT_METHOD.BANK_TRANSFER,
-          payoutBankName: null,
-          payoutBankBranch: null,
-          payoutBankAccountNumber: null,
-        }),
-      ).toBe(false);
-    });
-
-    it("returns true when bank transfer details are complete", () => {
-      expect(
-        isTeacherProfileSetupComplete({
-          ...completeInput,
-          payoutPreferredMethod: TEACHER_PAYOUT_METHOD.BANK_TRANSFER,
-          payoutBankName: "First Bank",
-          payoutBankBranch: "Victoria Island",
-          payoutBankAccountNumber: "0123456789",
-        }),
-      ).toBe(true);
     });
   });
 
@@ -80,9 +41,6 @@ describe("teacherProfileSetup", () => {
           locationCity: "",
           subjectIds: [],
           offeringsCount: 0,
-          payoutLegalName: null,
-          payoutCountryCode: null,
-          payoutPreferredMethod: null,
         }),
       ).toBe("bio");
     });
@@ -96,9 +54,6 @@ describe("teacherProfileSetup", () => {
           locationCity: "",
           subjectIds: [],
           offeringsCount: 0,
-          payoutLegalName: null,
-          payoutCountryCode: null,
-          payoutPreferredMethod: null,
         }),
       ).toBe("location");
     });
@@ -109,20 +64,17 @@ describe("teacherProfileSetup", () => {
           ...completeInput,
           subjectIds: [],
           offeringsCount: 0,
-          payoutLegalName: null,
-          payoutCountryCode: null,
-          payoutPreferredMethod: null,
         }),
       ).toBe("courses");
     });
 
-    it("returns payment when only payment is incomplete", () => {
+    it("returns schedule when only schedule is incomplete", () => {
       expect(
         firstIncompleteTeacherProfileSetupPhase({
           ...completeInput,
-          payoutPreferredMethod: "",
+          offeringsCount: 0,
         }),
-      ).toBe("payment");
+      ).toBe("schedule");
     });
   });
 
@@ -137,16 +89,12 @@ describe("teacherProfileSetup", () => {
           locationCity: completeInput.locationCity,
           subjectIds: [],
           offeringsCount: 0,
-          payoutLegalName: null,
-          payoutCountryCode: null,
-          payoutPreferredMethod: null,
         }),
       ).toEqual({
         bio: true,
         location: true,
         courses: false,
         schedule: false,
-        payment: false,
       });
     });
   });

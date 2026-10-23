@@ -34,6 +34,8 @@ export interface SearchComboboxProps {
   emptyMessage?: string;
   maxSuggestions?: number;
   id?: string;
+  /** Use `label` for aria-label only (inline hero forms). */
+  hideLabel?: boolean;
 }
 
 const InputWrap = styled.div`
@@ -130,6 +132,7 @@ export function SearchCombobox({
   emptyMessage = "No matches",
   maxSuggestions = 12,
   id,
+  hideLabel = false,
 }: SearchComboboxProps) {
   const autoId = React.useId();
   const inputId = id ?? autoId;
@@ -231,16 +234,19 @@ export function SearchCombobox({
   const showList = open && !disabled;
 
   return (
-    <FormFieldRoot ref={wrapRef} $hasLabel>
-      <FormFieldLabelSlot>
-        <FormFieldLabel htmlFor={inputId}>{label}</FormFieldLabel>
-      </FormFieldLabelSlot>
+    <FormFieldRoot ref={wrapRef} $hasLabel={!hideLabel}>
+      {hideLabel ? null : (
+        <FormFieldLabelSlot>
+          <FormFieldLabel htmlFor={inputId}>{label}</FormFieldLabel>
+        </FormFieldLabelSlot>
+      )}
       <FormFieldControlSlot>
         <InputWrap>
           <SearchInput
             id={inputId}
             type="search"
             role="combobox"
+            aria-label={hideLabel ? label : undefined}
             aria-expanded={showList}
             aria-controls={listId}
             aria-autocomplete="list"

@@ -11,92 +11,49 @@ import {
   TeacherProfileFormSection,
   TeacherProfileFormSectionStack,
 } from "./TeacherProfileFormSection";
-import {
-  FormFieldControlSlot,
-  FormFieldError,
-  FormFieldLabel,
-  FormFieldLabelSlot,
-  FormFieldMetaSlot,
-  FormFieldRoot,
-  InlineFormFieldRow,
-} from "@/components/ui/FormField";
-import { SearchCombobox, type SearchComboboxOption } from "@/components/ui/SearchCombobox";
-import { COUNTRIES, getCountryByCode } from "@/constants/countries.constants";
+import { FormFieldLabel } from "@/components/ui/FormField";
+import type { SearchComboboxOption } from "@/components/ui/SearchCombobox";
 import { COLORS } from "@/constants/colors.constants";
-import { APP_INPUT_HEIGHT, FORM_FIELD, formFieldControlBorder } from "@/constants/formField.constants";
 import { FONTS } from "@/constants/fonts.constants";
-import { BOX_SHADOW_INPUTS, LAYOUT } from "@/constants/layout.constants";
+import { LAYOUT } from "@/constants/layout.constants";
 import { SPACING } from "@/constants/spacing.constants";
 import { TeacherProfileForm } from "./TeacherProfileFormSurface";
 import { TEACHER_LOCATION_FORM_ID } from "./teacherProfileFormIds";
 import { useTeacherProfileSetupMode } from "./TeacherProfileSetupContext";
-import { getCitiesForCountry } from "@/lib/locationCities";
 import { resolveTeacherLocationFields } from "@/lib/teacherProfileLocation";
+import { TeacherProfileLanguagePills } from "./TeacherProfileLanguagePills";
+import { TeacherProfileLanguagesLocationFields } from "./TeacherProfileLanguagesLocationFields";
+import {
+  initialCityOption,
+  initialCountryOption,
+  parseLanguageTags,
+} from "./teacherProfileLanguagesLocationUtils";
 
-const TagWrap = styled.div`
+const ErrorText = styled.p`
+  font-size: ${FONTS.SIZE.SM};
+  color: ${COLORS.DESTRUCTIVE};
+`;
+
+const EmbeddedSaveFooter = styled.div<{ $compact?: boolean }>`
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: ${SPACING.TWO};
-  align-items: center;
-  min-height: ${APP_INPUT_HEIGHT};
-  border-radius: ${FORM_FIELD.CONTROL_RADIUS};
-  border: ${formFieldControlBorder(false)};
-  box-shadow: ${BOX_SHADOW_INPUTS};
-  padding: ${SPACING.TWO};
+  width: 100%;
+  margin-top: ${({ $compact }) => ($compact ? SPACING.TWO : SPACING.SIX)};
+`;
+
+const ViewCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.FIVE};
+  padding: ${SPACING.FOUR};
+  border-radius: ${LAYOUT.RADIUS.LG};
+  border: 1px solid ${COLORS.BORDER};
   background-color: ${COLORS.FOREGROUND};
-
-  &:focus-within {
-    border-color: ${COLORS.SIDEBAR_BRAND};
-    box-shadow: 0 0 0 2px ${COLORS.RING_BLACK_10};
-  }
 `;
 
-const Tag = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: ${SPACING.ONE};
-  border-radius: ${LAYOUT.RADIUS.FULL};
-  border: 1px solid ${COLORS.ACTION_PRIMARY_TINT_16};
-  padding: ${SPACING.ONE} ${SPACING.TWO};
-  font-size: ${FONTS.SIZE.XS};
-  font-weight: ${FONTS.WEIGHT.MEDIUM};
-  color: ${COLORS.ACTION_PRIMARY};
-`;
-
-const TagRemove = styled.button`
-  display: inline-flex;
-  border: none;
-  background: transparent;
-  padding: 0;
-  font-size: ${FONTS.SIZE.SM};
-  line-height: 1;
-  color: ${COLORS.MUTED_FOREGROUND};
-  cursor: pointer;
-
-  &:hover {
-    color: ${COLORS.DESTRUCTIVE};
-  }
-`;
-
-const TagInput = styled.input`
-  min-width: 8rem;
-  flex: 1;
-  border: none;
-  background: transparent;
-  padding: ${SPACING.ONE};
-  font-size: ${FONTS.SIZE.SM};
-  font-family: ${FONTS.FAMILY.PRIMARY};
-  font-weight: ${FONTS.WEIGHT.NORMAL};
-  color: ${COLORS.TEXT};
-  outline: none;
-
-  &::placeholder {
-    color: ${FORM_FIELD.PLACEHOLDER_COLOR};
-    font-weight: ${FONTS.WEIGHT.NORMAL};
-  }
-`;
-
-const DetailsFields = styled.div`
+const ViewFieldGrid = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${SPACING.FIVE};
@@ -108,55 +65,42 @@ const DetailsFields = styled.div`
   }
 `;
 
-const LocationRow = styled(InlineFormFieldRow)`
+const ViewLocationRow = styled.div`
+  display: grid;
   grid-template-columns: minmax(0, 1fr);
+  gap: ${SPACING.FIVE};
 
   ${LAYOUT.MEDIA.SM} {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: ${SPACING.SIX};
   }
 `;
 
-const ErrorText = styled.p`
-  font-size: ${FONTS.SIZE.SM};
-  color: ${COLORS.DESTRUCTIVE};
+const ViewField = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${SPACING.TWO};
+  min-width: 0;
 `;
 
-const EmbeddedSaveFooter = styled.div`
+const ViewValue = styled.p`
+  margin: 0;
+  font-size: ${FONTS.SIZE.SM};
+  line-height: ${FONTS.LINE_HEIGHT.NORMAL};
+  color: ${COLORS.TEXT};
+`;
+
+const ViewValueMuted = styled(ViewValue)`
+  color: ${COLORS.GRAY_TEXT_SECONDARY};
+`;
+
+const ViewFooter = styled.div`
   display: flex;
   justify-content: flex-end;
-  width: 100%;
-  margin-top: ${SPACING.SIX};
 `;
 
-const COUNTRY_OPTIONS: SearchComboboxOption[] = COUNTRIES.map((country) => ({
-  value: country.code,
-  label: country.name,
-}));
-
-function cityOptionsForCountry(countryCode: string): SearchComboboxOption[] {
-  return getCitiesForCountry(countryCode).map((city) => ({
-    value: city,
-    label: city,
-  }));
-}
-
-function initialCountryOption(countryCode: string): SearchComboboxOption | null {
-  if (!countryCode) return null;
-  const country = getCountryByCode(countryCode);
-  return country ? { value: country.code, label: country.name } : null;
-}
-
-function initialCityOption(city: string): SearchComboboxOption | null {
-  const trimmed = city.trim();
-  return trimmed ? { value: trimmed, label: trimmed } : null;
-}
-
-function parseLanguageTags(raw: string): string[] {
-  return raw
-    .split(/[,;]+/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-}
+const VIEW_EMPTY = "Not set";
+const VIEW_NO_LANGUAGES = "No languages listed yet.";
 
 export interface TeacherProfileLocationTabProps {
   spokenLanguages: string;
@@ -168,6 +112,8 @@ export interface TeacherProfileLocationTabProps {
   backDisabled?: boolean;
   /** Rendered inside Profile View public tabs (no back / advance navigation). */
   embedded?: boolean;
+  /** Profile About-style tabs: card in view mode, form when editing. */
+  presentation?: "alwaysEdit" | "viewEdit";
 }
 
 export function TeacherProfileLocationTab({
@@ -179,11 +125,13 @@ export function TeacherProfileLocationTab({
   onBack,
   backDisabled = false,
   embedded = false,
+  presentation = "alwaysEdit",
 }: TeacherProfileLocationTabProps) {
   const router = useRouter();
   const setupMode = useTeacherProfileSetupMode();
   const [isSaving, startTransition] = useActionPending();
   const [result, setResult] = React.useState<ActionResult | null>(null);
+  const [editing, setEditing] = React.useState(presentation === "alwaysEdit");
 
   const initialLocation = React.useMemo(
     () =>
@@ -204,28 +152,32 @@ export function TeacherProfileLocationTab({
     initialCityOption(initialLocation.city),
   );
 
-  const cityOptions = React.useMemo(
-    () => cityOptionsForCountry(country?.value ?? ""),
-    [country?.value],
-  );
+  function resetLocalFromProps() {
+    const resolved = resolveTeacherLocationFields({
+      locationCountryCode,
+      locationCity,
+      locationLabel,
+    });
+    setTags(parseLanguageTags(spokenLanguages));
+    setTagDraft("");
+    setCountry(initialCountryOption(resolved.countryCode));
+    setCity(initialCityOption(resolved.city));
+    setResult(null);
+  }
+
+  React.useEffect(() => {
+    resetLocalFromProps();
+  }, [spokenLanguages, locationCountryCode, locationCity, locationLabel]);
+
+  React.useEffect(() => {
+    if (presentation === "alwaysEdit") {
+      setEditing(true);
+    }
+  }, [presentation]);
 
   function onCountryChange(option: SearchComboboxOption | null) {
     setCountry(option);
     setCity(null);
-  }
-
-  function commitDraft() {
-    const next = tagDraft.trim();
-    if (!next) return;
-    setTags((prev) => (prev.includes(next) ? prev : [...prev, next]));
-    setTagDraft("");
-  }
-
-  function onTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      commitDraft();
-    }
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -239,78 +191,82 @@ export function TeacherProfileLocationTab({
       setResult(res);
       if (res.ok) {
         router.refresh();
+        if (presentation === "viewEdit") {
+          setEditing(false);
+        }
         onAdvance?.();
       }
     });
   }
 
+  function onCancelEdit() {
+    resetLocalFromProps();
+    setEditing(false);
+  }
+
   const errs = result && !result.ok ? result.fieldErrors : undefined;
 
+  const viewCountryLabel =
+    initialCountryOption(initialLocation.countryCode)?.label ?? VIEW_EMPTY;
+  const viewCityLabel = initialLocation.city.trim() || VIEW_EMPTY;
+  const viewLanguageTags = parseLanguageTags(spokenLanguages);
+
+  if (presentation === "viewEdit" && !editing) {
+    return (
+      <ViewCard>
+        <ViewFieldGrid>
+          <ViewLocationRow>
+            <ViewField>
+              <FormFieldLabel as="span">Country</FormFieldLabel>
+              <ViewValue>{viewCountryLabel}</ViewValue>
+            </ViewField>
+            <ViewField>
+              <FormFieldLabel as="span">City</FormFieldLabel>
+              <ViewValue>{viewCityLabel}</ViewValue>
+            </ViewField>
+          </ViewLocationRow>
+          <ViewField>
+            <FormFieldLabel as="span">Languages spoken</FormFieldLabel>
+            {viewLanguageTags.length > 0 ? (
+              <TeacherProfileLanguagePills languages={viewLanguageTags} />
+            ) : (
+              <ViewValueMuted>{VIEW_NO_LANGUAGES}</ViewValueMuted>
+            )}
+          </ViewField>
+        </ViewFieldGrid>
+        <ViewFooter>
+          <Button type="button" variant="secondary" onClick={() => setEditing(true)}>
+            Edit
+          </Button>
+        </ViewFooter>
+      </ViewCard>
+    );
+  }
+
+  const compactEmbeddedFields = embedded;
+
   const fields = (
-    <DetailsFields>
-            <LocationRow>
-              <SearchCombobox
-                id="teacher-profile-country"
-                label="Country"
-                value={country}
-                onChange={onCountryChange}
-                options={COUNTRY_OPTIONS}
-                placeholder="Search countries…"
-                error={errs?.locationCountryCode}
-              />
-              <SearchCombobox
-                id="teacher-profile-city"
-                label="City"
-                value={city}
-                onChange={setCity}
-                options={cityOptions}
-                placeholder={country ? "Search cities…" : "Select a country first"}
-                error={errs?.locationCity}
-                disabled={!country}
-                allowCustomValue
-                emptyMessage={country ? "No matching cities" : "Select a country first"}
-              />
-            </LocationRow>
-            <FormFieldRoot $hasLabel>
-              <FormFieldLabelSlot>
-                <FormFieldLabel htmlFor="teacher-profile-languages">Languages spoken</FormFieldLabel>
-              </FormFieldLabelSlot>
-              <FormFieldControlSlot>
-                <TagWrap>
-                  {tags.map((t) => (
-                    <Tag key={t}>
-                      {t}
-                      <TagRemove
-                        type="button"
-                        aria-label={`Remove ${t}`}
-                        onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
-                      >
-                        ×
-                      </TagRemove>
-                    </Tag>
-                  ))}
-                  <TagInput
-                    id="teacher-profile-languages"
-                    aria-label="Add a language"
-                    placeholder="Type a language, press Enter"
-                    value={tagDraft}
-                    onChange={(e) => setTagDraft(e.target.value)}
-                    onKeyDown={onTagKeyDown}
-                    onBlur={commitDraft}
-                  />
-                </TagWrap>
-              </FormFieldControlSlot>
-              <FormFieldMetaSlot>
-                {errs?.spokenLanguages ? (
-                  <FormFieldError>{errs.spokenLanguages}</FormFieldError>
-                ) : null}
-              </FormFieldMetaSlot>
-            </FormFieldRoot>
-    </DetailsFields>
+    <TeacherProfileLanguagesLocationFields
+      idPrefix="teacher-profile"
+      compact={compactEmbeddedFields}
+      languageTags={tags}
+      languageTagDraft={tagDraft}
+      onLanguageTagsChange={setTags}
+      onLanguageTagDraftChange={setTagDraft}
+      country={country}
+      city={city}
+      onCountryChange={onCountryChange}
+      onCityChange={setCity}
+      fieldErrors={errs}
+    />
   );
 
   return (
-    <TeacherProfileForm id={TEACHER_LOCATION_FORM_ID} onSubmit={onSubmit}>
+    <TeacherProfileForm
+      id={TEACHER_LOCATION_FORM_ID}
+      onSubmit={onSubmit}
+      contentInset={embedded ? "compactTop" : "default"}
+    >
       {embedded ? (
         fields
       ) : (
@@ -329,10 +285,21 @@ export function TeacherProfileLocationTab({
       {result && !result.ok && !result.fieldErrors ? <ErrorText>{result.error}</ErrorText> : null}
 
       {embedded ? (
-        <EmbeddedSaveFooter>
-          <Button type="submit" variant="primary" isLoading={isSaving}>
-            Save
-          </Button>
+        <EmbeddedSaveFooter $compact={compactEmbeddedFields}>
+          {presentation === "viewEdit" ? (
+            <>
+              <Button type="button" variant="secondary" disabled={isSaving} onClick={onCancelEdit}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" isLoading={isSaving}>
+                Save
+              </Button>
+            </>
+          ) : (
+            <Button type="submit" variant="primary" isLoading={isSaving}>
+              Save
+            </Button>
+          )}
         </EmbeddedSaveFooter>
       ) : (
         <TeacherProfileTabFooter

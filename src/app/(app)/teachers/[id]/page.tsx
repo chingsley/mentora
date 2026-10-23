@@ -5,6 +5,7 @@ import {
   getMyStudentEnrollmentsByOffering,
   getStudentProfileIdForUser,
   getTeacherById,
+  getTeacherSubjectYearsTaughtMap,
 } from "@/server/teachers";
 import { getPolicy } from "@/server/policies";
 import { listTestimonialsByTeacher } from "@/server/testimonials";
@@ -16,6 +17,7 @@ import { buildTeacherSubjectRateRows } from "@/lib/teacherSubjectRateRows";
 import type { CalendarEntry } from "@/components/features/calendar/types";
 import type { ClassDetail } from "@/components/features/class/ClassDetailsDialog";
 import { getStudentClassCalendarData } from "@/server/studentClassCalendar";
+import { teacherSubjectTenureLabel } from "@/lib/formatTeacherSubjectYearsTaught";
 import { mapTeacherWorkExperiencesForPublicProfile } from "@/lib/mapTeacherWorkExperiencesForPublicProfile";
 import { TeacherDetailView } from "./TeacherDetailView";
 
@@ -42,6 +44,8 @@ export default async function TeacherPage({ params }: Props) {
       : null;
 
   const isStudent = session.user.role === "STUDENT";
+
+  const subjectYearsTaught = await getTeacherSubjectYearsTaughtMap(teacher.id);
 
   const [testimonials, myEnrollments, studentSchedule] = await Promise.all([
     listTestimonialsByTeacher(teacher.id),
@@ -115,16 +119,19 @@ export default async function TeacherPage({ params }: Props) {
       headline={teacher.headline}
       bio={teacher.bio}
       email={teacher.user.email}
+      contactPhone={teacher.contactPhone ?? ""}
+      contactAddress={teacher.contactAddress ?? ""}
       spokenLanguages={teacher.spokenLanguages}
-      locationCountryCode={teacher.locationCountryCode}
+      locationCountryCode={teacher.locationCountryCode ?? ""}
+      locationCity={teacher.locationCity ?? ""}
+      locationLabel={teacher.locationLabel ?? ""}
       displayId={teacher.displayId}
       rating={teacher.avgRating}
       ratingsCount={teacher.ratingsCount}
       subjects={teacher.subjects.map((s) => ({
         id: s.subject.id,
         name: s.subject.name,
-        courseDescription: s.courseDescription,
-        gradeLevel: s.gradeLevel,
+        tenureLabel: teacherSubjectTenureLabel(subjectYearsTaught.get(s.subjectId)),
       }))}
       rates={rates}
       entries={entries}
